@@ -20,7 +20,7 @@ public class ServerTest {
     
     
     @Test
-    public void testServer() {
+    public void testServerClientDisconnect() {
         
     }
 }
