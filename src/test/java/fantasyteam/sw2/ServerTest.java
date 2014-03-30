@@ -9,8 +9,8 @@ import org.testng.annotations.Test;
  */
 public class ServerTest {
     
-    Server server1;
-    Server server2;
+    private Server server1;
+    private Server server2;
     
     @BeforeMethod
     private void setupServer() {
