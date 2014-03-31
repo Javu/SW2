@@ -1,20 +1,13 @@
-package fantasyteam.sw2;
+package fantasyteam.sw2.entities;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
-import javax.swing.*;
-import javax.imageio.*;
-import java.io.*;
-import java.util.*;
-import java.lang.*;
+import fantasyteam.sw2.collisions.BoundingBox;
+import java.util.Vector;
 
-class Player extends Entity{
+public class Player extends Entity{
 	
 	public Vector<Entity> entities;
 
-	Player(int w, int h, int x, int y, int x_p, int y_p, double rot, Vector<Entity> ent)
+	public Player(int w, int h, int x, int y, int x_p, int y_p, double rot, Vector<Entity> ent)
 	{
 		super(w,h,x,y,x_p,y_p,rot,"square_black");
 		solid = true;
@@ -22,6 +15,7 @@ class Player extends Entity{
 		entities = ent;
 	}
 	
+        @Override
 	public void update()
 	{
 		super.update();
@@ -40,11 +34,13 @@ class Player extends Entity{
 		animation_counter++;
 	}
 	
+        @Override
 	public int numEnt()
 	{
 		return entities.size();
 	}
 	
+        @Override
 	public void addAEntity(Vector<Entity> ent)
 	{
 		Bullet bullet = new Bullet(5,5,x_pos, y_pos,0,0,0);
@@ -52,11 +48,13 @@ class Player extends Entity{
 		ent.add(bullet);
 	}
 	
+        @Override
 	public Vector<Entity> giveEnt()
 	{
 		return entities;
 	}
 	
+        @Override
 	public void setEntNum()
 	{
 		entities.lastElement().setSpriteNum(2);

@@ -1,4 +1,4 @@
-package fantasyteam.sw2;
+package fantasyteam.sw2.server;
 
 
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class LobbyServer extends Server {
         }
     }
 
-    LobbyServer() {
+    public LobbyServer() {
         port = 23231;
         max_players = 8;
         game_type = 0;
@@ -50,7 +50,7 @@ public class LobbyServer extends Server {
         game_state = 0;
     }
 
-    LobbyServer(int players) {
+    public LobbyServer(int players) {
         port = 23231;
         max_players = players;
         game_type = 0;

@@ -1,16 +1,25 @@
-package fantasyteam.sw2;
+package fantasyteam.sw2.game;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
-import javax.swing.*;
-import javax.imageio.*;
-import java.io.*;
-import java.util.*;
-import java.lang.*;
+import fantasyteam.sw2.collisions.BoundingBox;
+import fantasyteam.sw2.collisions.CollisionDetector;
+import fantasyteam.sw2.rendering.Renderer;
+import fantasyteam.sw2.entities.Entity;
+import fantasyteam.sw2.entities.Player;
+import fantasyteam.sw2.entities.Wall;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.image.BufferStrategy;
+import java.util.Vector;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
-public class SquareWars extends Canvas{
+
+public class SquareWars extends Canvas {
 	private BufferStrategy strategy;
 	private Vector<Entity> entities;
 	private CollisionDetector collision_detector;
@@ -68,7 +77,7 @@ public class SquareWars extends Canvas{
 		}
 	}
 
-	SquareWars()
+	public SquareWars()
 	{
 		context = 0;
 		int X_SIZE = 1024;
@@ -177,7 +186,7 @@ public class SquareWars extends Canvas{
 		int current_size = entities.size();
 		for (int i=0; i<current_size; i++)
 		{
-			if (entities.get(i).destroyed == true)
+			if (entities.get(i).isDestroyed())
 			{
 				entities.remove(i);
 				i -= 1;
@@ -190,6 +199,7 @@ public class SquareWars extends Canvas{
 
 		boolean ctrl_flag = false;
 		
+                @Override
 		public void keyPressed(KeyEvent e)
 		{
 			if(context == 0)
@@ -241,6 +251,7 @@ public class SquareWars extends Canvas{
 			}*/
 		}
 		
+                @Override
 		public void keyReleased(KeyEvent e)
 		{
 		
@@ -267,6 +278,7 @@ public class SquareWars extends Canvas{
 			}*/
 		}
 		
+                @Override
 		public void keyTyped(KeyEvent e)
 		{
 			if (e.getKeyChar() == 27)

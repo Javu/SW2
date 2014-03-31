@@ -1,19 +1,21 @@
-package fantasyteam.sw2;
+package fantasyteam.sw2.rendering;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
-import javax.swing.*;
-import javax.imageio.*;
-import java.io.*;
-import java.util.*;
-import java.lang.*;
+import fantasyteam.sw2.entities.Entity;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
+import javax.imageio.ImageIO;
 
-class Renderer{
+
+public class Renderer{
 	private Map<String,Vector<BufferedImage>> images;
 	
-	Renderer()
+	public Renderer()
 	{
 		images = new HashMap<String,Vector<BufferedImage>>();
 	}

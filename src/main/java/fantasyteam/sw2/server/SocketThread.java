@@ -1,6 +1,7 @@
-package fantasyteam.sw2;
+package fantasyteam.sw2.server;
 
-import java.io.*;
+import java.io.IOException;
+
 
 /**
  * The {@link SocketThread} class is used to hold socket based connections and control interaction with the socket.
@@ -13,7 +14,7 @@ public class SocketThread extends Thread {
     private Server server;
     private String hash;
 
-    SocketThread(Sock inSock, Server ser, String h) {
+    public SocketThread(Sock inSock, Server ser, String h) {
         // Initialise attributes
         socket = inSock;
         server = ser;

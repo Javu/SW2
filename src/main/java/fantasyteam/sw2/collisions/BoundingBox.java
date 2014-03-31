@@ -1,12 +1,12 @@
-package fantasyteam.sw2;
+package fantasyteam.sw2.collisions;
 
-class BoundingBox{
+public class BoundingBox{
 	private int min_x;
 	private int min_y;
 	private int max_x;
 	private int max_y;
 
-	BoundingBox()
+	public BoundingBox()
 	{
 		min_x = 0;
 		min_y = 0;
@@ -14,7 +14,7 @@ class BoundingBox{
 		max_y = 0;
 	}
 
-	BoundingBox(int new_min_x, int new_min_y, int new_max_x, int new_max_y)
+	public BoundingBox(int new_min_x, int new_min_y, int new_max_x, int new_max_y)
 	{	
 		min_x = new_min_x;
 		min_y = new_min_y;

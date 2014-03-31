@@ -1,8 +1,12 @@
-package fantasyteam.sw2;
+package fantasyteam.sw2.server;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
-import java.io.*;
-import java.util.*;
 
 public class GameServer extends Server {
 
@@ -62,7 +66,7 @@ public class GameServer extends Server {
         }
     }
 
-    GameServer() {
+    public GameServer() {
         port = 23232;
         max_players = 8;
         game_type = 0;
@@ -73,7 +77,7 @@ public class GameServer extends Server {
         ready = false;
     }
 
-    GameServer(int g_type, int teams, int max_p
+    public GameServer(int g_type, int teams, int max_p
     ) {
         port = 23232;
         max_players = max_p;

@@ -1,18 +1,11 @@
-package fantasyteam.sw2;
+package fantasyteam.sw2.collisions;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
-import javax.swing.*;
-import javax.imageio.*;
-import java.io.*;
-import java.util.*;
-import java.lang.*;
+import fantasyteam.sw2.entities.Entity;
+import java.util.Vector;
 
-class CollisionDetector
+public class CollisionDetector
 {
-	CollisionDetector()
+	public CollisionDetector()
 	{
 
 	}

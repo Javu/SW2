@@ -1,16 +1,9 @@
-package fantasyteam.sw2;
+package fantasyteam.sw2.entities;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
-import javax.swing.*;
-import javax.imageio.*;
-import java.io.*;
-import java.util.*;
-import java.lang.*;
+import fantasyteam.sw2.collisions.BoundingBox;
+import java.util.Vector;
 
-class Entity{
+public class Entity{
 	protected int width;
 	protected int height;
 	protected String sprite;
@@ -26,7 +19,7 @@ class Entity{
 	protected double rotation;
 	public Vector<Entity> entities;
 	
-	Entity()
+	public Entity()
 	{
 		width = 64;
 		height = 64;
@@ -42,7 +35,7 @@ class Entity{
 		solid = false;
 	}
 	
-	Entity(int w, int h, int x, int y, int x_p, int y_p, double rot, String s)
+	public Entity(int w, int h, int x, int y, int x_p, int y_p, double rot, String s)
 	{
 		width = w;
 		height = h;
@@ -207,4 +200,8 @@ class Entity{
 	{
 	
 	}
+        
+        public boolean isDestroyed() {
+            return destroyed;
+        }
 }

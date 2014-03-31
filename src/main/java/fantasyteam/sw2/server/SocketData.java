@@ -1,4 +1,4 @@
-package fantasyteam.sw2;
+package fantasyteam.sw2.server;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -17,14 +17,14 @@ public class SocketData {
     private int player_number;
     private int team;
     
-    SocketData(){
+    public SocketData(){
         hash = "";
         player_name = hash;
         player_number = 0;
         team = 0;
     }
     
-    SocketData(String h, String pna, int st, int pn, int t){
+    public SocketData(String h, String pna, int st, int pn, int t){
         hash = h;
         player_name = pna;
         square_type = st;

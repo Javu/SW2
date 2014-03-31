@@ -1,8 +1,9 @@
-package fantasyteam.sw2;
+package fantasyteam.sw2.server;
 
 import java.io.IOException;
-import java.net.*;
-import java.util.*;
+import java.net.Socket;
+import java.util.HashMap;
+
 
 /**
  * The {@link Server} class is used to create client and server modules for a client/server framework. It contains all the methods needed to create and accept multiple connections using IP addresses and port numbers.
