@@ -135,19 +135,6 @@ public class Server {
         socket_list.put(hash,new SocketThread(temp_socket, this, hash));
         return hash;
     }
-
-    /**
-     * Creates a ServerSocket and puts {@link Server} into listen mode.
-     * @return The hash assigned to the SocketThread.
-     * @throws IOException
-     */
-    public String listen() throws IOException {
-        Sock temp_socket = new Sock(port);
-        String hash = generateUniqueHash();
-        socket_list.put(hash,new SocketThread(temp_socket, this, hash));
-        socket_list.get(hash).start();
-        return hash;
-    }
     
     /**
      * Generates a random hash Key.
@@ -210,6 +197,10 @@ public class Server {
         socket_list.remove(old_hash);
     }
 
+    public String listen() throws IOException {
+        return "";
+    }
+    
     /**
      * Interprets messages received from {@link Server}. Function is meant to be overridden in child class.
      * @param message Message received from {@link Server} that needs to be handled.
