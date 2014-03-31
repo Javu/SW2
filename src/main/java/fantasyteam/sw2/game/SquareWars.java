@@ -6,6 +6,7 @@ import fantasyteam.sw2.rendering.Renderer;
 import fantasyteam.sw2.entities.Entity;
 import fantasyteam.sw2.entities.Player;
 import fantasyteam.sw2.entities.Wall;
+import fantasyteam.sw2.rendering.SpriteResources;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -63,15 +64,15 @@ public class SquareWars extends Canvas {
 			if(program.getContext() == 0)
 			{
 				Vector<Entity> menuItems1 = new Vector<Entity>();
-				menuItems1.addElement(new Entity(297,99,512,512,0,0,0,"menu"));
+				menuItems1.addElement(new Entity(297,99,512,512,0,0,0,SpriteResources.MENU.filename));
 				program.setEntityList(menuItems1);
 			}
 			else if(program.getContext() == 1)
 			{
 				Vector<Entity> menuItems1 = new Vector<Entity>();
-				menuItems1.addElement(new Entity(297,99,512,10,0,0,0,"menu_kick_player"));
-				menuItems1.addElement(new Entity(297,99,512,300,0,0,0,"menu_change_team"));
-				menuItems1.addElement(new Entity(297,99,512,700,0,0,0,"menu_use_team"));
+				menuItems1.addElement(new Entity(297,99,512,10,0,0,0,SpriteResources.MENU_KICK_PLAYER.filename));
+				menuItems1.addElement(new Entity(297,99,512,300,0,0,0,SpriteResources.MENU_CHANGE_TEAM.filename));
+				menuItems1.addElement(new Entity(297,99,512,700,0,0,0,SpriteResources.MENU_CHANGE_TEAM.filename));
 				program.setEntityList(menuItems1);
 			}
 		}
@@ -127,13 +128,13 @@ public class SquareWars extends Canvas {
 		collision_detector = new CollisionDetector();
 		
 		renderer = new Renderer();
-		renderer.loadImage("square_black",33);
-		renderer.loadImage("square_wall",33);
-		renderer.loadImage("bullet",5);
-		renderer.loadImage("menu");
-		renderer.loadImage("menu_kick_player");
-		renderer.loadImage("menu_change_team");
-		renderer.loadImage("menu_use_team");
+		renderer.loadImage(SpriteResources.SQUARE_BLACK,33);
+		renderer.loadImage(SpriteResources.SQUARE_WALL,33);
+		renderer.loadImage(SpriteResources.BULLET,5);
+		renderer.loadImage(SpriteResources.MENU);
+		renderer.loadImage(SpriteResources.MENU_KICK_PLAYER);
+		renderer.loadImage(SpriteResources.MENU_CHANGE_TEAM);
+		renderer.loadImage(SpriteResources.MENU_USE_TEAM);
 	}
 	
 	public Vector<Entity> getEntities()

@@ -1,6 +1,7 @@
 package fantasyteam.sw2.entities;
 
 import fantasyteam.sw2.collisions.BoundingBox;
+import fantasyteam.sw2.rendering.SpriteResources;
 import java.util.Vector;
 
 public class Entity{
@@ -28,7 +29,7 @@ public class Entity{
 		rotation = 0;
 		sprite_num = 0;
 		animation_counter = 0;
-		sprite = "square_black";
+		sprite = SpriteResources.SQUARE_BLACK.filename;
 
 		bounding_box = new BoundingBox(0,0,width,height);
 		destroyed = false;

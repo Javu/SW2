@@ -9,10 +9,13 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 
 
 public class Renderer{
+        private static Logger LOGGER = Logger.getLogger(Renderer.class.getName());
+    
 	private Map<String,Vector<BufferedImage>> images;
 	
 	public Renderer()
@@ -44,17 +47,19 @@ public class Renderer{
 		return g;
 	}
 	
-	public void loadImage(String sprite)
+	public void loadImage(SpriteResources sprite)
 	{
-		if(!images.containsKey(sprite))
+		if(!images.containsKey(sprite.filename))
 		{
 			BufferedImage image = null;
 			Vector<BufferedImage> img = new Vector<BufferedImage>();
 			try{
-			File file = new File("sprites/"+sprite+".png");
-			image = ImageIO.read(file);
+                            LOGGER.info("Loading image: " + sprite.path);
+                            File file = new File(sprite.path);
+                            image = ImageIO.read(file);
 			}catch(Exception e){
-				System.out.println("LOL NO FILE");
+                            LOGGER.info("Failed to load image " + sprite.path);
+                            return;
 			}
 			for(int i=0;i < image.getWidth();i++)
 			{
@@ -68,21 +73,23 @@ public class Renderer{
 				}
 			}
 			img.add(image);
-			images.put(sprite,img);
+			images.put(sprite.filename,img);
 		}
 	}
 	
-	public void loadImage(String sprite,int height)
+	public void loadImage(SpriteResources sprite,int height)
 	{
-		if(!images.containsKey(sprite))
+		if(!images.containsKey(sprite.filename))
 		{
 			BufferedImage image = null;
 			Vector<BufferedImage> img = new Vector<BufferedImage>();
 			try{
-			File file = new File("sprites/"+sprite+".png");
-			image = ImageIO.read(file);
+                            LOGGER.info("Loading image: " + sprite.path);
+                            File file = new File(sprite.path);
+                            image = ImageIO.read(file);
 			}catch(Exception e){
-				System.out.println("LOL NO FILE");
+                            LOGGER.info("Failed to load image " + sprite.path);
+                            return;
 			}
 			for(int i=0;i < image.getWidth();i++)
 			{
@@ -103,12 +110,13 @@ public class Renderer{
 			{
 				img.add(image.getSubimage(x,y,w,h));
 			}
-			images.put(sprite,img);
+			images.put(sprite.filename,img);
 		}
 	}
 	
-	public void deleteImage(String sprite)
+	public void deleteImage(SpriteResources sprite)
 	{
-		images.remove(sprite);
+                LOGGER.info("Unloading image: " + sprite.filename);
+		images.remove(sprite.filename);
 	}
 }
