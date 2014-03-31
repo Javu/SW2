@@ -4,42 +4,28 @@ package fantasyteam.sw2.networking;
 import java.io.IOException;
 import java.util.HashMap;
 
-public class LobbyServer extends Server {
+public class LobbyServer extends ListenServer {
 
     private int max_players;
     private int game_type;
     private int use_teams;
     private String host_hash;
     private String game_map;
+    private LobbyThread lobby_thread;
     private HashMap<String, SocketData> socket_data;
     private int game_state;
 
-    public static void main(String args[]) {
+    public static void main(String args[]) throws IOException {
         int run = 1;
         boolean player_added = false;
         LobbyServer server = new LobbyServer();
         server.printUI();
         while (run == 1) {
-            // Block while awaiting connections. When a connection is made create a new SocketThread and start the thread
-            if (server.getSocketList().size() < server.getMaxPlayers()) {
-                String new_hash = "";
-                try {
-                    new_hash = server.listen();
-                    server.socket_data.put(new_hash, new SocketData(new_hash, "", 1, 1, 0));
-                    if (!player_added) {
-                        server.host_hash = new_hash;
-                    }
-                    player_added = true;
-                } catch (IOException e) {
-                    System.out.println("Could not listen");
-                }
-            } else {
-
-            }
+            
         }
     }
 
-    public LobbyServer() {
+    public LobbyServer() throws IOException {
         super(23231);
         max_players = 8;
         game_type = 0;
@@ -48,9 +34,12 @@ public class LobbyServer extends Server {
         game_map = "";
         socket_data = new HashMap<String, SocketData>();
         game_state = 0;
+        
+        lobby_thread = new LobbyThread(this);
+        lobby_thread.start();
     }
 
-    public LobbyServer(int players) {
+    public LobbyServer(int players) throws IOException {
         super(23231);
         max_players = players;
         game_type = 0;
@@ -59,8 +48,15 @@ public class LobbyServer extends Server {
         game_map = "";
         socket_data = new HashMap<String, SocketData>();
         game_state = 0;
+        
+        lobby_thread = new LobbyThread(this);
+        lobby_thread.start();
     }
 
+    public void setHostHash(String h){
+        host_hash = h;
+    }
+    
     public void setGameMap(String gm) {
         game_map = gm;
     }
@@ -73,10 +69,18 @@ public class LobbyServer extends Server {
         return max_players;
     }
 
+    public String getHostHash(){
+        return host_hash;
+    }
+    
     public String getGameMap() {
         return game_map;
     }
 
+    public HashMap<String, SocketData> getSocketData(){
+        return socket_data;
+    }
+    
     public int getGameSate() {
         return game_state;
     }

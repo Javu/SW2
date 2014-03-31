@@ -41,14 +41,6 @@ public class Sock {
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
-    // Overloaded constructor, takes an int for a port as arguments. Used to create a ServerSocket based connection.
-    public Sock(int p) throws IOException {
-        ServerSocket server_socket = new ServerSocket(p);
-        socket = server_socket.accept();
-        out = new PrintWriter(socket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-    }
-
     /**
      * Closes the {@link Sock}
      * @throws IOException

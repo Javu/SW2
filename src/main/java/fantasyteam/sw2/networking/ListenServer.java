@@ -12,18 +12,19 @@ import java.net.ServerSocket;
  *
  * @author javu
  */
-public class ServerListen extends Server{
+public class ListenServer extends Server{
     ServerSocket server_socket;
     
-    public ServerListen(){
+    public ListenServer(){
         super();
         server_socket = null;
     }
     
-    public ServerListen(int p){
+    public ListenServer(int p){
         super(p);
         server_socket = null;
     }
+    
     
     
 }
