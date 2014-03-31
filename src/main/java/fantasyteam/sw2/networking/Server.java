@@ -197,6 +197,10 @@ public class Server {
         socket_list.remove(old_hash);
     }
 
+    public void startThread(){
+        
+    }
+    
     public String listen() throws IOException {
         return "";
     }
