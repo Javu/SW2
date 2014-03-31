@@ -1,4 +1,4 @@
-package fantasyteam.sw2.server;
+package fantasyteam.sw2.networking;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -24,6 +24,11 @@ public class Server {
         socket_list = new HashMap<String,SocketThread>();
     }
 
+    public Server(int p) {
+        port = p;
+        socket_list = new HashMap<String,SocketThread>();
+    }
+    
     /**
      * Closes the {@link Server}.
      * @throws java.io.IOException

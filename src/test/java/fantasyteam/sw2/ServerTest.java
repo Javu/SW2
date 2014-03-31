@@ -1,6 +1,6 @@
 package fantasyteam.sw2;
 
-import fantasyteam.sw2.server.Server;
+import fantasyteam.sw2.networking.Server;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

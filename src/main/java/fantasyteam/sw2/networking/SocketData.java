@@ -1,4 +1,4 @@
-package fantasyteam.sw2.server;
+package fantasyteam.sw2.networking;
 
 /*
  * To change this license header, choose License Headers in Project Properties.

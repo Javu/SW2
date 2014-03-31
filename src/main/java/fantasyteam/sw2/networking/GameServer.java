@@ -1,4 +1,4 @@
-package fantasyteam.sw2.server;
+package fantasyteam.sw2.networking;
 
 import java.io.BufferedReader;
 import java.io.File;
