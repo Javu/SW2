@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import static java.lang.System.in;
 import static java.lang.System.out;
-import java.net.ServerSocket;
 import java.net.Socket;
 
 /**
@@ -14,7 +13,6 @@ import java.net.Socket;
  * @author javu
  */
 public class Sock {
-
 
     private Socket socket;
     private PrintWriter out;
@@ -66,8 +64,6 @@ public class Sock {
      * @throws IOException
      */
     public String readMessage() throws IOException {
-            String message = "";
-            message = in.readLine();
-        return message;
+        return in.readLine();
     }
 }

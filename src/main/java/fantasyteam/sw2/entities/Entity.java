@@ -2,7 +2,7 @@ package fantasyteam.sw2.entities;
 
 import fantasyteam.sw2.collisions.BoundingBox;
 import fantasyteam.sw2.rendering.SpriteResources;
-import java.util.Vector;
+import java.util.List;
 
 public class Entity{
 	protected int width;
@@ -18,7 +18,7 @@ public class Entity{
 	protected boolean destroyed;
 	protected boolean solid;
 	protected double rotation;
-	public Vector<Entity> entities;
+	protected List<Entity> entities;
 	
 	public Entity()
 	{
@@ -187,12 +187,12 @@ public class Entity{
 		return x_pos;
 	}
 	
-	public void addAEntity(Vector<Entity> ent)
+	public void addAEntity(List<Entity> ent)
 	{
 	
 	}
 	
-	public Vector<Entity> giveEnt()
+	public List<Entity> giveEnt()
 	{
 		return entities;
 	}

@@ -15,14 +15,15 @@ import java.awt.Point;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferStrategy;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 
 public class SquareWars extends Canvas {
 	private BufferStrategy strategy;
-	private Vector<Entity> entities;
+	private List<Entity> entities;
 	private CollisionDetector collision_detector;
 	private Renderer renderer;
 	private int context;
@@ -31,19 +32,15 @@ public class SquareWars extends Canvas {
 	{
 		SquareWars program = new SquareWars();
 		// Create Test Entity
-		System.out.println(program.getEntities().elementAt(0).numEnt());
+		System.out.println(program.getEntities().get(0).numEnt());
 		program.createEntity(new Entity());
-		System.out.println(program.getEntities().elementAt(0).numEnt());
+		System.out.println(program.getEntities().get(0).numEnt());
 		
-		program.getEntities().elementAt(0).addAEntity(program.getEntities());
+		program.getEntities().get(0).addAEntity(program.getEntities());
 		
-		program.getEntities().lastElement().setSpriteNum(1);
-		System.out.println(program.getEntities().lastElement().getSpriteNum());
-		System.out.println(program.getEntities().elementAt(0).giveEnt().lastElement().getSpriteNum());
+		program.getEntities().get(program.getEntities().size() - 1).setSpriteNum(1);
 		
-		program.getEntities().elementAt(0).setEntNum();
-		System.out.println(program.getEntities().elementAt(0).giveEnt().lastElement().getSpriteNum());
-		System.out.println(program.getEntities().lastElement().getSpriteNum());
+		program.getEntities().get(0).setEntNum();
 		/*
 		Vector<Entity> menuItems = new Vector<Entity>();
 		menuItems.addElement(new Entity(297,99,512,512,0,0,0,"menu"));
@@ -55,7 +52,7 @@ public class SquareWars extends Canvas {
 		UpdateTask update_task = new UpdateTask(program);
 		long paint_timer_delay = 16;
 		long update_timer_delay = 16;
-		Vector<String> tempppp = new Vector<String>();
+		List<String> tempppp = new ArrayList<>();
 		paintTimer.schedule(paint_task, paint_timer_delay, paint_timer_delay);
 		updateTimer.schedule(update_task, update_timer_delay, update_timer_delay);
 		boolean run = true;
@@ -63,16 +60,16 @@ public class SquareWars extends Canvas {
 		{
 			if(program.getContext() == 0)
 			{
-				Vector<Entity> menuItems1 = new Vector<Entity>();
-				menuItems1.addElement(new Entity(297,99,512,512,0,0,0,SpriteResources.MENU.filename));
+				List<Entity> menuItems1 = new ArrayList<>();
+				menuItems1.add(new Entity(297,99,512,512,0,0,0,SpriteResources.MENU.filename));
 				program.setEntityList(menuItems1);
 			}
 			else if(program.getContext() == 1)
 			{
-				Vector<Entity> menuItems1 = new Vector<Entity>();
-				menuItems1.addElement(new Entity(297,99,512,10,0,0,0,SpriteResources.MENU_KICK_PLAYER.filename));
-				menuItems1.addElement(new Entity(297,99,512,300,0,0,0,SpriteResources.MENU_CHANGE_TEAM.filename));
-				menuItems1.addElement(new Entity(297,99,512,700,0,0,0,SpriteResources.MENU_CHANGE_TEAM.filename));
+				List<Entity> menuItems1 = new ArrayList<>();
+				menuItems1.add(new Entity(297,99,512,10,0,0,0,SpriteResources.MENU_KICK_PLAYER.filename));
+				menuItems1.add(new Entity(297,99,512,300,0,0,0,SpriteResources.MENU_CHANGE_TEAM.filename));
+				menuItems1.add(new Entity(297,99,512,700,0,0,0,SpriteResources.MENU_CHANGE_TEAM.filename));
 				program.setEntityList(menuItems1);
 			}
 		}
@@ -111,9 +108,9 @@ public class SquareWars extends Canvas {
 		createBufferStrategy(2);
 		strategy = getBufferStrategy();
 		
-		entities = new Vector<Entity>();
+		entities = new ArrayList<>();
 		Player player = new Player(64,64,512,512,0,0,0,entities);
-		entities.addElement(player);
+		entities.add(player);
 
 		int wall_distance = 500;
 		Wall wall1 = new Wall(64,64,512-wall_distance,512,0,0,0);
@@ -137,34 +134,33 @@ public class SquareWars extends Canvas {
 		renderer.loadImage(SpriteResources.MENU_USE_TEAM);
 	}
 	
-	public Vector<Entity> getEntities()
+	public List<Entity> getEntities()
 	{
 		return entities;
 	}
 	
 	public void createEntity(Entity ent)
 	{
-		entities.addElement(ent);
+		entities.add(ent);
 	}
 	
-	public void setEntityList(Vector<Entity> ent)
+	public void setEntityList(List<Entity> ent)
 	{
 		entities = ent;
 	}
 	
 	public void updateComponent()
 	{
-		Vector<Entity> moved_entities = new Vector<Entity>();
+		List<Entity> moved_entities = new ArrayList<>();
 
-		for(int i=0;i < entities.size();i++)
-		{
-			BoundingBox current_position = entities.get(i).getWorldBoundingPoints();
-			entities.get(i).update();
-			BoundingBox new_position = entities.get(i).getWorldBoundingPoints();
+		for(Entity entity : entities) {
+			BoundingBox current_position = entity.getWorldBoundingPoints();
+			entity.update();
+			BoundingBox new_position = entity.getWorldBoundingPoints();
 
 			if (!current_position.equals(new_position))
 			{
-				moved_entities.add(entities.get(i));
+				moved_entities.add(entity);
 			}
 		}
 

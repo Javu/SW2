@@ -8,8 +8,6 @@ package fantasyteam.sw2.networking;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -39,6 +37,7 @@ public class ListenThread extends Thread {
 
     /**
      * Creates a ServerSocket and puts {@link Server} into listen mode.
+     *
      * @return The hash assigned to the SocketThread.
      * @throws IOException
      */

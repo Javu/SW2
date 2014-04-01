@@ -1,13 +1,11 @@
 package fantasyteam.sw2.entities;
 
 import fantasyteam.sw2.collisions.BoundingBox;
-import java.util.Vector;
+import java.util.List;
 
 public class Player extends Entity{
-	
-	public Vector<Entity> entities;
 
-	public Player(int w, int h, int x, int y, int x_p, int y_p, double rot, Vector<Entity> ent)
+	public Player(int w, int h, int x, int y, int x_p, int y_p, double rot, List<Entity> ent)
 	{
 		super(w,h,x,y,x_p,y_p,rot,"square_black");
 		solid = true;
@@ -41,7 +39,7 @@ public class Player extends Entity{
 	}
 	
         @Override
-	public void addAEntity(Vector<Entity> ent)
+	public void addAEntity(List<Entity> ent)
 	{
 		Bullet bullet = new Bullet(5,5,x_pos, y_pos,0,0,0);
 		entities.add(bullet);
@@ -49,7 +47,7 @@ public class Player extends Entity{
 	}
 	
         @Override
-	public Vector<Entity> giveEnt()
+	public List<Entity> giveEnt()
 	{
 		return entities;
 	}
@@ -57,6 +55,6 @@ public class Player extends Entity{
         @Override
 	public void setEntNum()
 	{
-		entities.lastElement().setSpriteNum(2);
+		entities.get(entities.size() - 1).setSpriteNum(2);
 	}
 }

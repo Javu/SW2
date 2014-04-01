@@ -3,6 +3,7 @@ package fantasyteam.sw2.networking;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 
 /**
@@ -17,16 +18,18 @@ public class Server {
     protected int port;
     /* HashMap used to hold {@link SocketThread}s and the hashed keys to associate them with */
     protected HashMap<String,SocketThread> socket_list;
+    
+    private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 
     /* Default Constructor */
     public Server() {
         port = 0;
-        socket_list = new HashMap<String,SocketThread>();
+        socket_list = new HashMap<>();
     }
 
     public Server(int p) {
         port = p;
-        socket_list = new HashMap<String,SocketThread>();
+        socket_list = new HashMap<>();
     }
     
     /**

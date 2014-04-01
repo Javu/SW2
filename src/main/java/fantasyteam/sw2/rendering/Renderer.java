@@ -6,24 +6,27 @@ import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Vector;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 
 
 public class Renderer{
-        private static Logger LOGGER = Logger.getLogger(Renderer.class.getName());
+        private static final Logger LOGGER = Logger.getLogger(Renderer.class.getName());
     
-	private Map<String,Vector<BufferedImage>> images;
+	private final Map<String,List<BufferedImage>> images;
 	
 	public Renderer()
 	{
-		images = new HashMap<String,Vector<BufferedImage>>();
+		images = new HashMap<>();
 	}
 	
-	public Graphics2D render(Graphics2D g, Vector<Entity> entities)
+	public Graphics2D render(Graphics2D g, List<Entity> entities)
 	{
 		for(int i=0;i<entities.size();i++)
 		{
@@ -31,12 +34,12 @@ public class Renderer{
 			{
 				AffineTransform a = g.getTransform();
 				AffineTransform b = new AffineTransform();
-				b.translate(entities.elementAt(i).getXPos()+(entities.elementAt(i).getWidth()/2),entities.elementAt(i).getYPos()+(entities.elementAt(i).getHeight()/2));
-				b.rotate(Math.toRadians(entities.elementAt(i).getRotation()));
-				b.translate(-entities.elementAt(i).getXPos()-(entities.elementAt(i).getWidth()/2),-entities.elementAt(i).getYPos()-(entities.elementAt(i).getHeight()/2));
+				b.translate(entities.get(i).getXPos()+(entities.get(i).getWidth()/2),entities.get(i).getYPos()+(entities.get(i).getHeight()/2));
+				b.rotate(Math.toRadians(entities.get(i).getRotation()));
+				b.translate(-entities.get(i).getXPos()-(entities.get(i).getWidth()/2),-entities.get(i).getYPos()-(entities.get(i).getHeight()/2));
 				g.setTransform(b);
-				Vector<BufferedImage> temp = images.get(entities.elementAt(i).getSprite());
-				g.drawImage(temp.elementAt(entities.elementAt(i).getSpriteNum()),entities.elementAt(i).getXPos(),entities.elementAt(i).getYPos(),null);
+				List<BufferedImage> temp = images.get(entities.get(i).getSprite());
+				g.drawImage(temp.get(entities.get(i).getSpriteNum()),entities.get(i).getXPos(),entities.get(i).getYPos(),null);
 				g.setTransform(a);
 			}
 			catch(Exception e)
@@ -51,14 +54,14 @@ public class Renderer{
 	{
 		if(!images.containsKey(sprite.filename))
 		{
-			BufferedImage image = null;
-			Vector<BufferedImage> img = new Vector<BufferedImage>();
+			BufferedImage image;
+			List<BufferedImage> img = new ArrayList<>();
 			try{
-                            LOGGER.info("Loading image: " + sprite.path);
+                            LOGGER.log(Level.INFO, "Loading image: {0}", sprite.path);
                             File file = new File(sprite.path);
                             image = ImageIO.read(file);
-			}catch(Exception e){
-                            LOGGER.info("Failed to load image " + sprite.path);
+			}catch(IOException e){
+                            LOGGER.log(Level.SEVERE, "Failed to load image {0}", sprite.path);
                             return;
 			}
 			for(int i=0;i < image.getWidth();i++)
@@ -81,14 +84,14 @@ public class Renderer{
 	{
 		if(!images.containsKey(sprite.filename))
 		{
-			BufferedImage image = null;
-			Vector<BufferedImage> img = new Vector<BufferedImage>();
+			BufferedImage image;
+			List<BufferedImage> img = new ArrayList<>();
 			try{
-                            LOGGER.info("Loading image: " + sprite.path);
+                            LOGGER.log(Level.INFO, "Loading image: {0}", sprite.path);
                             File file = new File(sprite.path);
                             image = ImageIO.read(file);
-			}catch(Exception e){
-                            LOGGER.info("Failed to load image " + sprite.path);
+			}catch(IOException e){
+                            LOGGER.log(Level.SEVERE, "Failed to load image {0}", sprite.path);
                             return;
 			}
 			for(int i=0;i < image.getWidth();i++)
@@ -116,7 +119,7 @@ public class Renderer{
 	
 	public void deleteImage(SpriteResources sprite)
 	{
-                LOGGER.info("Unloading image: " + sprite.filename);
+                LOGGER.log(Level.INFO, "Unloading image: {0}", sprite.filename);
 		images.remove(sprite.filename);
 	}
 }

@@ -1,18 +1,18 @@
 package fantasyteam.sw2.rendering;
 
 import java.awt.image.BufferedImage;
-import java.util.Vector;
+import java.util.List;
 
 
 public class Sprite{
-	Vector<BufferedImage> images;
+	List<BufferedImage> images;
 	
-	public Sprite(Vector<BufferedImage> sprites)
+	public Sprite(List<BufferedImage> sprites)
 	{
 		images = sprites;
 	}
 	
-	Vector<BufferedImage> getImages()
+	List<BufferedImage> getImages()
 	{
 		return images;
 	}

@@ -1,7 +1,7 @@
 package fantasyteam.sw2.collisions;
 
 import fantasyteam.sw2.entities.Entity;
-import java.util.Vector;
+import java.util.List;
 
 public class CollisionDetector
 {
@@ -10,7 +10,7 @@ public class CollisionDetector
 
 	}
 
-	public void detectCollisions(Vector<Entity> moved_entities, Vector<Entity> all_entities)
+	public void detectCollisions(List<Entity> moved_entities, List<Entity> all_entities)
 	{
 		for (int i=0; i<moved_entities.size(); i++)
 		{
