@@ -28,26 +28,14 @@ public class ListenThread extends Thread {
         int run = 1;
         while (run == 1) {
             try {
-                listen();
+                server.listen();
             } catch (IOException e) {
 
             }
         }
     }
 
-    /**
-     * Creates a ServerSocket and puts {@link Server} into listen mode.
-     *
-     * @return The hash assigned to the SocketThread.
-     * @throws IOException
-     */
-    public String listen() throws IOException {
-        Socket temp_socket = server_socket.accept();
-        Sock temp_sock = new Sock(temp_socket);
-        String hash = server.generateUniqueHash();
-        server.getSocketList().put(hash, new SocketThread(temp_sock, server, hash));
-        server.getSocketList().get(hash).start();
-        return hash;
+    public ServerSocket getServerSocket() {
+        return server_socket;
     }
-
 }

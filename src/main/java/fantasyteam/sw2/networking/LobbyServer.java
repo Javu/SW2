@@ -1,7 +1,7 @@
 package fantasyteam.sw2.networking;
 
-
 import java.io.IOException;
+import java.net.Socket;
 import java.util.HashMap;
 
 public class LobbyServer extends ListenServer {
@@ -11,7 +11,6 @@ public class LobbyServer extends ListenServer {
     private int use_teams;
     private String host_hash;
     private String game_map;
-    private LobbyThread lobby_thread;
     private HashMap<String, SocketData> socket_data;
     private int game_state;
 
@@ -21,7 +20,7 @@ public class LobbyServer extends ListenServer {
         LobbyServer server = new LobbyServer();
         server.printUI();
         while (run == 1) {
-            
+
         }
     }
 
@@ -34,9 +33,6 @@ public class LobbyServer extends ListenServer {
         game_map = "";
         socket_data = new HashMap<String, SocketData>();
         game_state = 0;
-        
-        lobby_thread = new LobbyThread(this);
-        lobby_thread.start();
     }
 
     public LobbyServer(int players) throws IOException {
@@ -48,15 +44,12 @@ public class LobbyServer extends ListenServer {
         game_map = "";
         socket_data = new HashMap<String, SocketData>();
         game_state = 0;
-        
-        lobby_thread = new LobbyThread(this);
-        lobby_thread.start();
     }
 
-    public void setHostHash(String h){
+    public void setHostHash(String h) {
         host_hash = h;
     }
-    
+
     public void setGameMap(String gm) {
         game_map = gm;
     }
@@ -69,18 +62,18 @@ public class LobbyServer extends ListenServer {
         return max_players;
     }
 
-    public String getHostHash(){
+    public String getHostHash() {
         return host_hash;
     }
-    
+
     public String getGameMap() {
         return game_map;
     }
 
-    public HashMap<String, SocketData> getSocketData(){
+    public HashMap<String, SocketData> getSocketData() {
         return socket_data;
     }
-    
+
     public int getGameSate() {
         return game_state;
     }
@@ -105,6 +98,18 @@ public class LobbyServer extends ListenServer {
                 System.out.println(socket.toString());
             }
         }
+    }
+
+    public String listen() throws IOException {
+        String new_hash = "";
+        if (socket_list.size() < max_players) {
+            new_hash = super.listen();
+            socket_data.put(new_hash, new SocketData(new_hash,"",1,1,0));
+            if (host_hash.compareTo("") != 0) {
+                host_hash = new_hash;
+            }
+        }
+        return new_hash;
     }
 
     /**
@@ -377,4 +382,3 @@ public class LobbyServer extends ListenServer {
         printUI();
     }
 }
-
