@@ -1,7 +1,6 @@
 package fantasyteam.sw2.networking;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 
 /**

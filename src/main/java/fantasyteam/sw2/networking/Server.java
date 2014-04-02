@@ -97,6 +97,7 @@ public class Server {
         Sock temp_socket = new Sock(s);
         String hash = generateUniqueHash();
         socket_list.put(hash,new SocketThread(temp_socket, this, hash));
+        socket_list.get(hash).start();
         return hash;
     }
 
@@ -109,6 +110,7 @@ public class Server {
     public String addSocketBySock(Sock s) throws IOException {
         String hash = generateUniqueHash();
         socket_list.put(hash,new SocketThread(s, this, hash));
+        socket_list.get(hash).start();
         return hash;
     }
 
@@ -122,6 +124,7 @@ public class Server {
         Sock temp_socket = new Sock(ip, port);
         String hash = generateUniqueHash();
         socket_list.put(hash,new SocketThread(temp_socket, this, hash));
+        socket_list.get(hash).start();
         return hash;
     }
 
@@ -136,6 +139,7 @@ public class Server {
         Sock temp_socket = new Sock(ip, p);
         String hash = generateUniqueHash();
         socket_list.put(hash,new SocketThread(temp_socket, this, hash));
+        socket_list.get(hash).start();
         return hash;
     }
     

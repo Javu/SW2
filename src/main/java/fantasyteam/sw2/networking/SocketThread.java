@@ -19,7 +19,6 @@ public class SocketThread extends Thread {
         socket = inSock;
         server = ser;
         hash = h;
-        //System.out.println("New Socket Thread Created");
     }
 
     @Override
@@ -30,24 +29,17 @@ public class SocketThread extends Thread {
             // Block and wait for input from the socket
             try {
                 message = socket.readMessage();
-                if (message.compareTo("-1") == 0) {
+                if (message==null) {
                     try {
                         server.removeSocket(hash);
                     } catch (IOException e) {
-                        System.out.println(e.getMessage());
+
                     }
                 } else {
                     server.handleMessage(message,hash);
                 }
             } catch (IOException e) {
-                // If socket is closed pass special command to message handler and end thread loop
-                System.out.println(e.getMessage());
-                try {
-                    close();
-                } catch (IOException ex) {
-                    System.out.println(ex.getMessage());
-                }
-                run = 0;
+                
             }
         }
     }
@@ -57,10 +49,8 @@ public class SocketThread extends Thread {
      * @throws IOException
      */
     public void close() throws IOException {
-        //System.out.println("Closing Socket Thread DICKHEAD");
-        // Close the socket, remove sockThread from sockets Vector and interrupt the thread
+        // Close the socket and interrupt the thread
         socket.close();
-        server.getSocketList().remove(hash);
         this.interrupt();
     }
 
