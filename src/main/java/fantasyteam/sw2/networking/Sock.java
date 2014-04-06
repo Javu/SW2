@@ -44,9 +44,9 @@ public class Sock {
      * @throws IOException
      */
     public void close() throws IOException {
-        socket.close();
         out.close();
         in.close();
+        socket.close();
     }
 
     /**
