@@ -45,7 +45,7 @@ public class ClientTest extends Server{
 				try
 				{
 					server.setPort(23231);
-					server.server_hash = server.addSocketByIp("127.0.0.1");
+					server.server_hash = server.addSocket("127.0.0.1");
 				}
 				catch(IOException e)
 				{

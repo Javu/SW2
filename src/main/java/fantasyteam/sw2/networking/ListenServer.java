@@ -21,6 +21,11 @@ public class ListenServer extends Server {
         listen_thread = new ListenThread(this);
     }
     
+    @Override
+    public void close() throws IOException{
+        listen_thread.close();
+    }
+    
     /**
      * Creates a ServerSocket and puts {@link Server} into listen mode.
      * @return The hash assigned to the SocketThread.

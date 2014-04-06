@@ -33,6 +33,12 @@ public class ListenThread extends Thread {
             }
         }
     }
+    
+    public void close() throws IOException{
+        server_socket.close();
+        server_socket = null;
+        this.interrupt();
+    }
 
     public ServerSocket getServerSocket() {
         return server_socket;
