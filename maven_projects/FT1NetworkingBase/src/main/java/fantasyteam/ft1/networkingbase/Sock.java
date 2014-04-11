@@ -1,7 +1,5 @@
 package fantasyteam.ft1.networkingbase;
 
-
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,68 +7,101 @@ import java.io.PrintWriter;
 import static java.lang.System.in;
 import static java.lang.System.out;
 import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * The {@link Sock} class is essentially a structure used to hold a Socket and an input and output stream to send and received messages through the Socket.
+ * The {@link Sock} class is essentially a structure used to hold a Socket and
+ * an input and output stream to send and received messages through the Socket.
+ *
  * @author javu
  */
 public class Sock {
 
+    /* socket used to hold the connection */
     private Socket socket;
+    /* Output stream for the socket. Used to send information through the connected socket */
     private PrintWriter out;
+    /* Input stream for the socket. Used to receive information through the connected socket */
     private BufferedReader in;
 
-    // Basic Constructor
+    /* Logger for logging important actions and exceptions */
+    private static final Logger LOGGER = Logger.getLogger(Sock.class.getName());
+
+    /**
+     * Default constructor
+     */
     public Sock() {
         socket = null;
         out = null;
         in = null;
     }
 
-    // Overloaded constructor, takes a Socket as an argument.
-    public Sock(Socket s) throws IOException {
-        socket = s;
-        out = new PrintWriter(socket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    /**
+     * Overloaded constructor, takes a Socket as an argument.
+     *
+     * @param socket socket used to construct the Sock with.
+     * @throws java.io.IOException
+     */
+    public Sock(Socket socket) throws IOException {
+        this.socket = socket;
+        out = new PrintWriter(this.socket.getOutputStream(), true);
+        in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+        LOGGER.log(Level.INFO, "Successfully created Socket using preconstructed Socket");
     }
 
-    // Overloaded constructor, takes a String for an IP address and an int for a port number as arguments.
-    public Sock(String ip, int p) throws IOException {
-        socket = new Socket(ip, p);
+    /**
+     * Overloaded constructor, takes a String for an IP address and an int for a
+     * port number as arguments.
+     *
+     * @param ip IP address to connect the socket to.
+     * @param port Port number to connect to.
+     * @throws java.io.IOException
+     */
+    public Sock(String ip, int port) throws IOException {
+        socket = new Socket(ip, port);
         out = new PrintWriter(socket.getOutputStream(), true);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        LOGGER.log(Level.INFO, "Successfully created Socket connected to IP {0} on port {1}", new Object[]{ip, port});
     }
 
     /**
      * Closes the {@link Sock}
+     *
      * @throws IOException
      */
     public void close() throws IOException {
         out.close();
         in.close();
         socket.close();
+        LOGGER.log(Level.INFO, "Successfully closed Sock");
     }
 
     /**
      * Sends a string message through the PrintWriter {@link out}.
+     *
      * @param message String message to send through the connection.
      * @throws IOException
      */
     public void sendMessage(String message) throws IOException {
         out.println(message);
+        LOGGER.log(Level.INFO, "Sent message {0}", message);
     }
 
     /**
      * Reads message received through the BufferedReader {@link in}.
+     *
      * @return message received through connection.
      * @throws IOException
      */
     public String readMessage() throws IOException {
-        return in.readLine();
+        String message = in.readLine();
+        LOGGER.log(Level.INFO, "Read message {0}", message);
+        return message;
     }
-    
-    public String toString(){
-        String to_string = "socket: "+socket.toString()+"\nout: "+out.toString()+"\nin: "+in.toString();
+
+    public String toString() {
+        String to_string = "socket: " + socket.toString() + "\nout: " + out.toString() + "\nin: " + in.toString();
         return to_string;
     }
 }

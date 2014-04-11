@@ -32,9 +32,14 @@ public class Server extends fantasyteam.ft1.Networking {
     /* ArrayList used to keep the hashes of disconnected sockets */
     protected ArrayList<String> disconnected_sockets;
 
-    private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
+    /* Logger for logging important actions and exceptions */
+    protected static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 
-    /* Default Constructor */
+    /**
+     * Constructor. Takes an instance of Game as a parameter.
+     *
+     * @param game An instance of the Game class utilising this Server Object.
+     */
     public Server(Game game) {
         super(game);
         port = 0;
@@ -43,6 +48,14 @@ public class Server extends fantasyteam.ft1.Networking {
         disconnected_sockets = new ArrayList<String>();
     }
 
+    /**
+     * Constructor. Takes an instance of Game and an Integer for the port
+     * number.
+     *
+     * @param game An instance of the Game class utilising this Server Object.
+     * @param port The port number used to connect to a server or listen for
+     * clients on.
+     */
     public Server(Game game, int port) {
         super(game);
         this.port = port;
@@ -55,8 +68,6 @@ public class Server extends fantasyteam.ft1.Networking {
      * Closes the {@link Server}.
      *
      * @throws java.io.IOException
-     * @throws RuntimeException if there is an error finding the
-     * {@link SocketThread} key
      */
     public void close() throws IOException {
         for (SocketThread socket : socket_list.values()) {
@@ -163,6 +174,7 @@ public class Server extends fantasyteam.ft1.Networking {
             }
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to remove socket: {0}\nSocket details:\n{1}", new Object[]{hash, socket_list.get(hash).toString()});
+            LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
         }
     }
 
@@ -192,6 +204,7 @@ public class Server extends fantasyteam.ft1.Networking {
             socket_list.get(hash).start();
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by Socket, connection was not established\nSocket details: {0}", socket.toString());
+            LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
         }
         return hash;
     }
@@ -211,6 +224,7 @@ public class Server extends fantasyteam.ft1.Networking {
             socket_list.get(hash).start();
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by Sock, connection was not established\nSock details: \n{0}", sock.toString());
+            LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
         }
         return hash;
     }
@@ -230,6 +244,7 @@ public class Server extends fantasyteam.ft1.Networking {
             socket_list.get(hash).start();
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by IP, connection was not established\nIP: {0}", ip);
+            LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
         }
         return hash;
     }
@@ -251,6 +266,7 @@ public class Server extends fantasyteam.ft1.Networking {
             socket_list.get(hash).start();
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by IP and port, connection was not established\nIP: {0}\nPort: {1}", new Object[]{ip, port});
+            LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
         }
         return hash;
     }
@@ -326,6 +342,33 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
+     * Function used to check if a particular hash is contained in the
+     * disconnected_sockets array. If it is the SocketThread is moved from its
+     * current hash to a new hash matching the one found in the
+     * disconnect_sockets array. It then returns true so any game specific data
+     * associated with the SocketThreads old hash can be re-mapped to the new
+     * hash. This function is intended to facilitate seamless reconnection to
+     * game servers and allow players to pick up where they left off if a
+     * disconnect occurs.
+     *
+     * @param current_hash The hash currently associated with the SocketThread.
+     * @param saved_hash The hash to check for in the list of disconnected_sockets.
+     * @return True if the hash was found in disconnected_sockets. False if it was not found.
+     */
+    public boolean connectDisconnectedSocket(String current_hash, String saved_hash) {
+        boolean exists = false;
+        if (use_disconnected_sockets) {
+            if (disconnected_sockets.contains(saved_hash)) {
+                replaceHash(current_hash, saved_hash);
+                removeDisconnectedSocket(saved_hash);
+                exists = true;
+                LOGGER.log(Level.INFO, "", new Object[]{current_hash, saved_hash});
+            }
+        }
+        return exists;
+    }
+
+    /**
      * Function used to start a new thread for listening on a ServerSocket. It
      * is meant to be overridden in child class as the basic {@link Server} does
      * not support the use of ServerSocket. An example of this can be found in
@@ -364,6 +407,7 @@ public class Server extends fantasyteam.ft1.Networking {
                 LOGGER.log(Level.INFO, "Ping successful to hash {0}", socket.getHash());
             } catch (IOException e) {
                 LOGGER.log(Level.INFO, "Ping unsuccessful to hash {0}, attempting to disconnect socket", socket.getHash());
+                LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
                 removeSocket(socket.getHash());
             }
         }
@@ -372,7 +416,7 @@ public class Server extends fantasyteam.ft1.Networking {
     /**
      * Prints attribute states of {@link Server} in readable form to System.out.
      *
-     * @return
+     * @return Attributes of {@link Server} in a readable String form.
      */
     @Override
     public String toString() {
@@ -388,8 +432,8 @@ public class Server extends fantasyteam.ft1.Networking {
      * Takes String input to assist formatting. Useful to add special characters
      * to assist formatting such as \t or \n.
      *
-     * @param ch Adds the String ch to the start of each line in the String
-     * @return
+     * @param ch Adds the String ch to the start of each line in the String.
+     * @return Attributes of {@link Server} in a readable String form.
      */
     public String toString(String ch) {
         String to_string = ch + "Server attribute values:\n" + ch + "\tPort: " + port + "\n" + ch + "\tSocket List:";
@@ -407,6 +451,7 @@ public class Server extends fantasyteam.ft1.Networking {
                     socket_list.get(hash).getSocket().sendMessage(message);
                 } catch (IOException e) {
                     LOGGER.log(Level.SEVERE, "Could not send message through socket with hash: {0}\nMessage was: {1}\nSocket data:\n{2}", new Object[]{hash, message, socket_list.get(hash).toString()});
+                    LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
                 }
             }
         }
