@@ -14,7 +14,7 @@ public class ServerTest {
     
     private Server server1;
     private Server server2;
-    
+    /*
     @BeforeMethod
     private void setupServer() throws IOException {
         server1 = new ListenServer(22222);

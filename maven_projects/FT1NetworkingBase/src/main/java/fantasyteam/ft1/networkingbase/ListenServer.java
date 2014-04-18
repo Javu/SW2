@@ -18,12 +18,15 @@ import java.util.logging.Level;
  */
 public class ListenServer extends Server {
 
-    /* The threaded class used to hold a ServerSocket based connection and interface with it */
+    /**
+     * The threaded class used to hold a ServerSocket based connection and
+     * interface with it.
+     */
     protected ListenThread listen_thread;
 
     /**
-     * Constructor. Takes the instance of {@link Game} that created this
-     * instance of {@link ListenServer}.
+     * Takes the instance of {@link Game} that created this instance of
+     * {@link ListenServer}.
      *
      * @param game The {@link Game} class that created the {@link ListenServer}.
      * @throws IOException
@@ -34,9 +37,9 @@ public class ListenServer extends Server {
     }
 
     /**
-     * Constructor. Takes the instance of {@link Game} that created this
-     * instance of {@link ListenServer} and a port number used to listen for new
-     * connections on.
+     * Takes the instance of {@link Game} that created this instance of
+     * {@link ListenServer} and a port number used to listen for new connections
+     * on.
      *
      * @param game The {@link Game} class that created the {@link ListenServer}.
      * @param port The port number used to listen for new client connections.
@@ -48,8 +51,8 @@ public class ListenServer extends Server {
     }
 
     /**
-     * Destructor. Gracefully closes listen_thread, all the
-     * {@link SocketThread}'s in socket_list and sets all attributes to null.
+     * Gracefully closes listen_thread, all the {@link SocketThread}'s in
+     * socket_list and sets all attributes to null.
      *
      * @throws IOException
      */
@@ -89,6 +92,37 @@ public class ListenServer extends Server {
     public void startThread() {
         listen_thread.start();
         LOGGER.log(Level.INFO, "Started listen_thread");
+    }
+    
+    /**
+     * Puts the attribute states of {@link ListenServer} in readable form.
+     *
+     * @return Attributes of {@link ListenServer} in a readable String form.
+     */
+    @Override
+    public String toString() {
+        String to_string = "ListenServer attribute values:" + "\n\tPort: " + port + "\n\tListenThread:\n" + listen_thread.toString() + "\n\tSocket List:";
+        for (SocketThread socket : socket_list.values()) {
+            to_string += "\n" + socket.toString("\t");
+        }
+        return to_string;
+    }
+
+    /**
+     * Puts the attribute states of {@link ListenServer} in readable form.
+     * Takes String input to assist formatting. Useful to add special characters
+     * to assist formatting such as \t or \n.
+     *
+     * @param ch Adds the String ch to the start of each line in the String.
+     * @return Attributes of {@link ListenServer} in a readable String form.
+     */
+    @Override
+    public String toString(String ch) {
+        String to_string = ch + "ListenServer attribute values:\n" + ch + "\tPort: " + port + "\n" + ch + "\tListenThread:\n" + listen_thread.toString() + "\n" + ch + "\tSocket List:";
+        for (SocketThread socket : socket_list.values()) {
+            to_string += "\n" + socket.toString(ch + "\t");
+        }
+        return to_string;
     }
 
 }

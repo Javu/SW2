@@ -23,20 +23,32 @@ import java.util.logging.Logger;
  */
 public class Server extends fantasyteam.ft1.Networking {
 
-    /* Port number */
+    /**
+     * Port number.
+     */
     protected int port;
-    /* Boolean used to specify whether to keep the hashes of disconnected sockets */
+    /**
+     * Boolean used to specify whether to keep the hashes of disconnected
+     * sockets.
+     */
     protected boolean use_disconnected_sockets;
-    /* HashMap used to hold {@link SocketThread}s and the hashed keys to associate them with */
+    /**
+     * HashMap used to hold {@link SocketThread}s and the hashed keys to
+     * associate them with.
+     */
     protected HashMap<String, SocketThread> socket_list;
-    /* ArrayList used to keep the hashes of disconnected sockets */
+    /**
+     * ArrayList used to keep the hashes of disconnected sockets.
+     */
     protected ArrayList<String> disconnected_sockets;
 
-    /* Logger for logging important actions and exceptions */
+    /**
+     * Logger for logging important actions and exceptions.
+     */
     protected static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 
     /**
-     * Constructor. Takes an instance of Game as a parameter.
+     * Takes an instance of Game as a parameter.
      *
      * @param game An instance of the Game class utilising this Server Object.
      */
@@ -49,8 +61,7 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
-     * Constructor. Takes an instance of Game and an Integer for the port
-     * number.
+     * Takes an instance of Game and an Integer for the port number.
      *
      * @param game An instance of the Game class utilising this Server Object.
      * @param port The port number used to connect to a server or listen for
@@ -67,7 +78,7 @@ public class Server extends fantasyteam.ft1.Networking {
     /**
      * Closes the {@link Server}.
      *
-     * @throws java.io.IOException
+     * @throws IOException
      */
     public void close() throws IOException {
         for (SocketThread socket : socket_list.values()) {
@@ -272,7 +283,7 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
-     * Generates a random hash Key.
+     * Generates a random hash key.
      *
      * @return the generated hash in String form.
      * @throws IOException
@@ -296,7 +307,7 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
-     * Generates a unique, random hash Key.
+     * Generates a unique, random hash key.
      *
      * @return the generated unique hash in String form.
      * @throws IOException
@@ -352,8 +363,10 @@ public class Server extends fantasyteam.ft1.Networking {
      * disconnect occurs.
      *
      * @param current_hash The hash currently associated with the SocketThread.
-     * @param saved_hash The hash to check for in the list of disconnected_sockets.
-     * @return True if the hash was found in disconnected_sockets. False if it was not found.
+     * @param saved_hash The hash to check for in the list of
+     * disconnected_sockets.
+     * @return True if the hash was found in disconnected_sockets. False if it
+     * was not found.
      */
     public boolean connectDisconnectedSocket(String current_hash, String saved_hash) {
         boolean exists = false;
@@ -414,7 +427,7 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
-     * Prints attribute states of {@link Server} in readable form to System.out.
+     * Puts the attribute states of {@link Server} in readable form.
      *
      * @return Attributes of {@link Server} in a readable String form.
      */
@@ -428,7 +441,7 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
-     * Prints attribute states of {@link Server} in readable form to System.out.
+     * Puts the attribute states of {@link Server} in readable form.
      * Takes String input to assist formatting. Useful to add special characters
      * to assist formatting such as \t or \n.
      *
@@ -443,6 +456,12 @@ public class Server extends fantasyteam.ft1.Networking {
         return to_string;
     }
 
+    /**
+     * Used to send a message to a list of sockets. Takes the String to send and a List of the hashes associated with the sockets to send to as input.
+     * 
+     * @param message The String to send.
+     * @param clientIds The List of hashes to send to.
+     */
     @Override
     protected void sendMessage(String message, List<String> clientIds) {
         for (String hash : clientIds) {

@@ -18,18 +18,28 @@ import java.util.logging.Logger;
  */
 public class Sock {
 
-    /* socket used to hold the connection */
+    /**
+     * socket used to hold the connection.
+     */
     private Socket socket;
-    /* Output stream for the socket. Used to send information through the connected socket */
+    /**
+     * Output stream for the socket. Used to send information through the
+     * connected socket.
+     */
     private PrintWriter out;
-    /* Input stream for the socket. Used to receive information through the connected socket */
+    /**
+     * Input stream for the socket. Used to receive information through the
+     * connected socket.
+     */
     private BufferedReader in;
 
-    /* Logger for logging important actions and exceptions */
+    /**
+     * Logger for logging important actions and exceptions.
+     */
     private static final Logger LOGGER = Logger.getLogger(Sock.class.getName());
 
     /**
-     * Default constructor
+     * Default constructor.
      */
     public Sock() {
         socket = null;
@@ -38,7 +48,7 @@ public class Sock {
     }
 
     /**
-     * Overloaded constructor, takes a Socket as an argument.
+     * Takes a Socket as an argument.
      *
      * @param socket socket used to construct the Sock with.
      * @throws java.io.IOException
@@ -51,8 +61,8 @@ public class Sock {
     }
 
     /**
-     * Overloaded constructor, takes a String for an IP address and an int for a
-     * port number as arguments.
+     * Takes a String for an IP address and an int for a port number as
+     * arguments.
      *
      * @param ip IP address to connect the socket to.
      * @param port Port number to connect to.
@@ -66,7 +76,7 @@ public class Sock {
     }
 
     /**
-     * Closes the {@link Sock}
+     * Closes the {@link Sock}.
      *
      * @throws IOException
      */
@@ -100,6 +110,11 @@ public class Sock {
         return message;
     }
 
+    /**
+     * Puts the attribute states of {@link Sock} in readable form.
+     *
+     * @return Attributes of {@link Sock} in a readable String form.
+     */
     public String toString() {
         String to_string = "socket: " + socket.toString() + "\nout: " + out.toString() + "\nin: " + in.toString();
         return to_string;

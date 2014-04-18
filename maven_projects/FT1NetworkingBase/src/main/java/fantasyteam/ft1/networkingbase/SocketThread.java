@@ -15,20 +15,28 @@ import java.util.logging.Logger;
  */
 public class SocketThread extends Thread {
 
-    /* {@link Sock} used to hold Socket connection and interface with it */
+    /**
+     * {@link Sock} used to hold Socket connection and interface with it
+     */
     private Sock socket;
-    /* Instance of the {@link Server} class that created this thread */
+    /**
+     * Instance of the {@link Server} class that created this thread
+     */
     private Server server;
-    /* The hash String given to this socket by the {@link Server} */
+    /**
+     * The hash String given to this socket by the {@link Server}
+     */
     private String hash;
 
-    /* Logger for logging important actions and exceptions */
+    /**
+     * Logger for logging important actions and exceptions
+     */
     private static final Logger LOGGER = Logger.getLogger(SocketThread.class.getName());
 
     /**
-     * Constructor. Takes the {@link Sock} instance of the socket to interface
-     * with, The instance of {@link Server} that created this thread and the
-     * hash String assigned to this thread by the {@link Server}.
+     * Takes the {@link Sock} instance of the socket to interface with, The
+     * instance of {@link Server} that created this thread and the hash String
+     * assigned to this thread by the {@link Server}.
      *
      * @param inSock
      * @param ser
@@ -41,6 +49,11 @@ public class SocketThread extends Thread {
         hash = h;
     }
 
+    /**
+     * Loop that blocks while it reads new messages from the socket. If a
+     * message is received it passes the message back to the {@link Server} to
+     * handle
+     */
     @Override
     public void run() {
         int run = 1;

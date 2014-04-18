@@ -2,6 +2,7 @@ package fantasyteam.ft1.networkingbase;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -13,16 +14,22 @@ import java.util.logging.Logger;
 
 public class ListenThread extends Thread {
 
-    /* ServerSocket used to accept new client connections */
+    /**
+     * ServerSocket used to accept new client connections.
+     */
     private ServerSocket server_socket;
-    /* The instance of {@link Server} that created this instance of {@link ListenThread} */
+    /**
+     * The instance of {@link Server} that created this instance of {@link ListenThread}.
+     */
     private Server server;
 
-     /* Logger for logging important actions and exceptions */
+    /**
+     * Logger for logging important actions and exceptions.
+     */
     private static final Logger LOGGER = Logger.getLogger(ListenThread.class.getName());
     
     /**
-     * Constructor. Takes the instance of {@link Server} that created this ListenThread as a parameter.
+     * Takes the instance of {@link Server} that created this ListenThread as a parameter.
      * 
      * @param server
      * @throws IOException 
@@ -32,6 +39,9 @@ public class ListenThread extends Thread {
         server_socket = new ServerSocket(this.server.getPort());
     }
 
+    /**
+     * Loop that blocks while it accepts new connections through server_socket.
+     */
     @Override
     public void run() {
         int run = 1;
@@ -39,13 +49,13 @@ public class ListenThread extends Thread {
             try {
                 server.listen();
             } catch (IOException e) {
-
+                LOGGER.log(Level.SEVERE, "Failed to accept new connection. Stack trace: {0}", e);
             }
         }
     }
 
     /**
-     * Destructor. Closes server_socket and interrupts the thread.
+     * Closes server_socket and interrupts the thread.
      * @throws IOException 
      */
     public void close() throws IOException {
