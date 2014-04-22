@@ -22,7 +22,13 @@ public class ListenThread extends Thread {
      * The instance of {@link Server} that created this instance of {@link ListenThread}.
      */
     private Server server;
-
+    private int port;
+    /**
+     * Boolean used to determine if the thread is running or not.
+     */
+    private boolean run;
+    
+    
     /**
      * Logger for logging important actions and exceptions.
      */
@@ -36,7 +42,10 @@ public class ListenThread extends Thread {
      */
     public ListenThread(Server server) throws IOException {
         this.server = server;
-        server_socket = new ServerSocket(this.server.getPort());
+        port = this.server.getPort();
+        server_socket = new ServerSocket(port);
+        run = false;
+        LOGGER.log(Level.INFO, "Constructed new ListenThread on port {0}", port);
     }
 
     /**
@@ -44,13 +53,20 @@ public class ListenThread extends Thread {
      */
     @Override
     public void run() {
-        int run = 1;
-        while (run == 1) {
+        run = true;
+        while (run) {
             try {
                 server.listen();
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Failed to accept new connection. Stack trace: {0}", e);
+                LOGGER.log(Level.SEVERE, "Failed to accept new connection. ListenThread will now terminate", e);
+                run = false;
             }
+        }
+        LOGGER.log(Level.INFO, "Listen loop has exited on port {0}", port);
+        try {
+            this.close();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to close and interrupt ListenThread. Thread may not have terminated correctly and could be tieing up system resources", e);
         }
     }
 
@@ -62,7 +78,7 @@ public class ListenThread extends Thread {
         server_socket.close();
         server_socket = null;
         this.interrupt();
-        
+        LOGGER.log(Level.INFO, "Closed ListenThread on port {0}", port);
     }
 
     /**
@@ -72,5 +88,28 @@ public class ListenThread extends Thread {
      */
     public ServerSocket getServerSocket() {
         return server_socket;
+    }
+    
+    public int getPort() {
+        return port;
+    }
+    
+    /**
+     * Returns the attribute run.
+     * 
+     * @return the boolean run.
+     */
+    public boolean getRun() {
+        return run;
+    }
+    
+    /**
+     * Sets the attribute run. Setting run to false while the thread is started
+     * will cause the thread to close.
+     *
+     * @param run boolean to set run to.
+     */
+    public void setRun(boolean run) {
+        this.run = run;
     }
 }

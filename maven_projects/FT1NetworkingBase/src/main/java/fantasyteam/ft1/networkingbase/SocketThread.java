@@ -1,6 +1,7 @@
 package fantasyteam.ft1.networkingbase;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,17 +17,22 @@ import java.util.logging.Logger;
 public class SocketThread extends Thread {
 
     /**
-     * {@link Sock} used to hold Socket connection and interface with it
+     * {@link Sock} used to hold Socket connection and interface with it.
      */
     private Sock socket;
     /**
-     * Instance of the {@link Server} class that created this thread
+     * Instance of the {@link Server} class that created this thread.
      */
     private Server server;
     /**
-     * The hash String given to this socket by the {@link Server}
+     * The hash String given to this socket by the {@link Server}.
      */
     private String hash;
+
+    /**
+     * Boolean used to determine if the thread is running or not.
+     */
+    private boolean run;
 
     /**
      * Logger for logging important actions and exceptions
@@ -42,11 +48,12 @@ public class SocketThread extends Thread {
      * @param ser
      * @param h
      */
-    public SocketThread(Sock inSock, Server ser, String h) {
+    public SocketThread(Sock sock, Server server, String hash) {
         // Initialise attributes
-        socket = inSock;
-        server = ser;
-        hash = h;
+        socket = sock;
+        this.server = server;
+        this.hash = hash;
+        run = true;
     }
 
     /**
@@ -56,22 +63,30 @@ public class SocketThread extends Thread {
      */
     @Override
     public void run() {
-        int run = 1;
-        while (run == 1) {
+        while (run) {
             String message = "";
             // Block and wait for input from the socket
             try {
                 message = socket.readMessage();
                 if (message == null) {
                     LOGGER.log(Level.INFO, "Socket has been disconnected, attempting to close socket on Server");
-                    server.removeSocket(hash);
                 } else {
                     LOGGER.log(Level.INFO, "Message received: {0}", message);
+                }
+                if (run) {
                     server.receiveMessage(message, hash);
                 }
             } catch (IOException e) {
-
+                LOGGER.log(Level.SEVERE, "Could not read from socket or read null, attempting to close socket on Server");
+                server.receiveMessage(null, hash);
+                run = false;
             }
+        }
+        LOGGER.log(Level.INFO, "Socket loop has exited");
+        try {
+            close();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to close and interrupt SocketThread. Thread may not have terminated correctly and could be tieing up system resources. Stack trace:", e);
         }
     }
 
@@ -81,8 +96,17 @@ public class SocketThread extends Thread {
      * @throws IOException
      */
     public void close() throws IOException {
-        // Close the socket and interrupt the thread
-        socket.close();
+        if(socket.getSocket() != null) {
+            try{
+                socket.close();
+                socket = null;
+                LOGGER.log(Level.INFO, "Successfully closed Sock socket");    
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Failed to close Sock socket in SocketThread");
+                throw new IOException("Failed to close Sock socket in SocketThread");
+            }
+        }
+        LOGGER.log(Level.INFO, "SocketThread has succesffully closed");
         this.interrupt();
     }
 
@@ -102,6 +126,15 @@ public class SocketThread extends Thread {
      */
     public String getHash() {
         return hash;
+    }
+
+    /**
+     * Returns the attribute run.
+     *
+     * @return the boolean run.
+     */
+    public boolean getRun() {
+        return run;
     }
 
     /**
@@ -128,6 +161,20 @@ public class SocketThread extends Thread {
         LOGGER.log(Level.INFO, "Changed hash: {0}", hash);
     }
 
+    /**
+     * Sets the attribute run. Setting run to false while the thread is started
+     * will cause the thread to close.
+     *
+     * @param run boolean to set run to.
+     */
+    public void setRun(boolean run) {
+        this.run = run;
+    }
+
+    public void unblock() throws IOException {
+        socket.close();
+    }
+    
     /**
      * Prints attribute states of {@link SocketThread} in readable form to
      * System.out.

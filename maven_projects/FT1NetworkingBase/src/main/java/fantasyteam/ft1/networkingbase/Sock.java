@@ -81,12 +81,40 @@ public class Sock {
      * @throws IOException
      */
     public void close() throws IOException {
-        out.close();
-        in.close();
+        LOGGER.log(Level.INFO, "Attempting to close Sock");
         socket.close();
-        LOGGER.log(Level.INFO, "Successfully closed Sock");
+        socket = null;
+        in = null;
+        out = null;
     }
 
+    /**
+     * Returns the value of socket.
+     * 
+     * @return the Socket socket.
+     */
+    public Socket getSocket() {
+        return socket;
+    }
+    
+    /**
+     * Returns the value of out.
+     * 
+     * @return the PrintWriter out.
+     */
+    public PrintWriter getOut() {
+        return out;
+    }
+    
+    /**
+     * Returns the value of in.
+     * 
+     * @return the BufferedReader in.
+     */
+    public BufferedReader getIn() {
+        return in;
+    }
+    
     /**
      * Sends a string message through the PrintWriter {@link out}.
      *
@@ -109,7 +137,7 @@ public class Sock {
         LOGGER.log(Level.INFO, "Read message {0}", message);
         return message;
     }
-
+    
     /**
      * Puts the attribute states of {@link Sock} in readable form.
      *
