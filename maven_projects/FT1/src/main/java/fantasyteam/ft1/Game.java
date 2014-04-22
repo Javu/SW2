@@ -51,5 +51,5 @@ public abstract class Game {
      * @param action
      * @param clientId 
      */
-    protected abstract void handleAction(Map<String, List<String>> action, String clientId);
+    protected abstract void handleAction(List<String> action, String clientId);
 }

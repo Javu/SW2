@@ -1,8 +1,7 @@
 package fantasyteam.ft1;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * base class for networking implementation. contains concrete methods for code
@@ -42,8 +41,8 @@ public abstract class Networking {
      * @param message the message received from the client
      * @param clientId the id of the client the message was received from
      */
-    public final void receiveMessage(String message, String clientId) {
-        Map<String, List<String>> action = parseAction(message);
+    public void receiveMessage(String message, String clientId) {
+        List<String> action = parseAction(message);
         if (!handleNetworkAction(action, clientId)) {
             game.handleAction(action, clientId);
         }
@@ -54,38 +53,56 @@ public abstract class Networking {
     * gets an action and parameters and turns it into a string to send accross the network
     */
     private String encodeAction(String action, List<String> parameters) {
-        //TODO gets the action and list of parameters and turns them into a string to
-        //transmit across the network
-        return "";
+        String seperator = "/";
+        String action_string = action + seperator;
+        if(parameters != null) {
+            for(String parameter : parameters) {
+                action_string += parameter + seperator;
+            }
+        }
+        return action_string;
     }
 
     
     /*
     * parses a string received accross the network
     */
-    private Map<String, List<String>> parseAction(String message) {
-        //TODO parsing code goes here, needs to return a map with a single entry
-        //the key is the actionName, the value is the list of string parameters
-        return new HashMap<>();
+    private List<String> parseAction(String message) {
+        boolean action_found = false;
+        String parameter_string = "";
+        List<String> parameter_list = new ArrayList<>();
+        if(message != null) {
+            for (char ch : message.toCharArray()) {
+                if (ch == '/') {
+                    parameter_list.add(parameter_string);
+                    parameter_string = "";
+                    action_found = true;
+                } else {
+                    parameter_string += ch;
+                }
+            }
+            if (!action_found) {
+                parameter_list.add(message);
+            }
+        }
+        parameter_list.add("disconnect");
+        return parameter_list;
     }
 
     
     /*
     * handles a reserved network action
     */
-    private boolean handleNetworkAction(Map<String, List<String>> action, String clientId) {
-//        switch (action.get(0).key()) {
-//            case "reserved network action 1":
-//                networkAction1(action.get(0))
-//                                    return true;
-//            case "reserved network action 2":
-//                networkAction2(action.get(0));
-//                return true;
-//                ......
-//            default:
-//                return false;
-//        }
-        return false;
+    private boolean handleNetworkAction(List<String> action, String clientId) {
+        switch (action.get(0)) {
+            case "":
+                return true;
+            case "disconnect":
+                disconnect(clientId);
+                return true;
+            default:
+                return false;
+        }
     }
 
     
@@ -98,7 +115,8 @@ public abstract class Networking {
      */
     protected abstract void sendMessage(String message, List<String> clientIds);
 
-
+    protected abstract void disconnect(String hash);
+    
 //    /**
 //    * Each reserved network action will have an abstract method that needs to be overridden to contain
 //    * the physical implementation of how the server handles reserved network functions (e.g. socket disconnect)
