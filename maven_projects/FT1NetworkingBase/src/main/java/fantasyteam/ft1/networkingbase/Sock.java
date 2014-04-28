@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 public class Sock {
 
     /**
-     * socket used to hold the connection.
+     * Socket used to hold the connection.
      */
     private Socket socket;
     /**
@@ -143,8 +143,22 @@ public class Sock {
      *
      * @return Attributes of {@link Sock} in a readable String form.
      */
+    @Override
     public String toString() {
         String to_string = "socket: " + socket.toString() + "\nout: " + out.toString() + "\nin: " + in.toString();
+        return to_string;
+    }
+    
+    /**
+     * Puts the attribute states of {@link Sock} in readable form. Takes
+     * String input to assist formatting. Useful to add special characters to
+     * assist formatting such as \t or \n.
+     *
+     * @param ch Adds the String ch to the start of each line in the String.
+     * @return Attributes of {@link Sock} in a readable String form.
+     */
+        public String toString(String ch) {
+        String to_string = ch + "socket: " + socket.toString() + "\n" + ch + "out: " + out.toString() + "\n" + ch + "in: " + in.toString();
         return to_string;
     }
 }

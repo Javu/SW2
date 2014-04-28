@@ -1,7 +1,6 @@
 package fantasyteam.ft1.networkingbase;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,7 +34,7 @@ public class SocketThread extends Thread {
     private boolean run;
 
     /**
-     * Logger for logging important actions and exceptions
+     * Logger for logging important actions and exceptions.
      */
     private static final Logger LOGGER = Logger.getLogger(SocketThread.class.getName());
 
@@ -44,9 +43,9 @@ public class SocketThread extends Thread {
      * instance of {@link Server} that created this thread and the hash String
      * assigned to this thread by the {@link Server}.
      *
-     * @param inSock
-     * @param ser
-     * @param h
+     * @param sock {@link Sock} used to hold the socket connection this {@link SocketThread} interfaces with.
+     * @param server {@link Server} that created this {@link SocketThread}. Mainly used to handle/parse messages received into meaningful actions.
+     * @param hash String representing the unique hash associated with this {@link SocketThread} by the {@link Server} that created it.
      */
     public SocketThread(Sock sock, Server server, String hash) {
         // Initialise attributes
@@ -59,7 +58,7 @@ public class SocketThread extends Thread {
     /**
      * Loop that blocks while it reads new messages from the socket. If a
      * message is received it passes the message back to the {@link Server} to
-     * handle
+     * handle.
      */
     @Override
     public void run() {
@@ -96,7 +95,7 @@ public class SocketThread extends Thread {
      * @throws IOException
      */
     public void close() throws IOException {
-        if(socket.getSocket() != null) {
+        if(socket != null) {
             try{
                 socket.close();
                 socket = null;
@@ -173,6 +172,8 @@ public class SocketThread extends Thread {
 
     public void unblock() throws IOException {
         socket.close();
+        socket = null;
+        LOGGER.log(Level.INFO, "Successfully closed Sock socket");  
     }
     
     /**
@@ -196,7 +197,13 @@ public class SocketThread extends Thread {
      * @return
      */
     public String toString(String ch) {
-        String to_string = ch + "Socket Thread attribute values:\n" + ch + "\tHash: " + hash;
+        String to_string = ch + "Socket Thread attribute values:\n" + ch + "\tHash: " + hash + "\n" + ch + "\tRunning: " + run;
+        to_string += "\n" + ch + "\tSock:";
+        if(socket != null) {
+            to_string += "\n" + socket.toString(ch + "\t\t");
+        } else {
+            to_string += " Sock has been closed";
+        }
         return to_string;
     }
 }

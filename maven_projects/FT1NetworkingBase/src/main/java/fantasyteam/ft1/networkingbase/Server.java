@@ -305,7 +305,7 @@ public class Server extends fantasyteam.ft1.Networking {
      * @param socket Pre-constructed {@link Server} to use for connection.
      * @return The hash assigned to the SocketThread.
      */
-    public String addSocket(Socket socket) {
+    public String addSocket(Socket socket) throws IOException {
         String hash = null;
         try {
             Sock temp_socket = new Sock(socket);
@@ -314,7 +314,8 @@ public class Server extends fantasyteam.ft1.Networking {
             socket_list.get(hash).start();
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by Socket, connection was not established\nSocket details: {0}", socket.toString());
-            LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
+            LOGGER.log(Level.INFO, "Caught exception: {0}", e);
+            throw new IOException("Failed to add or start SocketThread by Socket, connection was not established\\nSocket details:"+socket.toString());
         }
         return hash;
     }
@@ -326,7 +327,7 @@ public class Server extends fantasyteam.ft1.Networking {
      * @param sock Pre-constructed {@link Sock} to use for connection.
      * @return The hash assigned to the SocketThread.
      */
-    public String addSocket(Sock sock) {
+    public String addSocket(Sock sock) throws IOException {
         String hash = null;
         try {
             hash = generateUniqueHash();
@@ -334,7 +335,8 @@ public class Server extends fantasyteam.ft1.Networking {
             socket_list.get(hash).start();
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by Sock, connection was not established\nSock details: \n{0}", sock.toString());
-            LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
+            LOGGER.log(Level.INFO, "Caught exception: {0}", e);
+            throw new IOException("Failed to add or start SocketThread by Sock, connection was not established\nSock details:"+sock.toString());
         }
         return hash;
     }
@@ -345,7 +347,7 @@ public class Server extends fantasyteam.ft1.Networking {
      * @param ip IP address of {@link Server}.
      * @return The hash assigned to the SocketThread.
      */
-    public String addSocket(String ip) {
+    public String addSocket(String ip) throws IOException {
         String hash = null;
         try {
             Sock temp_socket = new Sock(ip, port);
@@ -354,7 +356,8 @@ public class Server extends fantasyteam.ft1.Networking {
             socket_list.get(hash).start();
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by IP, connection was not established\nIP: {0}", ip);
-            LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
+            LOGGER.log(Level.INFO, "Caught exception: {0}", e);
+            throw new IOException("Failed to add or start SocketThread by IP, connection was not established\nIP:"+ip);
         }
         return hash;
     }
@@ -367,7 +370,7 @@ public class Server extends fantasyteam.ft1.Networking {
      * @param port Port number of {@link Server}.
      * @return The hash assigned to the SocketThread.
      */
-    public String addSocket(String ip, int port) {
+    public String addSocket(String ip, int port) throws IOException {
         String hash = null;
         try {
             Sock temp_socket = new Sock(ip, port);
@@ -376,7 +379,8 @@ public class Server extends fantasyteam.ft1.Networking {
             socket_list.get(hash).start();
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by IP and port, connection was not established\nIP: {0}\nPort: {1}", new Object[]{ip, port});
-            LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
+            LOGGER.log(Level.INFO, "Caught exception: {0}", e);
+            throw new IOException("Failed to add or start SocketThread by IP and port, connection was not established\nIP: "+ip+"\nPort: "+port);
         }
         return hash;
     }
@@ -552,13 +556,32 @@ public class Server extends fantasyteam.ft1.Networking {
         } else {
             to_string += "Server ";
         }
-        to_string += "attribute values:" + "\n\tPort: " + port;
+        to_string += "attribute values:\n\tState: " + state + "\n\tPort: " + port + "\n\tUse disconnected sockets: " + use_disconnected_sockets;
+        if(use_disconnected_sockets) {
+            to_string += "\n\tDisconnected Sockets";
+            if(!disconnected_sockets.isEmpty()) {
+                String sockets = "";
+                int number_of_sockets = 0;
+                for(String hash : disconnected_sockets) {
+                    sockets += "\n\t\t" + hash;
+                    number_of_sockets++;
+                }
+                to_string += "(total connections " + number_of_sockets + "):" + sockets;
+            } else {
+                to_string += ": No hashes in disconnected sockets list";
+            }
+        }
         if (listen_thread != null) {
             to_string += "\n\tListenThread:\n" + listen_thread.toString();
         }
         to_string += "\n\tSocket List:";
-        for (SocketThread socket : socket_list.values()) {
-            to_string += "\n" + socket.toString("\t");
+        if(!socket_list.isEmpty()) {
+            for (SocketThread socket : socket_list.values()) {
+                to_string += "\n" + socket.toString("\t\t");
+            }
+        }
+        else {
+            to_string += " No sockets are connected";
         }
         return to_string;
     }
@@ -578,14 +601,34 @@ public class Server extends fantasyteam.ft1.Networking {
         } else {
             to_string += "Server ";
         }
-        to_string += "attribute values:\n" + ch + "\tPort: " + port;
+        to_string += "attribute values:\n" + ch + "\tState: " + state + "\n" + ch + "\tPort: " + port + "\n" + ch + "\tUse disconnected sockets: " + use_disconnected_sockets;
+        if(use_disconnected_sockets) {
+            to_string += "\n" + ch + "\tDisconnected Sockets";
+            if(!disconnected_sockets.isEmpty()) {
+                String sockets = "";
+                int number_of_sockets = 0;
+                for(String hash : disconnected_sockets) {
+                    sockets += "\n" + ch + "\t\t" + hash;
+                    number_of_sockets++;
+                }
+                to_string += "(total connections " + number_of_sockets + "):" + sockets;
+            } else {
+                to_string += ": No hashes in disconnected sockets list";
+            }
+        }
         if (listen_thread != null) {
             to_string += "\n" + ch + "\tListenThread:\n" + listen_thread.toString();
         }
         to_string += "\n" + ch + "\tSocket List:";
-        for (SocketThread socket : socket_list.values()) {
-            to_string += "\n" + socket.toString(ch + "\t");
+        if(!socket_list.isEmpty()) {
+            for (SocketThread socket : socket_list.values()) {
+                to_string += "\n" + socket.toString(ch + "\t\t");
+            }
         }
+        else {
+            to_string += " No sockets are connected";
+        }
+        
         return to_string;
     }
 
