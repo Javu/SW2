@@ -14,13 +14,11 @@ import org.testng.annotations.Test;
  *
  * @author javu
  */
-public class SockTest {
+public class ListenThreadTest {
     
-    private Sock sock;
-    private String ip;
+    private Server server;
     private int port;
     private boolean exception;
-    private Server server;
     /**
      * This int is the parameter used when running the waitTime function in
      * these tests. Change this value to increase or decrease the time waited
@@ -28,7 +26,7 @@ public class SockTest {
      */
     int wait = 30;
     
-    protected static final Logger LOGGER = Logger.getLogger(SockTest.class.getName());
+    protected static final Logger LOGGER = Logger.getLogger(ListenThreadTest.class.getName());
     
     /**
      * waitTime tells the test to wait for a specified amount of time, which is
@@ -47,48 +45,28 @@ public class SockTest {
     }
     
     @BeforeMethod
-    private void setupSock() throws IOException {
-        ip = "127.0.0.1";
-        port = 22225;
+    private void setupListenThread() throws IOException {
+        port = 22224;
         Game game = EasyMock.createMock(Game.class);
         server = new Server(game,port,true);
         server.startThread();
         waitTime();
-        sock = new Sock(ip,port);
         exception = false;
     }
     
     @AfterMethod
-    private void deleteSock() throws IOException {
-        sock.close();
-        waitTime();
+    private void deleteListenThread() throws IOException {
         server.close();
         waitTime();
-    }
-    
-    @Test
-    public void testDefaultConstructor() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testDefaultConstructor -----");
-        Sock sock1 = new Sock();
-        Assert.assertEquals(sock1.getSocket(), null, "Value of socket in Sock not set to null");
-        Assert.assertEquals(sock1.getOut(), null, "Value of out in Sock not set to null");
-        Assert.assertEquals(sock1.getIn(), null, "Value of in in Sock not set to null");
-        LOGGER.log(Level.INFO, "----- TEST testDefaultConstructor COMPLETED -----");
-        try {
-            sock.close();
-        } catch (IOException ex) {
-            exception = true;
-        }
-        Assert.assertFalse(exception, "Exception found");
     }
     
     @Test
     public void testToString() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToString -----");
         String to_string = null;
-        to_string = sock.toString();
-        Assert.assertNotEquals(to_string, null, "Sock data not generated into a readable String with added character");
-        LOGGER.log(Level.INFO, "Sock String details: \n{0}", to_string);
+        to_string = server.getListenThread().toString();
+        Assert.assertNotEquals(to_string, null, "ListenThread data not generated into a readable String with added character");
+        LOGGER.log(Level.INFO, "ListenThread String details: \n{0}", to_string);
         LOGGER.log(Level.INFO, "----- TEST testToString COMPLETED -----");
     }
 }

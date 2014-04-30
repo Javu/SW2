@@ -13,7 +13,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Tests for base server class
+ * Tests for base Server class. These tests also test the majority of the
+ * functionality of the fantasyteam.ft1.networkingbase package, so any core
+ * functionality of the other classes of this package are also tested in here.
+ * Any outlying or utility methods associated with classes other than Server
+ * will be tested on their own in that classes individual test package.
  *
  * @author javu
  */
@@ -21,14 +25,14 @@ public class ServerTest {
 
     private Server server1;
     private Server server2;
-    int port = 22222;
+    int port;
     boolean exception;
     /**
      * This int is the parameter used when running the waitTime function in
-     * these tests. Change this value to increase or decrease the
-     * time waited when waitTime is called.
+     * these tests. Change this value to increase or decrease the time waited
+     * when waitTime is called.
      */
-    int wait = 10;
+    int wait = 30;
 
     /**
      * Logger for logging important actions and exceptions.
@@ -36,13 +40,12 @@ public class ServerTest {
     protected static final Logger LOGGER = Logger.getLogger(ServerTest.class.getName());
 
     /**
-     * waitTime tells the test to wait for a specified amount of
-     * time, which is useful when dealing with sockets and connections as they
-     * need to be given a small amount of time before being able to perform
-     * certain tasks on them. Without this short wait period a lot of these
-     * tests would fail. This also serves as a benchmark to see how quickly
-     * networking tasks can be performed after trying to connect sockets and
-     * other networking tasks.
+     * waitTime tells the test to wait for a specified amount of time, which is
+     * useful when dealing with sockets and connections as they need to be given
+     * a small amount of time before being able to perform certain tasks on
+     * them. Without this short wait period a lot of these tests would fail.
+     * This also serves as a benchmark to see how quickly networking tasks can
+     * be performed after trying to connect sockets and other networking tasks.
      */
     private void waitTime() {
         try {
@@ -54,6 +57,7 @@ public class ServerTest {
 
     @BeforeMethod
     private void setupServer() throws IOException {
+        port = 22222;
         exception = false;
         Game game = EasyMock.createMock(Game.class);
 
@@ -90,10 +94,10 @@ public class ServerTest {
             exception = true;
         }
         Game game = EasyMock.createMock(Game.class);
-        server2 = new Server(game, true);
+        server2 = new Server(game);
         Assert.assertFalse(exception, "Exception found");
         Assert.assertEquals(server2.getPort(), 0, "Server not constructed");
-        Assert.assertEquals(server2.getState(), 0, "Server not set as listen server");
+        Assert.assertEquals(server2.getState(), 1, "Server not set as client server");
         LOGGER.log(Level.INFO, "----- TEST testServerConstructor COMPLETED -----");
     }
 
@@ -111,7 +115,7 @@ public class ServerTest {
             exception = true;
         }
         Game game = EasyMock.createMock(Game.class);
-        server2 = new Server(game, false);
+        server2 = new Server(game);
         Assert.assertFalse(exception, "Exception found");
         Assert.assertEquals(server2.getPort(), 0, "Server not constructed");
         Assert.assertEquals(server2.getListenThread(), null, "Server not constructed");
@@ -131,7 +135,11 @@ public class ServerTest {
             exception = true;
         }
         Game game = EasyMock.createMock(Game.class);
-        server2 = new Server(game, 12457, true);
+        try {
+            server2 = new Server(game, 12457, true);
+        } catch (IOException ex) {
+            exception = true;
+        }
         Assert.assertFalse(exception, "Exception found");
         Assert.assertEquals(server2.getPort(), 12457, "Server not constructed");
         LOGGER.log(Level.INFO, "----- TEST testServerConstructorPort COMPLETED -----");
@@ -151,7 +159,11 @@ public class ServerTest {
             exception = true;
         }
         Game game = EasyMock.createMock(Game.class);
-        server2 = new Server(game, 12457, false);
+        try {
+            server2 = new Server(game, 12457, false);
+        } catch (IOException ex) {
+            exception = true;
+        }
         Assert.assertFalse(exception, "Exception found");
         Assert.assertEquals(server2.getPort(), 12457, "Server not constructed");
         Assert.assertEquals(server2.getListenThread(), null, "Server not constructed");
@@ -434,10 +446,9 @@ public class ServerTest {
     }
 
     /**
-     * This test ensures the version of addSocket(String, int) correctly takes
-     * a String representing an IP address and an int representing a port
-     * number, builds them into a SocketThread and adds it to the socket_list
-     * map.
+     * This test ensures the version of addSocket(String, int) correctly takes a
+     * String representing an IP address and an int representing a port number,
+     * builds them into a SocketThread and adds it to the socket_list map.
      */
     @Test
     public void testServerClientConnectIpPort() {
@@ -578,7 +589,12 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testReplaceHash -----");
         String client_hash = "";
         Game game = EasyMock.createMock(Game.class);
-        Server server3 = new Server(game, port, false);
+        Server server3 = null;
+        try {
+            server3 = new Server(game, port, false);
+        } catch (IOException ex) {
+            exception = true;
+        }
         server1.setUseDisconnectedSockets(true);
         server1.startThread();
         try {
@@ -622,7 +638,12 @@ public class ServerTest {
     public void testPingSocket() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testPingSocket -----");
         Game game = EasyMock.createMock(Game.class);
-        Server server3 = new Server(game, port, false);
+        Server server3 = null;
+        try {
+            server3 = new Server(game, port, false);
+        } catch (IOException ex) {
+            exception = true;
+        }
         server1.startThread();
         try {
             server2.addSocket("127.0.0.1");
@@ -666,7 +687,12 @@ public class ServerTest {
             exception = true;
         }
         waitTime();
-        Server server3 = new Server(game, port, true);
+        Server server3 = null;
+        try {
+            server3 = new Server(game, port, true);
+        } catch (IOException ex) {
+            exception = true;
+        }
         Assert.assertEquals(server3.getState(), 0, "Server not set as state 0. Port could not be listened on");
         try {
             server3.close();
@@ -692,7 +718,12 @@ public class ServerTest {
             exception = true;
         }
         waitTime();
-        Server server3 = new Server(game, port, true);
+        Server server3 = null;
+        try {
+            server3 = new Server(game, port, true);
+        } catch (IOException ex) {
+            exception = true;
+        }
         Assert.assertEquals(server3.getState(), 0, "Server not set as state 0. Port could not be listened on");
         try {
             server3.close();
@@ -704,7 +735,8 @@ public class ServerTest {
     }
 
     /**
-     * Calls the startThread method on a Server setup as a client. Ensures that the call doesn't do anything and that listen_thread is not started.
+     * Calls the startThread method on a Server setup as a client. Ensures that
+     * the call doesn't do anything and that listen_thread is not started.
      */
     @Test
     public void testStartThreadClient() {
@@ -715,50 +747,71 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- TEST testStartThreadClient COMPLETED -----");
     }
     
+    /**
+     * Calls the listen method on a Server setup as a client. Ensures that
+     * the call doesn't do anything.
+     */
+    @Test
+    public void testListenClient() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testListenClient -----");
+        String listen = "";
+        try {
+            listen = server2.listen();
+        } catch (IOException ex) {
+            exception = true;
+        }
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server2.getState(), 1, "server2 not set as client server");
+        Assert.assertEquals(listen, null, "Client server attempted to listen");
+        LOGGER.log(Level.INFO, "----- TEST testListenClient COMPLETED -----");
+    }
+
     @Test
     public void testToStringClient() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringClient -----");
         String to_string = null;
+        server2.setUseDisconnectedSockets(true);
         to_string = server2.toString();
         boolean server_type = false;
-        if(to_string != null) {
+        if (to_string != null) {
             String server_string = "";
             char[] ch = to_string.toCharArray();
-            for(int i=0;i<6;i++) {
+            for (int i = 0; i < 6; i++) {
                 server_string += ch[i];
             }
-            if(server_string.compareTo("Server") == 0) {
+            if (server_string.compareTo("Server") == 0) {
                 server_type = true;
             }
         }
         Assert.assertTrue(server_type, "Server not detected as a client server when generating String data");
         Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String");
-        LOGGER.log(Level.INFO, "Server toString() details: \n{0}", to_string);
+        LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
         LOGGER.log(Level.INFO, "----- TEST testToStringClient COMPLETED -----");
     }
-    
+
     @Test
     public void testToStringClientCh() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringClientCh -----");
         String to_string = null;
+        server2.setUseDisconnectedSockets(true);
         to_string = server2.toString("\t");
         boolean server_type = false;
-        if(to_string != null) {
+        if (to_string != null) {
             String server_string = "";
             char[] ch = to_string.toCharArray();
-            for(int i=1;i<7;i++) {
+            for (int i = 1; i < 7; i++) {
                 server_string += ch[i];
             }
-            if(server_string.compareTo("Server") == 0) {
+            if (server_string.compareTo("Server") == 0) {
                 server_type = true;
             }
         }
         Assert.assertTrue(server_type, "Server not detected as a client server when generating String data");
         Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String with added character");
-        LOGGER.log(Level.INFO, "Server toString() details: \n{0}", to_string);
+        LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
         LOGGER.log(Level.INFO, "----- TEST testToStringClientCh COMPLETED -----");
     }
-    
+
     @Test
     public void testToStringServer() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServer -----");
@@ -772,9 +825,14 @@ public class ServerTest {
             exception = true;
         }
         waitTime();
-        Server server3 = new Server(game,port,false);
+        Server server3 = null;
         try {
-            server3.addSocket("127.0.01");
+            server3 = new Server(game, port, false);
+        } catch (IOException ex) {
+            exception = true;
+        }
+        try {
+            server3.addSocket("127.0.0.1");
         } catch (IOException ex) {
             exception = true;
         }
@@ -787,23 +845,23 @@ public class ServerTest {
         waitTime();
         to_string = server1.toString();
         boolean server_type = false;
-        if(to_string != null) {
+        if (to_string != null) {
             String server_string = "";
             char[] ch = to_string.toCharArray();
-            for(int i=0;i<6;i++) {
+            for (int i = 0; i < 6; i++) {
                 server_string += ch[i];
             }
-            if(server_string.compareTo("Listen") == 0) {
+            if (server_string.compareTo("Listen") == 0) {
                 server_type = true;
             }
         }
         Assert.assertFalse(exception, "Exception found");
         Assert.assertTrue(server_type, "Server not detected as a listen server when generating String data");
         Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String");
-        LOGGER.log(Level.INFO, "Server toString() details: \n{0}", to_string);
+        LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
         LOGGER.log(Level.INFO, "----- TEST testToStringServer COMPLETED -----");
     }
-    
+
     @Test
     public void testToStringServerCh() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServerCh -----");
@@ -817,9 +875,14 @@ public class ServerTest {
             exception = true;
         }
         waitTime();
-        Server server3 = new Server(game,port,false);
+        Server server3 = null;
         try {
-            server3.addSocket("127.0.01");
+            server3 = new Server(game, port, false);
+        } catch (IOException ex) {
+            exception = true;
+        }
+        try {
+            server3.addSocket("127.0.0.1");
         } catch (IOException ex) {
             exception = true;
         }
@@ -832,20 +895,62 @@ public class ServerTest {
         waitTime();
         to_string = server1.toString("\t");
         boolean server_type = false;
-        if(to_string != null) {
+        if (to_string != null) {
             String server_string = "";
             char[] ch = to_string.toCharArray();
-            for(int i=1;i<7;i++) {
+            for (int i = 1; i < 7; i++) {
                 server_string += ch[i];
             }
-            if(server_string.compareTo("Listen") == 0) {
+            if (server_string.compareTo("Listen") == 0) {
                 server_type = true;
             }
         }
         Assert.assertFalse(exception, "Exception found");
         Assert.assertTrue(server_type, "Server not detected as a listen server when generating String data");
         Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String with added character");
-        LOGGER.log(Level.INFO, "Server toString() details: \n{0}", to_string);
+        LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
         LOGGER.log(Level.INFO, "----- TEST testToStringServerCh COMPLETED -----");
+    }
+
+    @Test
+    public void testToStringServerNotStarted() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServerNotStarted -----");
+        String to_string = null;
+        to_string = server1.toString();
+        Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String with added character");
+        LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
+        LOGGER.log(Level.INFO, "----- TEST testToStringServerNotStarted COMPLETED -----");
+    }
+
+    @Test
+    public void testToStringClientClosed() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringClientClosed -----");
+        String to_string = null;
+        try {
+            server2.close();
+        } catch (IOException ex) {
+            exception = true;
+        }
+        to_string = server2.toString();
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String with added character");
+        LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
+        LOGGER.log(Level.INFO, "----- TEST testToStringClientClosed COMPLETED -----");
+    }
+
+    @Test
+    public void testToStringServerClosed() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringClientClosed -----");
+        String to_string = null;
+        try {
+            server1.close();
+        } catch (IOException ex) {
+            exception = true;
+        }
+        to_string = server1.toString();
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String with added character");
+        LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
+        LOGGER.log(Level.INFO, "----- TEST testToStringClientClosed COMPLETED -----");
     }
 }

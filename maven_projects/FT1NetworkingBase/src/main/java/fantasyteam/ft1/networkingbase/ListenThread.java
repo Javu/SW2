@@ -75,8 +75,10 @@ public class ListenThread extends Thread {
      * @throws IOException 
      */
     public void close() throws IOException {
-        server_socket.close();
-        server_socket = null;
+        if(server_socket != null) {
+            server_socket.close();
+            server_socket = null;
+        }
         this.interrupt();
         LOGGER.log(Level.INFO, "Closed ListenThread on port {0}", port);
     }
@@ -111,5 +113,35 @@ public class ListenThread extends Thread {
      */
     public void setRun(boolean run) {
         this.run = run;
+    }
+    
+    /**
+     * Puts the attribute states of {@link ListenThread} in readable form.
+     *
+     * @return Attributes of {@link ListenThread} in a readable String form.
+     */
+    @Override
+    public String toString() {
+        String to_string = toString("");
+        return to_string;
+    }
+    
+    /**
+     * Puts the attribute states of {@link ListenThread} in readable form. Takes
+     * String input to assist formatting. Useful to add special characters to
+     * assist formatting such as \t or \n.
+     *
+     * @param ch Adds the String ch to the start of each line in the String.
+     * @return Attributes of {@link ListenThread} in a readable String form.
+     */
+    public String toString(String ch) {
+        String to_string = ch + "Port: " + port + "\n" + ch + "Running: " + run;
+        to_string += "\n" + ch + "Server Socket:";
+        if(server_socket != null) {
+            to_string += "\n" + ch + "\t" + server_socket.toString();
+        } else {
+            to_string += " Sock has been closed";
+        }
+        return to_string;
     }
 }

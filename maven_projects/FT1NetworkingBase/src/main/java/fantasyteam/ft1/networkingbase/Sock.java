@@ -82,8 +82,10 @@ public class Sock {
      */
     public void close() throws IOException {
         LOGGER.log(Level.INFO, "Attempting to close Sock");
-        socket.close();
-        socket = null;
+        if(socket != null) {
+           socket.close();
+           socket = null; 
+        }
         in = null;
         out = null;
     }
@@ -145,7 +147,7 @@ public class Sock {
      */
     @Override
     public String toString() {
-        String to_string = "socket: " + socket.toString() + "\nout: " + out.toString() + "\nin: " + in.toString();
+        String to_string = toString("");
         return to_string;
     }
     

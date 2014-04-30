@@ -23,7 +23,6 @@ import java.util.logging.Logger;
  */
 public class Server extends fantasyteam.ft1.Networking {
 
-    
     protected int state;
     /**
      * Port number.
@@ -58,25 +57,15 @@ public class Server extends fantasyteam.ft1.Networking {
      * Takes an instance of Game as a parameter.
      *
      * @param game An instance of the Game class utilising this Server Object.
-     * @param listen Boolean flag to set whether the Server will act as a server
-     * or client.
      */
-    public Server(Game game, boolean listen) {
+    public Server(Game game) {
         super(game);
         port = 0;
         use_disconnected_sockets = false;
         socket_list = new HashMap<>();
         disconnected_sockets = new ArrayList<String>();
-        if (listen) {
-            try {
-                setListenThread();
-            } catch(IOException e) {
-                LOGGER.log(Level.SEVERE, "Failed to start ListenThread on server. Server state has been set as errored", e);
-            }
-        } else {
-            listen_thread = null;
-            state = 1;
-        }
+        listen_thread = null;
+        state = 1;
     }
 
     /**
@@ -87,8 +76,9 @@ public class Server extends fantasyteam.ft1.Networking {
      * clients on.
      * @param listen Boolean flag to set whether the Server will act as a server
      * or client.
+     * @throws java.io.IOException
      */
-    public Server(Game game, int port, boolean listen) {
+    public Server(Game game, int port, boolean listen) throws IOException {
         super(game);
         this.port = port;
         use_disconnected_sockets = false;
@@ -97,8 +87,9 @@ public class Server extends fantasyteam.ft1.Networking {
         if (listen) {
             try {
                 setListenThread();
-            } catch(IOException e) {
+            } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Failed to start ListenThread on server. Server state has been set as errored", e);
+                throw new IOException("Failed to start ListenThread on server. Server state has been set as errored");
             }
         } else {
             listen_thread = null;
@@ -125,7 +116,7 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     public void closeListenThread() throws IOException {
-         if (state == 0 && listen_thread != null) {
+        if (state == 0 && listen_thread != null) {
             if (listen_thread.getRun()) {
                 LOGGER.log(Level.INFO, "Attempting to close running listen_thread on port {0}", listen_thread.getPort());
                 listen_thread.setRun(false);
@@ -137,7 +128,7 @@ public class Server extends fantasyteam.ft1.Networking {
             }
         }
     }
-    
+
     /**
      * Sets the port number used for connections.
      *
@@ -195,6 +186,7 @@ public class Server extends fantasyteam.ft1.Networking {
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Could not create ListenThread on port {0}", port);
             state = -1;
+            throw new IOException("Could not create ListenThread on port" + port);
         }
     }
 
@@ -252,7 +244,7 @@ public class Server extends fantasyteam.ft1.Networking {
     public int getState() {
         return state;
     }
-    
+
     /**
      * Closes {@link SocketThread} at specified key of
      * HashMap(String,{@link SocketThread}) socket_list.
@@ -261,7 +253,7 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     @Override
     public void disconnect(String hash) {
-        if(socket_list.containsKey(hash)) {
+        if (socket_list.containsKey(hash)) {
             if (socket_list.get(hash).getRun()) {
                 LOGGER.log(Level.INFO, "Attempting to close SocketThread with hash {0}", hash);
                 try {
@@ -274,16 +266,16 @@ public class Server extends fantasyteam.ft1.Networking {
                 LOGGER.log(Level.INFO, "Socket Thread with hash {0} has already been disconnected", hash);
             }
 //            if(!socket_list.get(hash).isAlive()) {
-                socket_list.remove(hash);
-                LOGGER.log(Level.INFO, "Closed SocketThread has been interrupted, removing from socket_list on Server");
-                if (use_disconnected_sockets) {
-                    disconnected_sockets.add(hash);
-                    LOGGER.log(Level.INFO, "Closed SocketThread's hash has been added to disconnected sockets list");
-                }
+            socket_list.remove(hash);
+            LOGGER.log(Level.INFO, "Closed SocketThread has been interrupted, removing from socket_list on Server");
+            if (use_disconnected_sockets) {
+                disconnected_sockets.add(hash);
+                LOGGER.log(Level.INFO, "Closed SocketThread's hash has been added to disconnected sockets list");
+            }
 //            } else {
 //                LOGGER.log(Level.INFO, "Socket Thread with hash {0} has not yet been interrupted. Will not remove from list", hash);
 //            }
-        }else {
+        } else {
             LOGGER.log(Level.INFO, "Socket Thread with hash {0} does not exist on Server", hash);
         }
     }
@@ -315,7 +307,7 @@ public class Server extends fantasyteam.ft1.Networking {
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by Socket, connection was not established\nSocket details: {0}", socket.toString());
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
-            throw new IOException("Failed to add or start SocketThread by Socket, connection was not established\\nSocket details:"+socket.toString());
+            throw new IOException("Failed to add or start SocketThread by Socket, connection was not established\\nSocket details:" + socket.toString());
         }
         return hash;
     }
@@ -336,7 +328,7 @@ public class Server extends fantasyteam.ft1.Networking {
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by Sock, connection was not established\nSock details: \n{0}", sock.toString());
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
-            throw new IOException("Failed to add or start SocketThread by Sock, connection was not established\nSock details:"+sock.toString());
+            throw new IOException("Failed to add or start SocketThread by Sock, connection was not established\nSock details:" + sock.toString());
         }
         return hash;
     }
@@ -357,7 +349,7 @@ public class Server extends fantasyteam.ft1.Networking {
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by IP, connection was not established\nIP: {0}", ip);
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
-            throw new IOException("Failed to add or start SocketThread by IP, connection was not established\nIP:"+ip);
+            throw new IOException("Failed to add or start SocketThread by IP, connection was not established\nIP:" + ip);
         }
         return hash;
     }
@@ -380,7 +372,7 @@ public class Server extends fantasyteam.ft1.Networking {
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by IP and port, connection was not established\nIP: {0}\nPort: {1}", new Object[]{ip, port});
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
-            throw new IOException("Failed to add or start SocketThread by IP and port, connection was not established\nIP: "+ip+"\nPort: "+port);
+            throw new IOException("Failed to add or start SocketThread by IP and port, connection was not established\nIP: " + ip + "\nPort: " + port);
         }
         return hash;
     }
@@ -506,7 +498,6 @@ public class Server extends fantasyteam.ft1.Networking {
      * passing true in the constructor.
      *
      * @return The hash assigned to the SocketThread.
-     * @throws IOException
      */
     public String listen() throws IOException {
         if (state == 0) {
@@ -522,7 +513,7 @@ public class Server extends fantasyteam.ft1.Networking {
             return hash;
         } else {
             LOGGER.log(Level.INFO, "Server is not set to listen. Will not attempt to listen for new connections");
-            throw new IOException("Server is not set to listen. Will not attempt to listen for new connections");
+            return null;
         }
     }
 
@@ -550,39 +541,7 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     @Override
     public String toString() {
-        String to_string = "";
-        if (state == 0) {
-            to_string += "Listen Server ";
-        } else {
-            to_string += "Server ";
-        }
-        to_string += "attribute values:\n\tState: " + state + "\n\tPort: " + port + "\n\tUse disconnected sockets: " + use_disconnected_sockets;
-        if(use_disconnected_sockets) {
-            to_string += "\n\tDisconnected Sockets";
-            if(!disconnected_sockets.isEmpty()) {
-                String sockets = "";
-                int number_of_sockets = 0;
-                for(String hash : disconnected_sockets) {
-                    sockets += "\n\t\t" + hash;
-                    number_of_sockets++;
-                }
-                to_string += "(total connections " + number_of_sockets + "):" + sockets;
-            } else {
-                to_string += ": No hashes in disconnected sockets list";
-            }
-        }
-        if (listen_thread != null) {
-            to_string += "\n\tListenThread:\n" + listen_thread.toString();
-        }
-        to_string += "\n\tSocket List:";
-        if(!socket_list.isEmpty()) {
-            for (SocketThread socket : socket_list.values()) {
-                to_string += "\n" + socket.toString("\t\t");
-            }
-        }
-        else {
-            to_string += " No sockets are connected";
-        }
+        String to_string = toString("");
         return to_string;
     }
 
@@ -598,37 +557,42 @@ public class Server extends fantasyteam.ft1.Networking {
         String to_string = ch;
         if (state == 0) {
             to_string += "Listen Server ";
+        } else if (state == 2) {
+            to_string += "Closed Server ";
         } else {
             to_string += "Server ";
         }
         to_string += "attribute values:\n" + ch + "\tState: " + state + "\n" + ch + "\tPort: " + port + "\n" + ch + "\tUse disconnected sockets: " + use_disconnected_sockets;
-        if(use_disconnected_sockets) {
+        if (use_disconnected_sockets) {
             to_string += "\n" + ch + "\tDisconnected Sockets";
-            if(!disconnected_sockets.isEmpty()) {
-                String sockets = "";
-                int number_of_sockets = 0;
-                for(String hash : disconnected_sockets) {
-                    sockets += "\n" + ch + "\t\t" + hash;
-                    number_of_sockets++;
+            if (!disconnected_sockets.isEmpty()) {
+                String disconnects = "";
+                int number_of_disconnects = 0;
+                for (String hash : disconnected_sockets) {
+                    number_of_disconnects++;
+                    disconnects += "\n" + ch + "\t\t" + number_of_disconnects + ". " + hash;
                 }
-                to_string += "(total connections " + number_of_sockets + "):" + sockets;
+                to_string += " (total disconnects - " + number_of_disconnects + "):" + disconnects;
             } else {
                 to_string += ": No hashes in disconnected sockets list";
             }
         }
         if (listen_thread != null) {
-            to_string += "\n" + ch + "\tListenThread:\n" + listen_thread.toString();
+            to_string += "\n" + ch + "\tListenThread:\n" + listen_thread.toString(ch + "\t\t");
         }
-        to_string += "\n" + ch + "\tSocket List:";
-        if(!socket_list.isEmpty()) {
+        to_string += "\n" + ch + "\tSocket List";
+        if (socket_list != null && !socket_list.isEmpty()) {
+            String sockets = "";
+            int number_of_sockets = 0;
             for (SocketThread socket : socket_list.values()) {
-                to_string += "\n" + socket.toString(ch + "\t\t");
+                number_of_sockets++;
+                sockets += "\n" + ch + "\t\t" + number_of_sockets + ". Socket Thread attribute values:";
+                sockets += "\n" + socket.toString(ch + "\t\t\t");
             }
+            to_string += " (total sockets - " + number_of_sockets + "):" + sockets;
+        } else {
+            to_string += ": No sockets are connected";
         }
-        else {
-            to_string += " No sockets are connected";
-        }
-        
         return to_string;
     }
 

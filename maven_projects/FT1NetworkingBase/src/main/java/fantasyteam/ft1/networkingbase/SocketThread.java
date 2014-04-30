@@ -177,30 +177,29 @@ public class SocketThread extends Thread {
     }
     
     /**
-     * Prints attribute states of {@link SocketThread} in readable form to
-     * System.out.
+     * Puts the attribute states of {@link SocketThread} in readable form.
      *
-     * @return
+     * @return Attributes of {@link SocketThread} in a readable String form.
      */
     @Override
     public String toString() {
-        String to_string = "Socket Thread attribute values:\n\tHash: " + hash;
+        String to_string = toString("");
         return to_string;
     }
 
     /**
-     * Prints attribute states of {@link Server} in readable form to System.out.
-     * Takes String input to assist formatting. Useful to add special characters
-     * to assist formatting such as \t or \n.
+     * Puts the attribute states of {@link SocketThread} in readable form. Takes
+     * String input to assist formatting. Useful to add special characters to
+     * assist formatting such as \t or \n.
      *
-     * @param ch Adds the String ch to the start of each printed line.
-     * @return
+     * @param ch Adds the String ch to the start of each line in the String.
+     * @return Attributes of {@link SocketThread} in a readable String form.
      */
     public String toString(String ch) {
-        String to_string = ch + "Socket Thread attribute values:\n" + ch + "\tHash: " + hash + "\n" + ch + "\tRunning: " + run;
-        to_string += "\n" + ch + "\tSock:";
-        if(socket != null) {
-            to_string += "\n" + socket.toString(ch + "\t\t");
+        String to_string = ch + "Hash: " + hash + "\n" + ch + "Running: " + run;
+        to_string += "\n" + ch + "Sock:";
+        if(socket != null && socket.getSocket() != null) {
+            to_string += "\n" + socket.toString(ch + "\t");
         } else {
             to_string += " Sock has been closed";
         }
