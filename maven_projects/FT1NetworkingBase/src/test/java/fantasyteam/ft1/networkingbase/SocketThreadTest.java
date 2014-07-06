@@ -76,7 +76,11 @@ public class SocketThreadTest {
     @Test
     public void testClose() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testClose -----");
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         String hash = "";
         try {
             hash = server2.addSocket("127.0.0.1");
@@ -95,7 +99,11 @@ public class SocketThreadTest {
     @Test
     public void testSetHash() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testSetHash -----");
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         String hash = "";
         try {
             hash = server2.addSocket("127.0.0.1");
@@ -113,7 +121,11 @@ public class SocketThreadTest {
     @Test
     public void testToString() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToString -----");
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         String hash = "";
         try {
             hash = server2.addSocket("127.0.0.1");
@@ -126,28 +138,5 @@ public class SocketThreadTest {
         Assert.assertNotEquals(to_string, null, "SocketThread data not generated into a readable String with added character");
         LOGGER.log(Level.INFO, "SocketThread String details: \n{0}", to_string);
         LOGGER.log(Level.INFO, "----- TEST testToString COMPLETED -----");
-    }
-    
-    @Test
-    public void testToStringSocketClosed() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringSocketClosed -----");
-        server1.startThread();
-        String hash = "";
-        try {
-            hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
-            exception = true;
-        }
-        try {
-            server2.getSocketList().get(hash).getSocket().close();
-        } catch (IOException ex) {
-            exception = true;
-        }
-        String to_string = null;
-        to_string = server2.getSocketList().get(hash).toString();
-        Assert.assertFalse(exception, "Exception found");
-        Assert.assertNotEquals(to_string, null, "SocketThread data not generated into a readable String with added character");
-        LOGGER.log(Level.INFO, "SocketThread String details: \n{0}", to_string);
-        LOGGER.log(Level.INFO, "----- TEST testToStringSocketClosed COMPLETED -----");
     }
 }

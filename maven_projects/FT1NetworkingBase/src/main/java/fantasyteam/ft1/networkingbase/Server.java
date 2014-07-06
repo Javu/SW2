@@ -286,8 +286,12 @@ public class Server extends fantasyteam.ft1.Networking {
      * @param hash Hash to remove.
      */
     public void removeDisconnectedSocket(String hash) {
-        disconnected_sockets.remove(hash);
-        LOGGER.log(Level.INFO, "Removed hash from disconnected_sockets: {0}", hash);
+        if(disconnected_sockets.contains(hash)) {
+            disconnected_sockets.remove(hash);
+            LOGGER.log(Level.INFO, "Removed hash from disconnected_sockets: {0}", hash);
+        } else {
+            LOGGER.log(Level.INFO, "Hash does not exist in disconnected_sockets: {0}", hash);
+        }
     }
 
     /**
@@ -311,6 +315,10 @@ public class Server extends fantasyteam.ft1.Networking {
                     timer.waitTime(5);
                     if(timer.getTime() > 5000) {
                         started = true;
+                        disconnect(hash);
+                        removeDisconnectedSocket(hash);
+                        LOGGER.log(Level.SEVERE,"Socket was created but did not start in time");
+                        throw new IOException("Socket was created but did not start in time");
                     }
                 } else {
                     started = true;
@@ -344,6 +352,10 @@ public class Server extends fantasyteam.ft1.Networking {
                     timer.waitTime(5);
                     if(timer.getTime() > 5000) {
                         started = true;
+                        disconnect(hash);
+                        removeDisconnectedSocket(hash);
+                        LOGGER.log(Level.SEVERE,"Socket was created but did not start in time");
+                        throw new IOException("Socket was created but did not start in time");
                     }
                 } else {
                     started = true;
@@ -377,6 +389,10 @@ public class Server extends fantasyteam.ft1.Networking {
                     timer.waitTime(5);
                     if(timer.getTime() > 5000) {
                         started = true;
+                        disconnect(hash);
+                        removeDisconnectedSocket(hash);
+                        LOGGER.log(Level.SEVERE,"Socket was created but did not start in time");
+                        throw new IOException("Socket was created but did not start in time");
                     }
                 } else {
                     started = true;
@@ -412,6 +428,10 @@ public class Server extends fantasyteam.ft1.Networking {
                     timer.waitTime(5);
                     if(timer.getTime() > 5000) {
                         started = true;
+                        disconnect(hash);
+                        removeDisconnectedSocket(hash);
+                        LOGGER.log(Level.SEVERE,"Socket was created but did not start in time");
+                        throw new IOException("Socket was created but did not start in time");
                     }
                 } else {
                     started = true;
@@ -532,7 +552,7 @@ public class Server extends fantasyteam.ft1.Networking {
      * works if the server was specified as a listen Server by passing true in
      * the constructor.
      */
-    public void startThread() {
+    public void startThread() throws IOException {
         if (state == 0) {
             listen_thread.start();
             boolean started = false;
@@ -542,6 +562,14 @@ public class Server extends fantasyteam.ft1.Networking {
                     timer.waitTime(5);
                     if(timer.getTime() > 5000) {
                         started = true;
+                        try {
+                            listen_thread.close();
+                            LOGGER.log(Level.SEVERE,"listen_thread failed to start in time");
+                            throw new IOException("listen_thread failed to start in time");
+                        } catch(IOException e) {
+                            LOGGER.log(Level.SEVERE,"listen_thread failed to start in time. Attempted to close listen_thread but failed");
+                            throw new IOException("listen_thread failed to start in time. Attempted to close listen_thread but failed");
+                        }
                     }
                 } else {
                     started = true;

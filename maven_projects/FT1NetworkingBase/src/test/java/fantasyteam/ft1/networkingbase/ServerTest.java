@@ -326,7 +326,11 @@ public class ServerTest {
             }
             if (server2.getState() == 0) {
                 flag2 = true;
-                server2.startThread();
+                try {
+                    server2.startThread();
+                } catch(IOException e) {
+                    exception = true;
+                }
             }
         }
         if (flag2) {
@@ -356,7 +360,11 @@ public class ServerTest {
     @Test
     public void testRemoveDisconnectedSocket() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testRemoveDisconnectedSocket -----");
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         ArrayList<String> string_array = new ArrayList<String>();
         string_array.add("r");
         string_array.add("b");
@@ -375,7 +383,11 @@ public class ServerTest {
     public void testServerClientConnectSocket() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientConnectSocket -----");
         String client_hash = "";
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         Socket socket = null;
         try {
             socket = new Socket("127.0.0.1", port);
@@ -403,7 +415,11 @@ public class ServerTest {
     public void testServerClientConnectSock() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientConnectSock -----");
         String client_hash = "";
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         Sock sock = null;
         try {
             sock = new Sock("127.0.0.1", port);
@@ -431,7 +447,11 @@ public class ServerTest {
     public void testServerClientConnectIp() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientConnectIp -----");
         String client_hash = "";
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         try {
             server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
@@ -456,7 +476,11 @@ public class ServerTest {
     public void testServerClientConnectIpPort() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientConnectIpPort -----");
         String client_hash = "";
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         try {
             server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
@@ -488,7 +512,11 @@ public class ServerTest {
     public void testServerClientDisconnect() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientDisconnect -----");
         String client_hash = "";
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         try {
             server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
@@ -528,7 +556,11 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientDisconnectWithHash -----");
         String client_hash = "";
         server1.setUseDisconnectedSockets(true);
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         try {
             server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
@@ -558,8 +590,12 @@ public class ServerTest {
     @Test
     public void testServerClose() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClose -----");
-        server1.startThread();
-        waitTime();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
+        //waitTime();
         boolean flag1 = false;
         boolean flag2 = false;
         if (server1.getListenThread().getRun()) {
@@ -598,7 +634,11 @@ public class ServerTest {
             exception = true;
         }
         server1.setUseDisconnectedSockets(true);
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         try {
             server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
@@ -644,7 +684,11 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         try {
             server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
@@ -712,8 +756,12 @@ public class ServerTest {
     public void testReleasePortNumberRunning() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testReleasePortNumberRunning -----");
         Game game = EasyMock.createMock(Game.class);
-        server1.startThread();
-        waitTime();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
+        //waitTime();
         try {
             server1.close();
         } catch (IOException ex) {
@@ -745,7 +793,11 @@ public class ServerTest {
     @Test
     public void testStartThreadClient() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testStartThreadClient -----");
-        server2.startThread();
+        try {
+            server2.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         Assert.assertEquals(server2.getState(), 1, "server2 not set as client server");
         Assert.assertEquals(server2.getListenThread(), null, "ListenThread started on client server");
         LOGGER.log(Level.INFO, "----- TEST testStartThreadClient COMPLETED -----");
@@ -822,7 +874,11 @@ public class ServerTest {
         String to_string = null;
         Game game = EasyMock.createMock(Game.class);
         server1.setUseDisconnectedSockets(true);
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         try {
             server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
@@ -872,7 +928,11 @@ public class ServerTest {
         String to_string = null;
         Game game = EasyMock.createMock(Game.class);
         server1.setUseDisconnectedSockets(true);
-        server1.startThread();
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
         try {
             server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
