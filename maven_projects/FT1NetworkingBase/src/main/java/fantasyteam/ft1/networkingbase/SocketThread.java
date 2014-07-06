@@ -110,9 +110,10 @@ public class SocketThread extends Thread {
                 LOGGER.log(Level.SEVERE, "Failed to close Sock socket in SocketThread");
                 throw new IOException("Failed to close Sock socket in SocketThread");
             }
+        } else {
+            LOGGER.log(Level.INFO, "SocketThread has succesffully closed");
+            this.interrupt();    
         }
-        LOGGER.log(Level.INFO, "SocketThread has succesffully closed");
-        this.interrupt();
     }
 
     /**
