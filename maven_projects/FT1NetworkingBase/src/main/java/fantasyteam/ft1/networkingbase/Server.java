@@ -1,6 +1,7 @@
 package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
+import fantasyteam.ft1.Timing;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -257,7 +258,6 @@ public class Server extends fantasyteam.ft1.Networking {
             if (socket_list.get(hash).getRun()) {
                 LOGGER.log(Level.INFO, "Attempting to close SocketThread with hash {0}", hash);
                 try {
-                    socket_list.get(hash).setRun(false);
                     socket_list.get(hash).unblock();
                 } catch (IOException e) {
                     LOGGER.log(Level.SEVERE, "Failed to close SocketThread", e);
@@ -304,6 +304,18 @@ public class Server extends fantasyteam.ft1.Networking {
             hash = generateUniqueHash();
             socket_list.put(hash, new SocketThread(temp_socket, this, hash));
             socket_list.get(hash).start();
+            boolean started = false;
+            Timing timer = new Timing();
+            while(!started){
+                if(!socket_list.get(hash).getRun()) {
+                    timer.waitTime(5);
+                    if(timer.getTime() > 5000) {
+                        started = true;
+                    }
+                } else {
+                    started = true;
+                }
+            }
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by Socket, connection was not established\nSocket details: {0}", socket.toString());
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
@@ -325,6 +337,18 @@ public class Server extends fantasyteam.ft1.Networking {
             hash = generateUniqueHash();
             socket_list.put(hash, new SocketThread(sock, this, hash));
             socket_list.get(hash).start();
+            boolean started = false;
+            Timing timer = new Timing();
+            while(!started){
+                if(!socket_list.get(hash).getRun()) {
+                    timer.waitTime(5);
+                    if(timer.getTime() > 5000) {
+                        started = true;
+                    }
+                } else {
+                    started = true;
+                }
+            }
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by Sock, connection was not established\nSock details: \n{0}", sock.toString());
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
@@ -346,6 +370,18 @@ public class Server extends fantasyteam.ft1.Networking {
             hash = generateUniqueHash();
             socket_list.put(hash, new SocketThread(temp_socket, this, hash));
             socket_list.get(hash).start();
+            boolean started = false;
+            Timing timer = new Timing();
+            while(!started){
+                if(!socket_list.get(hash).getRun()) {
+                    timer.waitTime(5);
+                    if(timer.getTime() > 5000) {
+                        started = true;
+                    }
+                } else {
+                    started = true;
+                }
+            }
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by IP, connection was not established\nIP: {0}", ip);
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
@@ -369,6 +405,18 @@ public class Server extends fantasyteam.ft1.Networking {
             hash = generateUniqueHash();
             socket_list.put(hash, new SocketThread(temp_socket, this, hash));
             socket_list.get(hash).start();
+            boolean started = false;
+            Timing timer = new Timing();
+            while(!started){
+                if(!socket_list.get(hash).getRun()) {
+                    timer.waitTime(5);
+                    if(timer.getTime() > 5000) {
+                        started = true;
+                    }
+                } else {
+                    started = true;
+                }
+            }
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by IP and port, connection was not established\nIP: {0}\nPort: {1}", new Object[]{ip, port});
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
@@ -441,8 +489,11 @@ public class Server extends fantasyteam.ft1.Networking {
      * @param new_hash New Key to associate with the desired value.
      */
     public void replaceHash(String old_hash, String new_hash) {
-        SocketThread socket = socket_list.get(old_hash);
-        socket_list.put(new_hash, socket);
+        if(socket_list.containsKey(new_hash)){
+            disconnect(new_hash);
+        }
+        socket_list.put(new_hash, socket_list.get(old_hash));
+        socket_list.get(new_hash).setHash(new_hash);
         socket_list.remove(old_hash);
         LOGGER.log(Level.INFO, "Moved socket details from hash {0} to hash {1}", new Object[]{old_hash, new_hash});
     }
@@ -484,6 +535,18 @@ public class Server extends fantasyteam.ft1.Networking {
     public void startThread() {
         if (state == 0) {
             listen_thread.start();
+            boolean started = false;
+            Timing timer = new Timing();
+            while(!started){
+                if(!listen_thread.getRun()) {
+                    timer.waitTime(5);
+                    if(timer.getTime() > 5000) {
+                        started = true;
+                    }
+                } else {
+                    started = true;
+                }
+            }
             LOGGER.log(Level.INFO, "Started listen_thread");
         } else {
             LOGGER.log(Level.INFO, "Server is not set to listen. Will not start ListenThread");
@@ -512,7 +575,7 @@ public class Server extends fantasyteam.ft1.Networking {
             }
             return hash;
         } else {
-            LOGGER.log(Level.INFO, "Server is not set to listen. Will not attempt to listen for new connections");
+            LOGGER.log(Level.INFO, "Server is not set to listen. Will not attempt to listen for new connections. State {0}", state);
             return null;
         }
     }

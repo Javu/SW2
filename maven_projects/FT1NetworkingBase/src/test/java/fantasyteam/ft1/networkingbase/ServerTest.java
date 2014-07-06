@@ -64,7 +64,9 @@ public class ServerTest {
 //        game.runVoidMethod();
 //        EasyMock.expect(game.parseAction()).andReturn("go fuck yoruself").anyTimes();
 //        EasyMock.replay();
+        LOGGER.log(Level.INFO,"Building Server1");
         server1 = new Server(game, port, true);
+        LOGGER.log(Level.INFO,"Building Server2");
         server2 = new Server(game, port, false);
 
 //        EasyMock.verify();
@@ -587,7 +589,7 @@ public class ServerTest {
     @Test
     public void testReplaceHash() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testReplaceHash -----");
-        String client_hash = "";
+        ArrayList<String> string_array = new ArrayList<String>();
         Game game = EasyMock.createMock(Game.class);
         Server server3 = null;
         try {
@@ -603,11 +605,6 @@ public class ServerTest {
             exception = true;
         }
         waitTime();
-        ArrayList<String> string_array = new ArrayList<String>();
-        for (SocketThread sockets : server1.getSocketList().values()) {
-            string_array.add(sockets.getHash());
-        }
-        server1.setDisconnectedSockets(string_array);
         try {
             server3.addSocket("127.0.0.1");
         } catch (IOException ex) {
@@ -615,9 +612,12 @@ public class ServerTest {
         }
         waitTime();
         for (SocketThread sockets : server1.getSocketList().values()) {
-            client_hash = sockets.getHash();
+            string_array.add(sockets.getHash());
         }
-        boolean flag = server1.connectDisconnectedSocket(client_hash, string_array.get(0));
+        ArrayList<String> disconnected_socket = new ArrayList<String>();
+        disconnected_socket.add(string_array.get(0));
+        server1.setDisconnectedSockets(disconnected_socket);
+        boolean flag = server1.connectDisconnectedSocket(string_array.get(1), string_array.get(0));
         waitTime();
         Assert.assertTrue(flag, "Sockets hash not changed");
         try {
@@ -699,6 +699,7 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
+        waitTime();
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testReleasePortNumber COMPLETED -----");
     }
@@ -712,6 +713,7 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testReleasePortNumberRunning -----");
         Game game = EasyMock.createMock(Game.class);
         server1.startThread();
+        waitTime();
         try {
             server1.close();
         } catch (IOException ex) {
@@ -720,6 +722,7 @@ public class ServerTest {
         waitTime();
         Server server3 = null;
         try {
+            LOGGER.log(Level.INFO,"Building Server3");
             server3 = new Server(game, port, true);
         } catch (IOException ex) {
             exception = true;
@@ -730,6 +733,7 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
+        waitTime();
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testReleasePortNumberRunning COMPLETED -----");
     }

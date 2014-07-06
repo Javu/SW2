@@ -93,32 +93,6 @@ public class SocketThreadTest {
     }
     
     @Test
-    public void testSetSocket() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testSetSocket -----");
-        server1.startThread();
-        String hash = "";
-        try {
-            hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
-            exception = true;
-        }
-        Sock sock = null;
-        try {
-            sock = new Sock("127.0.0.1", port);
-        } catch (IOException ex) {
-            exception = true;
-        }
-        try {
-            server2.getSocketList().get(hash).setSocket(sock);
-        } catch (IOException ex) {
-            exception = true;
-        }
-        Assert.assertFalse(exception, "Exception found");
-        Assert.assertEquals(server2.getSocketList().get(hash).getSocket(), sock, "Sock not changed correctly");
-        LOGGER.log(Level.INFO, "----- TEST testSetSocket COMPLETED -----");
-    }
-    
-    @Test
     public void testSetHash() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testSetHash -----");
         server1.startThread();
@@ -132,6 +106,7 @@ public class SocketThreadTest {
         server2.getSocketList().get(hash).setHash(new_hash);
         Assert.assertFalse(exception, "Exception found");
         Assert.assertEquals(server2.getSocketList().get(hash).getHash(), new_hash, "Hash not changed correctly");
+        server2.getSocketList().get(hash).setHash(hash);
         LOGGER.log(Level.INFO, "----- TEST testSetHash COMPLETED -----");
     }
     

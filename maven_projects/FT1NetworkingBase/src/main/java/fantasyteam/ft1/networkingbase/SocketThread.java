@@ -63,22 +63,30 @@ public class SocketThread extends Thread {
     @Override
     public void run() {
         while (run) {
+            boolean read = false;
             String message = "";
             // Block and wait for input from the socket
             try {
                 message = socket.readMessage();
+                read = true;
+            } catch (IOException e) {
+                if(run){
+                    if (server.getSocketList().containsKey(hash)){
+                        LOGGER.log(Level.SEVERE, "Could not read from socket, attempting to close socket on Server. Hash {0}", hash);
+                        server.receiveMessage("disconnect", hash);
+                    }
+                }
+            }
+            if (read) {
                 if (message == null) {
-                    LOGGER.log(Level.INFO, "Socket has been disconnected, attempting to close socket on Server");
+                    LOGGER.log(Level.INFO, "Socket has been disconnected, attempting to close socket on Server. Hash {0}", hash);
+                    message = "disconnect";
                 } else {
                     LOGGER.log(Level.INFO, "Message received: {0}", message);
                 }
                 if (run) {
                     server.receiveMessage(message, hash);
                 }
-            } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Could not read from socket or read null, attempting to close socket on Server");
-                server.receiveMessage(null, hash);
-                run = false;
             }
         }
         LOGGER.log(Level.INFO, "Socket loop has exited");
@@ -97,9 +105,7 @@ public class SocketThread extends Thread {
     public void close() throws IOException {
         if(socket != null) {
             try{
-                socket.close();
-                socket = null;
-                LOGGER.log(Level.INFO, "Successfully closed Sock socket");    
+                unblock();    
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Failed to close Sock socket in SocketThread");
                 throw new IOException("Failed to close Sock socket in SocketThread");
@@ -137,20 +143,6 @@ public class SocketThread extends Thread {
     }
 
     /**
-     * Sets the attribute socket with a pre-constructed {@link Sock}.
-     *
-     * @param sock Pre-constructed {@link Sock} to set socket to.
-     * @throws IOException
-     */
-    public void setSocket(Sock sock) throws IOException {
-        if (socket != null) {
-            socket.close();
-        }
-        socket = sock;
-        LOGGER.log(Level.INFO, "Changed Sock used as connection. New Sock details:\n{0}", socket.toString());
-    }
-
-    /**
      * Sets the attribute hash.
      *
      * @param hash String to set hash to.
@@ -171,6 +163,7 @@ public class SocketThread extends Thread {
     }
 
     public void unblock() throws IOException {
+        run = false;
         socket.close();
         socket = null;
         LOGGER.log(Level.INFO, "Successfully closed Sock socket");  
