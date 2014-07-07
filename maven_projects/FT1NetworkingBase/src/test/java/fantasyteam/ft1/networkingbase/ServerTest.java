@@ -533,7 +533,7 @@ public class ServerTest {
         }
         waitTime();
         try {
-            if (server1.containsHash(client_hash) != true || !server1.getSocketList().get(client_hash).getRun()) {
+            if (server1.containsHash(client_hash) != true || server1.getSocketList().get(client_hash).getRun() == 3) {
                 client_hash = "disconnected";
             }
         } catch (IOException ex) {

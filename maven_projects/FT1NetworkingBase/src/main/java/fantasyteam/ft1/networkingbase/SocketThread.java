@@ -29,9 +29,13 @@ public class SocketThread extends Thread {
     private String hash;
 
     /**
-     * Boolean used to determine if the thread is running or not.
+     * int used to determine the state of the class. Valid states are:
+     * 0 = Thread not started yet
+     * 1 = Thread started, connection not confirmed on other end
+     * 2 = Thread started, connection confirmed on other end
+     * 3 = Thread has finished.
      */
-    private boolean run;
+    private int run;
 
     /**
      * Logger for logging important actions and exceptions.
@@ -43,16 +47,19 @@ public class SocketThread extends Thread {
      * instance of {@link Server} that created this thread and the hash String
      * assigned to this thread by the {@link Server}.
      *
-     * @param sock {@link Sock} used to hold the socket connection this {@link SocketThread} interfaces with.
-     * @param server {@link Server} that created this {@link SocketThread}. Mainly used to handle/parse messages received into meaningful actions.
-     * @param hash String representing the unique hash associated with this {@link SocketThread} by the {@link Server} that created it.
+     * @param sock {@link Sock} used to hold the socket connection this
+     * {@link SocketThread} interfaces with.
+     * @param server {@link Server} that created this {@link SocketThread}.
+     * Mainly used to handle/parse messages received into meaningful actions.
+     * @param hash String representing the unique hash associated with this
+     * {@link SocketThread} by the {@link Server} that created it.
      */
     public SocketThread(Sock sock, Server server, String hash) {
         // Initialise attributes
         socket = sock;
         this.server = server;
         this.hash = hash;
-        run = true;
+        run = 0;
     }
 
     /**
@@ -62,7 +69,10 @@ public class SocketThread extends Thread {
      */
     @Override
     public void run() {
-        while (run) {
+        if (run == 0) {
+            run = 1;
+        }
+        while (run == 1 || run == 2) {
             boolean read = false;
             String message = "";
             // Block and wait for input from the socket
@@ -70,8 +80,8 @@ public class SocketThread extends Thread {
                 message = socket.readMessage();
                 read = true;
             } catch (IOException e) {
-                if(run){
-                    if (server.getSocketList().containsKey(hash)){
+                if (run == 1 || run == 2) {
+                    if (server.getSocketList().containsKey(hash)) {
                         LOGGER.log(Level.SEVERE, "Could not read from socket, attempting to close socket on Server. Hash {0}", hash);
                         server.receiveMessage("disconnect", hash);
                     }
@@ -84,7 +94,7 @@ public class SocketThread extends Thread {
                 } else {
                     LOGGER.log(Level.INFO, "Message received: {0}", message);
                 }
-                if (run) {
+                if (run == 1 || run == 2) {
                     server.receiveMessage(message, hash);
                 }
             }
@@ -93,7 +103,7 @@ public class SocketThread extends Thread {
         try {
             close();
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to close and interrupt SocketThread. Thread may not have terminated correctly and could be tieing up system resources. Stack trace:", e);
+            LOGGER.log(Level.SEVERE, "Failed to close and interrupt SocketThread. Thread may not have terminated correctly and could be tieing up system resources. Exception:", e);
         }
     }
 
@@ -102,17 +112,17 @@ public class SocketThread extends Thread {
      *
      * @throws IOException
      */
-    public void close() throws IOException {
-        if(socket != null) {
-            try{
-                unblock();    
+    private void close() throws IOException {
+        if (socket != null) {
+            try {
+                unblock();
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Failed to close Sock socket in SocketThread");
                 throw new IOException("Failed to close Sock socket in SocketThread");
             }
         } else {
             LOGGER.log(Level.INFO, "SocketThread has succesffully closed");
-            this.interrupt();    
+            this.interrupt();
         }
     }
 
@@ -137,9 +147,9 @@ public class SocketThread extends Thread {
     /**
      * Returns the attribute run.
      *
-     * @return the boolean run.
+     * @return the int run.
      */
-    public boolean getRun() {
+    public int getRun() {
         return run;
     }
 
@@ -154,22 +164,22 @@ public class SocketThread extends Thread {
     }
 
     /**
-     * Sets the attribute run. Setting run to false while the thread is started
-     * will cause the thread to close.
+     * Sets the attribute run. Setting run != 1 && run != 2 while the thread is
+     * started will cause the thread to close.
      *
-     * @param run boolean to set run to.
+     * @param run int to set run to.
      */
-    public void setRun(boolean run) {
+    public void setRun(int run) {
         this.run = run;
     }
 
     public void unblock() throws IOException {
-        run = false;
+        run = 3;
         socket.close();
         socket = null;
-        LOGGER.log(Level.INFO, "Successfully closed Sock socket");  
+        LOGGER.log(Level.INFO, "Successfully closed Sock socket");
     }
-    
+
     /**
      * Puts the attribute states of {@link SocketThread} in readable form.
      *
@@ -190,9 +200,9 @@ public class SocketThread extends Thread {
      * @return Attributes of {@link SocketThread} in a readable String form.
      */
     public String toString(String ch) {
-        String to_string = ch + "Hash: " + hash + "\n" + ch + "Running: " + run;
+        String to_string = ch + "Hash: " + hash + "\n" + ch + "State: " + run;
         to_string += "\n" + ch + "Sock:";
-        if(socket != null && socket.getSocket() != null) {
+        if (socket != null && socket.getSocket() != null) {
             to_string += "\n" + socket.toString(ch + "\t");
         } else {
             to_string += " Sock has been closed";

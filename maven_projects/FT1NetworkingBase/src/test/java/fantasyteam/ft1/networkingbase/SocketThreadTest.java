@@ -72,29 +72,6 @@ public class SocketThreadTest {
         server1.close();
         waitTime();
     }
-
-    @Test
-    public void testClose() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testClose -----");
-        try {
-            server1.startThread();
-        } catch(IOException e) {
-            exception = true;
-        }
-        String hash = "";
-        try {
-            hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
-            exception = true;
-        }
-        try {
-            server2.getSocketList().get(hash).close();
-        } catch (IOException ex) {
-            exception = true;
-        }
-        Assert.assertFalse(exception, "SocketThread not closed correctly");
-        LOGGER.log(Level.INFO, "----- TEST testClose COMPLETED -----");
-    }
     
     @Test
     public void testSetHash() {

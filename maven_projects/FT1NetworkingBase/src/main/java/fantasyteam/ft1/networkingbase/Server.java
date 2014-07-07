@@ -255,7 +255,7 @@ public class Server extends fantasyteam.ft1.Networking {
     @Override
     public void disconnect(String hash) {
         if (socket_list.containsKey(hash)) {
-            if (socket_list.get(hash).getRun()) {
+            if (socket_list.get(hash).getRun() < 3) {
                 LOGGER.log(Level.INFO, "Attempting to close SocketThread with hash {0}", hash);
                 try {
                     socket_list.get(hash).unblock();
@@ -294,6 +294,27 @@ public class Server extends fantasyteam.ft1.Networking {
         }
     }
 
+    
+    public void startSocket(String hash) throws IOException {
+        socket_list.get(hash).start();
+        boolean started = false;
+        Timing timer = new Timing();
+        while(!started){
+            if(socket_list.get(hash).getRun() != 1) {
+                timer.waitTime(5);
+                if(timer.getTime() > 5000) {
+                    started = true;
+                    disconnect(hash);
+                    removeDisconnectedSocket(hash);
+                    LOGGER.log(Level.SEVERE,"Socket was created but did not start in time");
+                    throw new IOException("Socket was created but did not start in time");
+                }
+            } else {
+                started = true;
+            }
+        }
+    }
+    
     /**
      * Creates a new {@link SocketThread} using a pre-constructed {@link Server}
      * and adds it to HashMap(String,{@link SocketThread}) socket_list.
@@ -307,23 +328,7 @@ public class Server extends fantasyteam.ft1.Networking {
             Sock temp_socket = new Sock(socket);
             hash = generateUniqueHash();
             socket_list.put(hash, new SocketThread(temp_socket, this, hash));
-            socket_list.get(hash).start();
-            boolean started = false;
-            Timing timer = new Timing();
-            while(!started){
-                if(!socket_list.get(hash).getRun()) {
-                    timer.waitTime(5);
-                    if(timer.getTime() > 5000) {
-                        started = true;
-                        disconnect(hash);
-                        removeDisconnectedSocket(hash);
-                        LOGGER.log(Level.SEVERE,"Socket was created but did not start in time");
-                        throw new IOException("Socket was created but did not start in time");
-                    }
-                } else {
-                    started = true;
-                }
-            }
+            startSocket(hash);
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by Socket, connection was not established\nSocket details: {0}", socket.toString());
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
@@ -344,23 +349,7 @@ public class Server extends fantasyteam.ft1.Networking {
         try {
             hash = generateUniqueHash();
             socket_list.put(hash, new SocketThread(sock, this, hash));
-            socket_list.get(hash).start();
-            boolean started = false;
-            Timing timer = new Timing();
-            while(!started){
-                if(!socket_list.get(hash).getRun()) {
-                    timer.waitTime(5);
-                    if(timer.getTime() > 5000) {
-                        started = true;
-                        disconnect(hash);
-                        removeDisconnectedSocket(hash);
-                        LOGGER.log(Level.SEVERE,"Socket was created but did not start in time");
-                        throw new IOException("Socket was created but did not start in time");
-                    }
-                } else {
-                    started = true;
-                }
-            }
+            startSocket(hash);
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by Sock, connection was not established\nSock details: \n{0}", sock.toString());
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
@@ -381,23 +370,7 @@ public class Server extends fantasyteam.ft1.Networking {
             Sock temp_socket = new Sock(ip, port);
             hash = generateUniqueHash();
             socket_list.put(hash, new SocketThread(temp_socket, this, hash));
-            socket_list.get(hash).start();
-            boolean started = false;
-            Timing timer = new Timing();
-            while(!started){
-                if(!socket_list.get(hash).getRun()) {
-                    timer.waitTime(5);
-                    if(timer.getTime() > 5000) {
-                        started = true;
-                        disconnect(hash);
-                        removeDisconnectedSocket(hash);
-                        LOGGER.log(Level.SEVERE,"Socket was created but did not start in time");
-                        throw new IOException("Socket was created but did not start in time");
-                    }
-                } else {
-                    started = true;
-                }
-            }
+            startSocket(hash);
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by IP, connection was not established\nIP: {0}", ip);
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
@@ -420,23 +393,7 @@ public class Server extends fantasyteam.ft1.Networking {
             Sock temp_socket = new Sock(ip, port);
             hash = generateUniqueHash();
             socket_list.put(hash, new SocketThread(temp_socket, this, hash));
-            socket_list.get(hash).start();
-            boolean started = false;
-            Timing timer = new Timing();
-            while(!started){
-                if(!socket_list.get(hash).getRun()) {
-                    timer.waitTime(5);
-                    if(timer.getTime() > 5000) {
-                        started = true;
-                        disconnect(hash);
-                        removeDisconnectedSocket(hash);
-                        LOGGER.log(Level.SEVERE,"Socket was created but did not start in time");
-                        throw new IOException("Socket was created but did not start in time");
-                    }
-                } else {
-                    started = true;
-                }
-            }
+            startSocket(hash);
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Failed to add or start SocketThread by IP and port, connection was not established\nIP: {0}\nPort: {1}", new Object[]{ip, port});
             LOGGER.log(Level.INFO, "Caught exception: {0}", e);
@@ -697,7 +654,7 @@ public class Server extends fantasyteam.ft1.Networking {
     @Override
     protected void sendMessage(String message, List<String> clientIds) {
         for (String hash : clientIds) {
-            if (socket_list.containsKey(hash) && socket_list.get(hash).getRun()) {
+            if (socket_list.containsKey(hash) && socket_list.get(hash).getRun() < 3 && socket_list.get(hash).getRun() > 0) {
                 try {
                     socket_list.get(hash).getSocket().sendMessage(message);
                     LOGGER.log(Level.INFO, "Sent message {0} through socket with hash {1}", new Object[]{message, hash});
@@ -706,6 +663,8 @@ public class Server extends fantasyteam.ft1.Networking {
                     LOGGER.log(Level.INFO, "Stack trace of caught exception: {0}", e);
                     disconnect(hash);
                 }
+            } else {
+                LOGGER.log(Level.INFO,"Socket with hash {0} does not exist or is not running",hash);
             }
         }
     }
