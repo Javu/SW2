@@ -193,7 +193,18 @@ public class ServerTest {
         Assert.assertEquals(server1.getUseDisconnectedSockets(), true, "Use Disonnected Sockets flag not changed");
         LOGGER.log(Level.INFO, "----- TEST testUseDisconnectSockets COMPLETED -----");
     }
-
+    
+    /**
+     * Test of an attribute setter for the use_message_queues attribute.
+     */
+    @Test
+    public void testUseMessageQueues() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testUseMessageQueues -----");
+        server1.setUseMessageQueues(true);
+        Assert.assertEquals(server1.getUseMessageQueues(), true, "Use Message Queues flag not changed");
+        LOGGER.log(Level.INFO, "----- TEST testUseMessageQueues COMPLETED -----");
+    }
+    
     /**
      * Test of an attribute setter for the socket_list attribute.
      */
@@ -502,7 +513,37 @@ public class ServerTest {
         Assert.assertFalse(server2.getSocketList().isEmpty(), "SocketThread not added to socket_list");
         LOGGER.log(Level.INFO, "----- TEST testServerClientConnectIpPort COMPLETED -----");
     }
-
+    
+    @Test
+    public void testServerClientConnectWithMessageQueue() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientConnectWithMessageQueue -----");
+        int runningServer = 0;
+        int runningClient = 0;
+        server1.setUseMessageQueues(true);
+        server2.setUseMessageQueues(true);
+        try {
+            server1.startThread();
+        } catch(IOException e) {
+            exception = true;
+        }
+        try {
+            server2.addSocket("127.0.0.1", port);
+        } catch (IOException ex) {
+            exception = true;
+        }
+        waitTime();
+        for (SocketThread sockets : server1.getSocketList().values()) {
+            runningServer = sockets.getMessageQueue().getRun();
+        }
+        for (SocketThread sockets : server2.getSocketList().values()) {
+            runningClient = sockets.getMessageQueue().getRun();
+        }
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(runningServer, 1, "Server MessageQueue not started");
+        Assert.assertEquals(runningClient, 1, "Client MessageQueue not started");
+        LOGGER.log(Level.INFO, "----- TEST testServerClientConnectWithMessageQueue COMPLETED -----");
+    }
+    
     /**
      * This test ensures that the disconnect method correctly removes the
      * SocketThread corresponding to the given hash String from the socket_list
@@ -533,7 +574,7 @@ public class ServerTest {
         }
         waitTime();
         try {
-            if (server1.containsHash(client_hash) != true || server1.getSocketList().get(client_hash).getRun() == 3) {
+            if (server1.containsHash(client_hash) != true || server1.getSocketList().get(client_hash).getRun() == 4) {
                 client_hash = "disconnected";
             }
         } catch (IOException ex) {

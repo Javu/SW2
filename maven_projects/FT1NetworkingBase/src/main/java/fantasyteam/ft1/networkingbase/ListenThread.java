@@ -79,7 +79,6 @@ public class ListenThread extends Thread {
             server_socket.close();
             server_socket = null;
         }
-        this.interrupt();
         LOGGER.log(Level.INFO, "Closed ListenThread on port {0}", port);
     }
 
