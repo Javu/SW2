@@ -51,7 +51,7 @@ public class Sock {
      * Takes a Socket as an argument.
      *
      * @param socket socket used to construct the Sock with.
-     * @throws java.io.IOException
+     * @throws java.io.IOException if an exception is encountered when starting the new PrinterWriter or BufferedReader. 
      */
     public Sock(Socket socket) throws IOException {
         this.socket = socket;
@@ -66,7 +66,7 @@ public class Sock {
      *
      * @param ip IP address to connect the socket to.
      * @param port Port number to connect to.
-     * @throws java.io.IOException
+     * @throws IOException if an exception is encountered when starting the new Socket, PrinterWriter or BufferedReader.
      */
     public Sock(String ip, int port) throws IOException {
         socket = new Socket(ip, port);
@@ -78,7 +78,7 @@ public class Sock {
     /**
      * Closes the {@link Sock}.
      *
-     * @throws IOException
+     * @throws IOException if an exception is encountered when closing the Socket.
      */
     public void close() throws IOException {
         LOGGER.log(Level.INFO, "Attempting to close Sock");
@@ -121,7 +121,7 @@ public class Sock {
      * Sends a string message through the PrintWriter {@link out}.
      *
      * @param message String message to send through the connection.
-     * @throws IOException
+     * @throws IOException if an exception is encountered when sending a message through out.
      */
     public void sendMessage(String message) throws IOException {
         out.println(message);
@@ -132,7 +132,7 @@ public class Sock {
      * Reads message received through the BufferedReader {@link in}.
      *
      * @return message received through connection.
-     * @throws IOException
+     * @throws IOException if an exception is encountered when reading a message from in.
      */
     public String readMessage() throws IOException {
         String message = in.readLine();

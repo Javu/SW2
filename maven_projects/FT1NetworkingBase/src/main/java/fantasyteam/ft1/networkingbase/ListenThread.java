@@ -10,6 +10,8 @@ import java.util.logging.Logger;
  * new connections to the socket by clients. It extends the Thread class to
  * allow it to block for input and wait for new clients to connect without
  * blocking the normal execution of the {@link Server} instance that created it.
+ * 
+ * @author javu
  */
 
 public class ListenThread extends Thread {
@@ -22,11 +24,11 @@ public class ListenThread extends Thread {
      * The instance of {@link Server} that created this instance of {@link ListenThread}.
      */
     private Server server;
-    private int port;
+    private volatile int port;
     /**
      * Boolean used to determine if the thread is running or not.
      */
-    private boolean run;
+    private volatile boolean run;
     
     
     /**
@@ -37,8 +39,8 @@ public class ListenThread extends Thread {
     /**
      * Takes the instance of {@link Server} that created this ListenThread as a parameter.
      * 
-     * @param server
-     * @throws IOException 
+     * @param server the {@link Server} that created this {@link ListenThread}.
+     * @throws IOException if an exception is encountered when constructing the ServerSocket.
      */
     public ListenThread(Server server) throws IOException {
         this.server = server;
@@ -72,7 +74,7 @@ public class ListenThread extends Thread {
 
     /**
      * Closes server_socket and interrupts the thread.
-     * @throws IOException 
+     * @throws IOException if an exception is encountered when closing the ServerSocket.
      */
     public void close() throws IOException {
         if(server_socket != null) {
@@ -91,6 +93,11 @@ public class ListenThread extends Thread {
         return server_socket;
     }
     
+    /**
+     * Returns the port number used to listen on.
+     * 
+     * @return the int port.
+     */
     public int getPort() {
         return port;
     }

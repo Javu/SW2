@@ -864,6 +864,65 @@ public class ServerTest {
     }
 
     @Test
+    public void testServerUseMessageQueueSend() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerUseMessageQueueSend -----");
+        server1.setUseMessageQueues(true);
+        server2.setUseMessageQueues(true);
+        try {
+            server1.startThread();
+        } catch (IOException ex) {
+            exception = true;
+        }
+        String hash = "";
+        try {
+            hash = server2.addSocket("127.0.0.1",port);
+        } catch (IOException ex) {
+            exception = true;
+        }
+        waitTime();
+        server2.getSocketList().get(hash).sendMessage("TEST");
+        waitTime();
+        ArrayList<String> test_queue = server2.getSocketList().get(hash).getMessageQueue().getMessages();
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertTrue(test_queue.isEmpty(),"Message was not sent through MessageQueue");
+        LOGGER.log(Level.INFO, "----- TEST testServerUseMessageQueueSend COMPLETED -----");
+    }
+    
+    @Test
+    public void testServerUseMessageQueueWithPauseAndResume() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerUseMessageQueueWithPauseAndResume -----");
+        server1.setUseMessageQueues(true);
+        server2.setUseMessageQueues(true);
+        try {
+            server1.startThread();
+        } catch (IOException ex) {
+            exception = true;
+        }
+        String hash = "";
+        try {
+            hash = server2.addSocket("127.0.0.1",port);
+        } catch (IOException ex) {
+            exception = true;
+        }
+        waitTime();
+        server2.getSocketList().get(hash).getMessageQueue().pauseQueue();
+        waitTime();
+        server2.getSocketList().get(hash).sendMessage("TEST");
+        server2.getSocketList().get(hash).sendMessage("TEST2");
+        ArrayList<String> test_queue = server2.getSocketList().get(hash).getMessageQueue().getMessages();
+        Assert.assertEquals("TEST", test_queue.get(0), "MessageQueue was not paused");
+        Assert.assertEquals("TEST2", test_queue.get(1), "MessageQueue was not paused");
+        
+        server2.getSocketList().get(hash).getMessageQueue().resumeQueue();
+        waitTime();
+        test_queue = server2.getSocketList().get(hash).getMessageQueue().getMessages();
+        Assert.assertTrue(test_queue.isEmpty(), "MessageQueue was not resumed");
+        
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testServerUseMessageQueueWithPauseAndResume COMPLETED -----");
+    }
+    
+    @Test
     public void testToStringClient() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringClient -----");
         String to_string = null;
@@ -1057,5 +1116,113 @@ public class ServerTest {
         Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String with added character");
         LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
         LOGGER.log(Level.INFO, "----- TEST testToStringClientClosed COMPLETED -----");
+    }
+    
+    @Test
+    private void testToStringServerMessageQueueEmpty() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServerMessageQueueEmpty -----");
+        server1.setUseMessageQueues(true);
+        server2.setUseMessageQueues(true);
+        String hash = "";
+        try {
+            server1.startThread();
+        } catch (IOException ex) {
+            exception = true;
+        }
+        try {
+            hash = server2.addSocket("127.0.0.1",port);
+        } catch (IOException ex) {
+            exception = true;
+        }
+        waitTime();
+        String to_string = server2.toString();
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String");
+        LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testToStringServerMessageQueueEmpty COMPLETED -----");
+    }
+    
+    @Test
+    private void testToStringServerMessageQueueEmptyCh() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServerMessageQueueEmptyCh -----");
+        server1.setUseMessageQueues(true);
+        server2.setUseMessageQueues(true);
+        String hash = "";
+        try {
+            server1.startThread();
+        } catch (IOException ex) {
+            exception = true;
+        }
+        try {
+            hash = server2.addSocket("127.0.0.1",port);
+        } catch (IOException ex) {
+            exception = true;
+        }
+        waitTime();
+        String to_string = server2.toString("\t");
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String");
+        LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testToStringServerMessageQueueEmptyCh COMPLETED -----");
+    }
+    
+    @Test
+    private void testToStringServerMessageQueueWithMessages() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServerMessageQueueWithMessages -----");
+        server1.setUseMessageQueues(true);
+        server2.setUseMessageQueues(true);
+        String hash = "";
+        try {
+            server1.startThread();
+        } catch (IOException ex) {
+            exception = true;
+        }
+        try {
+            hash = server2.addSocket("127.0.0.1",port);
+        } catch (IOException ex) {
+            exception = true;
+        }
+        waitTime();
+        server2.getSocketList().get(hash).getMessageQueue().pauseQueue();
+        server2.getSocketList().get(hash).sendMessage("TEST");
+        server2.getSocketList().get(hash).sendMessage("TEST2");
+        server2.getSocketList().get(hash).sendMessage("TEST3");
+        String to_string = server2.toString();
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String");
+        LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testToStringServerMessageQueueWithMessages COMPLETED -----");
+    }
+    
+    @Test
+    private void testToStringServerMessageQueueWithMessagesCh() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServerMessageQueueWithMessagesCh -----");
+        server1.setUseMessageQueues(true);
+        server2.setUseMessageQueues(true);
+        String hash = "";
+        try {
+            server1.startThread();
+        } catch (IOException ex) {
+            exception = true;
+        }
+        try {
+            hash = server2.addSocket("127.0.0.1",port);
+        } catch (IOException ex) {
+            exception = true;
+        }
+        waitTime();
+        server2.getSocketList().get(hash).getMessageQueue().pauseQueue();
+        server2.getSocketList().get(hash).sendMessage("TEST");
+        server2.getSocketList().get(hash).sendMessage("TEST2");
+        server2.getSocketList().get(hash).sendMessage("TEST3");
+        String to_string = server2.toString("\t");
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String with added character");
+        LOGGER.log(Level.INFO, "Server String details: \n{0}", to_string);
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testToStringServerMessageQueueWithMessagesCh COMPLETED -----");
     }
 }
