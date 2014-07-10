@@ -26,7 +26,7 @@ public class SockTest {
      * these tests. Change this value to increase or decrease the time waited
      * when waitTime is called.
      */
-    int wait = 30;
+    int wait = 50;
     
     protected static final Logger LOGGER = Logger.getLogger(SockTest.class.getName());
     
@@ -49,12 +49,14 @@ public class SockTest {
     @BeforeMethod
     private void setupSock() throws IOException {
         ip = "127.0.0.1";
-        port = 22225;
+        port = 22227;
         Game game = EasyMock.createMock(Game.class);
         server = new Server(game,port,true);
+        waitTime();
         server.startThread();
         waitTime();
         sock = new Sock(ip,port);
+        waitTime();
         exception = false;
     }
     

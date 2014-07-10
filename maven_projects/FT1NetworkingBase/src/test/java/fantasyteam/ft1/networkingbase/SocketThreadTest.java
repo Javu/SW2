@@ -25,7 +25,7 @@ public class SocketThreadTest {
      * these tests. Change this value to increase or decrease the time waited
      * when waitTime is called.
      */
-    int wait = 30;
+    int wait = 50;
 
     /**
      * Logger for logging important actions and exceptions.
@@ -87,6 +87,7 @@ public class SocketThreadTest {
         } catch (IOException ex) {
             exception = true;
         }
+        waitTime();
         String new_hash = "Hi";
         server2.getSocketList().get(hash).setHash(new_hash);
         Assert.assertFalse(exception, "Exception found");

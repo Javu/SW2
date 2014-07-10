@@ -351,7 +351,7 @@ public class Server extends fantasyteam.ft1.Networking {
         boolean started = false;
         Timing timer = new Timing();
         while (!started) {
-            if (socket_list.get(hash).getRun() != 1) {
+            if (socket_list.get(hash).getRun() < 1) {
                 timer.waitTime(5);
                 if (timer.getTime() > 5000) {
                     started = true;
@@ -745,6 +745,22 @@ public class Server extends fantasyteam.ft1.Networking {
             } else {
                 LOGGER.log(Level.INFO, "Socket with hash {0} does not exist or is not running", hash);
             }
+        }
+    }
+    
+    /**
+     * Used to send a message to one socket. Takes the String to send and
+     * the hash associated with the socket to send to as input.
+     *
+     * @param message The String to send.
+     * @param clientId The hash to send to.
+     */
+    @Override
+    protected void sendMessage(String message, String clientId) {
+        if (socket_list.containsKey(clientId) && socket_list.get(clientId).getRun() <= 3 && socket_list.get(clientId).getRun() >= 1) {
+            socket_list.get(clientId).sendMessage(message);
+        } else {
+            LOGGER.log(Level.INFO, "Socket with hash {0} does not exist or is not running", clientId);
         }
     }
 }

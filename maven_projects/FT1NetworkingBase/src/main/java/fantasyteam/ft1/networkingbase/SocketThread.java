@@ -23,7 +23,7 @@ public class SocketThread extends Thread {
     /**
      * Instance of the {@link Server} class that created this thread.
      */
-    private Server server;
+    private final Server server;
     /**
      * The hash String given to this socket by the {@link Server}.
      */
