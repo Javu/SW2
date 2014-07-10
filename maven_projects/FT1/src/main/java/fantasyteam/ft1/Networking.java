@@ -34,7 +34,63 @@ public abstract class Networking {
             sendMessage(message, clientIds);
         }
     }
+    
+    /**
+     * sends an action across the network
+     * @param action the action name including the list of parameters to send for the action
+     * @param clientIds the client ids to send the action to
+     */
+    public final void sendAction(List<String> action, List<String> clientIds) {
+        String message = encodeAction(action);
 
+        for (String clientId : clientIds) {
+            sendMessage(message, clientIds);
+        }
+    }
+    
+    /**
+     * sends an action across the network
+     * @param action the String to send for the action
+     * @param clientIds the client ids to send the action to
+     */
+    public final void sendAction(String action, List<String> clientIds) {
+        String message = encodeAction(action);
+
+        for (String clientId : clientIds) {
+            sendMessage(message, clientIds);
+        }
+    }
+
+    /**
+     * sends an action across the network
+     * @param action the name of the action to send
+     * @param parameters the list of parameters to send for the action
+     * @param clientId the client id to send the action to
+     */
+    public final void sendAction(String action, List<String> parameters, String clientId) {
+        String message = encodeAction(action, parameters);
+        sendMessage(message, clientId);
+    }
+    
+    /**
+     * sends an action across the network
+     * @param action the action name including the list of parameters to send for the action
+     * @param clientId the client id to send the action to
+     */
+    public final void sendAction(List<String> action, String clientId) {
+        String message = encodeAction(action);
+        sendMessage(message, clientId);
+    }
+    
+    /**
+     * sends an action across the network
+     * @param action the String to send for the action
+     * @param clientId the client id to send the action to
+     */
+    public final void sendAction(String action, String clientId) {
+        String message = encodeAction(action);
+        sendMessage(message, clientId);
+    }
     
     /**
      * receive a message from a client
@@ -47,13 +103,12 @@ public abstract class Networking {
             game.handleAction(action, clientId);
         }
     }
-
     
     /*
-    * gets an action and parameters and turns it into a string to send accross the network
+    * gets an action and parameters and turns it into a string to send across the network
     */
     private String encodeAction(String action, List<String> parameters) {
-        String seperator = "/";
+        String seperator = Character.toString((char)31);
         String action_string = action + seperator;
         if(parameters != null) {
             for(String parameter : parameters) {
@@ -62,10 +117,33 @@ public abstract class Networking {
         }
         return action_string;
     }
+    
+    /*
+    * gets an action with parameters and turns it into a string to send across the network
+    */
+    private String encodeAction(List<String> action) {
+        String seperator = Character.toString((char)31);
+        String action_string = "";
+        if(action != null) {
+            for(String parameter : action) {
+                action_string += parameter + seperator;
+            }
+        }
+        return action_string;
+    }
+    
+    /*
+    * gets a string and turns encodes it to send across the network
+    */
+    private String encodeAction(String action) {
+        String seperator = Character.toString((char)31);
+        String action_string = action + seperator;
+        return action_string;
+    }
 
     
     /*
-    * parses a string received accross the network
+    * parses a string received across the network
     */
     private List<String> parseAction(String message) {
         boolean action_found = false;
@@ -73,7 +151,7 @@ public abstract class Networking {
         List<String> parameter_list = new ArrayList<>();
         if(message != null) {
             for (char ch : message.toCharArray()) {
-                if (ch == '/') {
+                if (ch == 31) {
                     parameter_list.add(parameter_string);
                     parameter_string = "";
                     action_found = true;
@@ -85,7 +163,6 @@ public abstract class Networking {
                 parameter_list.add(message);
             }
         }
-        parameter_list.add("disconnect");
         return parameter_list;
     }
 
@@ -114,6 +191,15 @@ public abstract class Networking {
      * @param clientIds the client ids to send the message to
      */
     protected abstract void sendMessage(String message, List<String> clientIds);
+    
+    /**
+     * abstract method. handles the physical sending of the message string to the
+     * specified client id
+     * 
+     * @param message the message received over the network
+     * @param clientId the client id to send the message to
+     */
+    protected abstract void sendMessage(String message, String clientId);
 
     protected abstract void disconnect(String hash);
     

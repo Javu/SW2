@@ -3,7 +3,6 @@ package fantasyteam.ft1;
 import fantasyteam.ft1.interfaces.Physics;
 import fantasyteam.ft1.interfaces.Renderer;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Game class. Handles game logic and combines all of the engine components
@@ -51,5 +50,5 @@ public abstract class Game {
      * @param action
      * @param clientId 
      */
-    protected abstract void handleAction(List<String> action, String clientId);
+    public abstract void handleAction(List<String> action, String clientId);
 }
