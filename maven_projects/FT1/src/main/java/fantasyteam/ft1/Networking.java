@@ -177,6 +177,9 @@ public abstract class Networking {
             case "disconnect":
                 disconnect(clientId);
                 return true;
+            case "customnetwork1":
+                customNetwork1(action, clientId);
+                return true;
             default:
                 return false;
         }
@@ -208,4 +211,6 @@ public abstract class Networking {
 //    * the physical implementation of how the server handles reserved network functions (e.g. socket disconnect)
 //    */
 //    protected abstract void networkAction1();
+    
+    protected abstract void customNetwork1(List<String> action, String clientId);
 }
