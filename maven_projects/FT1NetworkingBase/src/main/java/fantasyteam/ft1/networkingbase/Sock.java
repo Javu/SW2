@@ -80,7 +80,7 @@ public class Sock {
      *
      * @throws IOException if an exception is encountered when closing the Socket.
      */
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         LOGGER.log(Level.INFO, "Attempting to close Sock");
         if(socket != null) {
            socket.close();

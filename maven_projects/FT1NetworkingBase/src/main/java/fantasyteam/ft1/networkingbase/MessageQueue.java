@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  * queue. It will be fleshed out to include error handling and a system for
  * acknowledging whether each message is received on the other end and resending
  * messages if they are not acknowledged within a specified timeout.
- * 
+ *
  * @author javu
  */
 public class MessageQueue extends Thread {
@@ -28,19 +28,21 @@ public class MessageQueue extends Thread {
      */
     private volatile ArrayList<String> messages;
     /**
-     * The instance of {@link SocketThread} that created this instance of
+     * The instance of {@link Server} that created this instance of
      * {@link MessageThread}.
      */
-    private volatile SocketThread socket;
+    private volatile Server server;
     /**
      * {@link fantasyteam.ft1.Timing} used to track timeouts for global errors
      * on the socket (affecting the entire socket, not just an individual
      * message).
      */
     private Timing timer;
+    private volatile long timeout;
+    private volatile String hash;
     /**
      * The current state of the MessageQueue. Valid states are: 0 - New 1 -
-     * Running 2 - Errored 3 - Paused 4 - Closed
+     * Running 2 - Errored 3 - Paused 4 - Disconnected 5 - Closed
      */
     private volatile int state;
     /**
@@ -50,37 +52,40 @@ public class MessageQueue extends Thread {
 
     /**
      * Takes an instance of the {@link SocketThread} that is creating this
-     * instance of {@link MessageQueue}. Sets the state to 0 (New MessageQueue, not yet started).
+     * instance of {@link MessageQueue}. Sets the state to 0 (New MessageQueue,
+     * not yet started).
      *
-     * @param socket The {@link SocketThread} that created this {@link MessageQueue}.
+     * @param server The {@link Server} that created this {@link MessageQueue}.
      */
-    public MessageQueue(SocketThread socket) {
+    public MessageQueue(Server server, String hash) {
         messages = new ArrayList<String>();
-        this.socket = socket;
+        this.server = server;
+        this.hash = hash;
         timer = null;
+        timeout = 300000;
         state = 0;
     }
 
     /**
      * Closes the {@link MessageQueue}. Sets the state to 4 (Closed).
      */
-    public void close() {
-        state = 4;
+    public synchronized void close() {
+        state = 5;
     }
 
     /**
      * Loop used to handle messages in the messages ArrayList. If state is set
-     * to 4 (Closed) the loop will exit and the Thread will terminate.
+     * to 5 (Closed) the loop will exit and the Thread will terminate.
      */
     @Override
     public void run() {
         state = 1;
-        while (state >= 1 && state <= 3) {
-            if (state != 3) {
-                if (!messages.isEmpty() && socket.getRun() >= 1 && socket.getRun() <= 3) {
+        while (state >= 1 && state <= 4) {
+            if (state < 3) {
+                if (!messages.isEmpty() && server.getSocketList() != null && server.getSocketList().containsKey(hash) && socket().getRun() >= 1 && socket().getRun() <= 3) {
                     try {
-                        LOGGER.log(Level.INFO, "Attempting to send message {0} through MessageQueue for SocketThread {1}", new Object[]{messages.get(0), socket.getHash()});
-                        socket.getSocket().sendMessage(messages.get(0));
+                        LOGGER.log(Level.INFO, "Attempting to send message {0} through MessageQueue for SocketThread {1}", new Object[]{messages.get(0), hash});
+                        socket().getSocket().sendMessage(messages.get(0));
                         messages.remove(0);
                         state = 1;
                         if (timer != null) {
@@ -94,10 +99,26 @@ public class MessageQueue extends Thread {
                         LOGGER.log(Level.SEVERE, "Could not send message: {0}. Exception: {1}", new Object[]{messages.get(0), e});
                         if (timer.getTime() > 5000) {
                             LOGGER.log(Level.SEVERE, "Sending message has timed out. Disconnecting socket. Message: ", messages.get(0));
-                            socket.getServer().disconnect(socket.getHash());
+                            server.disconnect(hash);
                         }
                     }
                 }
+            } else if(state == 4) {
+                if(server.getUseDisconnectedSockets()) {
+                    if(timer == null) {
+                        LOGGER.log(Level.INFO,"SocketThread with hash {0} has been disconnected, waiting to re-establish connection", hash);
+                        timer = new Timing();
+                    } else if(timer.getTime() > timeout) {
+                        LOGGER.log(Level.INFO,"SocketThread with hash {0} did not reconnect within the given timeout", hash);
+                        server.removeDisconnectedSocket(hash);
+                        server.removeQueue(hash);
+                    } else {
+                        messages.clear();
+                    }
+                } else {
+                    state = 1;
+                    LOGGER.log(Level.INFO,"Server is not set to use disconnecting functionality. MessageQueue cannot be set to state 4. State set to 1");
+                }   
             }
         }
         messages.clear();
@@ -106,22 +127,34 @@ public class MessageQueue extends Thread {
         LOGGER.log(Level.INFO, "MessageQueue successfully closed");
     }
 
+    private SocketThread socket() {
+        return server.getSocketList().get(hash);
+    }
+
     /**
      * Sets the attribute messages.
      *
      * @param messages ArrayList(String) to set messages to.
      */
-    public void setMessages(ArrayList<String> messages) {
+    public synchronized void setMessages(ArrayList<String> messages) {
         this.messages = messages;
     }
 
+    public synchronized void setTimeout(long timeout) {
+        this.timeout = timeout;
+    }
+    
+    public synchronized void setHash(String hash) {
+        this.hash = hash;
+    }
+    
     /**
      * Sets the attribute state. Valid states are: 0 - New 1 - Running 2 -
-     * Errored 3 - Paused 4 - Closed
+     * Errored 3 - Paused 4 - Disconnected 5 - Closed
      *
      * @param state the int to set state to.
      */
-    public void setRun(int state) {
+    public synchronized void setRun(int state) {
         this.state = state;
     }
 
@@ -134,6 +167,14 @@ public class MessageQueue extends Thread {
         return messages;
     }
 
+    public long getTimeout() {
+        return timeout;
+    }
+    
+    public String getHash() {
+        return hash;
+    }
+    
     /**
      * Returns the attribute state.
      *
@@ -150,6 +191,7 @@ public class MessageQueue extends Thread {
      * @param message the String to queue in messages.
      */
     public void queueMessage(String message) {
+        LOGGER.log(Level.INFO, "Queued message {0} for SocketThread {1}", new Object[]{message, hash});
         messages.add(message);
     }
 
@@ -160,7 +202,7 @@ public class MessageQueue extends Thread {
      */
     public void pauseQueue() {
         state = 3;
-        LOGGER.log(Level.INFO, "Paused MessageQueue for SocketThread ", socket.getHash());
+        LOGGER.log(Level.INFO, "Paused MessageQueue for SocketThread {0}", hash);
     }
 
     /**
@@ -169,7 +211,7 @@ public class MessageQueue extends Thread {
      */
     public void resumeQueue() {
         state = 1;
-        LOGGER.log(Level.INFO, "Resumed MessageQueue for SocketThread ", socket.getHash());
+        LOGGER.log(Level.INFO, "Resumed MessageQueue for SocketThread {0}", hash);
     }
 
     /**
@@ -178,7 +220,7 @@ public class MessageQueue extends Thread {
      */
     public void clearQueue() {
         messages.clear();
-        LOGGER.log(Level.INFO, "Cleared MessageQueue for SocketThread ", socket.getHash());
+        LOGGER.log(Level.INFO, "Cleared MessageQueue for SocketThread {0}", hash);
     }
 
     /**
@@ -201,7 +243,7 @@ public class MessageQueue extends Thread {
      * @return Attributes of {@link MessageQueue} in a readable String form.
      */
     public String toString(String ch) {
-        String to_string = ch + "Owning SocketThread hash: " + socket.getHash() + "\n" + ch + "State: " + state;
+        String to_string = ch + "Owning SocketThread hash: " + hash + "\n" + ch + "State: " + state;
         if (!messages.isEmpty()) {
             to_string += "\n" + ch + "Queued messages:";
             for (String message : messages) {

@@ -1,6 +1,7 @@
 package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
+import fantasyteam.ft1.Timing;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -22,12 +23,13 @@ public class MessageQueueTest {
     int port;
     boolean exception;
     String hash;
+    Timing time = new Timing();
     /**
      * This int is the parameter used when running the waitTime function in
      * these tests. Change this value to increase or decrease the time waited
      * when waitTime is called.
      */
-    int wait = 30;
+    long wait = 10;
 
     /**
      * Logger for logging important actions and exceptions.
@@ -51,14 +53,10 @@ public class MessageQueueTest {
     }
 
     @BeforeMethod
-    private void setupServer() throws IOException {
+    private void setupQueue() throws IOException {
         port = 22222;
         exception = false;
         Game game = EasyMock.createMock(Game.class);
-
-//        game.runVoidMethod();
-//        EasyMock.expect(game.parseAction()).andReturn("go fuck yoruself").anyTimes();
-//        EasyMock.replay();
         LOGGER.log(Level.INFO,"Building Server1");
         server1 = new Server(game, port, true);
         LOGGER.log(Level.INFO,"Building Server2");
@@ -70,13 +68,23 @@ public class MessageQueueTest {
         } catch (IOException ex) {
             exception = true;
         }
+        time.waitTime(wait);
         try {
             hash = server2.addSocket("127.0.0.1",port);
         } catch (IOException ex) {
             exception = true;
         }
-        waitTime();
-//        EasyMock.verify();
+        time.waitTime(wait);
+    }
+    
+    @AfterMethod
+    private void deleteQueue() throws IOException {
+        LOGGER.log(Level.INFO, "+++++ CLOSING server2 (CLIENT SERVER) +++++");
+        server2.close();
+        time.waitTime(wait);
+        LOGGER.log(Level.INFO, "+++++ CLOSING server1 (LISTEN SERVER) +++++");
+        server1.close();
+        time.waitTime(wait);
     }
     
     @Test
@@ -84,8 +92,9 @@ public class MessageQueueTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetMessages -----");
         ArrayList<String> string_array = new ArrayList<String>();
         string_array.add("TEST");
-        server2.getSocketList().get(hash).getMessageQueue().setMessages(string_array);
-        Assert.assertEquals(server2.getSocketList().get(hash).getMessageQueue().getMessages().get(0), "TEST", "MessageQueue.messages was not changed");
+        server2.getQueueList().get(hash).pauseQueue();
+        server2.getQueueList().get(hash).setMessages(string_array);
+        Assert.assertEquals(server2.getQueueList().get(hash).getMessages().get(0), "TEST", "MessageQueue.messages was not changed");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetMessages COMPLETED -----");
     }
@@ -93,21 +102,52 @@ public class MessageQueueTest {
     @Test
     public void testMessageQueueSetRun() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetRun -----");
-        server2.getSocketList().get(hash).getMessageQueue().setRun(2);
-        Assert.assertEquals(server2.getSocketList().get(hash).getMessageQueue().getRun(), 2, "MessageQueue.run was not set to 2");
+        server2.getQueueList().get(hash).setRun(2);
+        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), 2, "MessageQueue.run was not set to 2");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetRun COMPLETED -----");
+    }
+    
+    @Test
+    public void testMessageQueueSetHash() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetHash -----");
+        server2.getQueueList().get(hash).setHash("TEST");
+        Assert.assertEquals(server2.getQueueList().get(hash).getHash(), "TEST", "MessageQueue.hash was not set to TEST");
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetHash COMPLETED -----");
+    }
+    
+    @Test
+    public void testMessageQueueGetTimeout() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueGetTimeout -----");
+        long timeout = server2.getQueueList().get(hash).getTimeout();
+        Assert.assertEquals(timeout, 300000, "Did not return the correct timeout value");
+        long new_timeout = 5;
+        server2.getQueueList().get(hash).setTimeout(new_timeout);
+        timeout = server2.getQueueList().get(hash).getTimeout();
+        Assert.assertEquals(timeout, new_timeout, "Did not return the correct timeout value after changing it using MessageQueue.setTimeout(long timeout)");
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testMessageQueueGetTimeout COMPLETED -----");
+    }
+    
+    @Test
+    public void testMessageQueueGetHash() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueGetHash -----");
+        String current_hash = server2.getQueueList().get(hash).getHash();
+        Assert.assertEquals(current_hash, hash, "MessageQueue.hash was is not set correctly");
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testMessageQueueGetHash COMPLETED -----");
     }
 
     @Test
     public void testMessageQueuePauseAndClearQueue() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueuePauseAndClearQueue -----");
-        server2.getSocketList().get(hash).getMessageQueue().pauseQueue();
-        server2.getSocketList().get(hash).sendMessage("TEST");
-        Assert.assertEquals(server2.getSocketList().get(hash).getMessageQueue().getRun(), 3, "MessageQueue.run was not set to 3 (paused)");
-        Assert.assertEquals(server2.getSocketList().get(hash).getMessageQueue().getMessages().get(0), "TEST", "MessageQueue was not paused");
-        server2.getSocketList().get(hash).getMessageQueue().clearQueue();
-        Assert.assertTrue(server2.getSocketList().get(hash).getMessageQueue().getMessages().isEmpty(), "MessageQueue was not cleared");
+        server2.getQueueList().get(hash).pauseQueue();
+        server2.sendMessage("TEST",hash);
+        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), 3, "MessageQueue.run was not set to 3 (paused)");
+        Assert.assertEquals(server2.getQueueList().get(hash).getMessages().get(0), "TEST", "MessageQueue was not paused");
+        server2.getQueueList().get(hash).clearQueue();
+        Assert.assertTrue(server2.getQueueList().get(hash).getMessages().isEmpty(), "MessageQueue was not cleared");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueuePauseAndClearQueue COMPLETED -----");
     }
@@ -115,25 +155,25 @@ public class MessageQueueTest {
     @Test
     public void testMessageQueuePauseAndResumeQueue() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueuePauseAndResumeQueue -----");
-        server2.getSocketList().get(hash).getMessageQueue().pauseQueue();
-        server2.getSocketList().get(hash).sendMessage("TEST");
-        Assert.assertEquals(server2.getSocketList().get(hash).getMessageQueue().getRun(), 3, "MessageQueue.run was not set to 3 (paused)");
-        Assert.assertEquals(server2.getSocketList().get(hash).getMessageQueue().getMessages().get(0), "TEST", "MessageQueue was not paused");
-        server2.getSocketList().get(hash).getMessageQueue().resumeQueue();
-        waitTime();
-        Assert.assertEquals(server2.getSocketList().get(hash).getMessageQueue().getRun(), 1, "MessageQueue.run was not set to 1 (resume)");
-        Assert.assertTrue(server2.getSocketList().get(hash).getMessageQueue().getMessages().isEmpty(), "Messages in MessageQueue were not sent after queue was resumed");
+        server2.getQueueList().get(hash).pauseQueue();
+        server2.sendMessage("TEST",hash);
+        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), 3, "MessageQueue.run was not set to 3 (paused)");
+        Assert.assertEquals(server2.getQueueList().get(hash).getMessages().get(0), "TEST", "MessageQueue was not paused");
+        server2.getQueueList().get(hash).resumeQueue();
+        time.waitTime(wait);
+        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), 1, "MessageQueue.run was not set to 1 (resume)");
+        Assert.assertTrue(server2.getQueueList().get(hash).getMessages().isEmpty(), "Messages in MessageQueue were not sent after queue was resumed");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueuePauseAndResumeQueue COMPLETED -----");
     }
     
-    @AfterMethod
-    private void deleteServer() throws IOException {
-        LOGGER.log(Level.INFO, "+++++ CLOSING server2 (CLIENT SERVER) +++++");
-        server2.close();
-        waitTime();
-        LOGGER.log(Level.INFO, "+++++ CLOSING server1 (LISTEN SERVER) +++++");
-        server1.close();
-        waitTime();
+    @Test
+    public void testToStringMessageQueue() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringMessageQueue -----");
+        String to_string = null;
+        to_string = server2.getQueueList().get(hash).toString();
+        Assert.assertNotEquals(to_string, null, "ListenThread data not generated into a readable String with added character");
+        LOGGER.log(Level.INFO, "ListenThread String details: \n{0}", to_string);
+        LOGGER.log(Level.INFO, "----- TEST testToStringMessageQueue COMPLETED -----");
     }
 }

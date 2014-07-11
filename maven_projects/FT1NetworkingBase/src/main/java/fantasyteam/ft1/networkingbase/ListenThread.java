@@ -76,7 +76,7 @@ public class ListenThread extends Thread {
      * Closes server_socket and interrupts the thread.
      * @throws IOException if an exception is encountered when closing the ServerSocket.
      */
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if(server_socket != null) {
             server_socket.close();
             server_socket = null;
@@ -117,7 +117,7 @@ public class ListenThread extends Thread {
      *
      * @param run boolean to set run to.
      */
-    public void setRun(boolean run) {
+    public synchronized void setRun(boolean run) {
         this.run = run;
     }
     

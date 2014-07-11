@@ -1,6 +1,7 @@
 package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
+import fantasyteam.ft1.Timing;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,12 +22,13 @@ public class SockTest {
     private int port;
     private boolean exception;
     private Server server;
+    Timing time = new Timing();
     /**
      * This int is the parameter used when running the waitTime function in
      * these tests. Change this value to increase or decrease the time waited
      * when waitTime is called.
      */
-    int wait = 50;
+    long wait = 10;
     
     protected static final Logger LOGGER = Logger.getLogger(SockTest.class.getName());
     
@@ -52,20 +54,20 @@ public class SockTest {
         port = 22227;
         Game game = EasyMock.createMock(Game.class);
         server = new Server(game,port,true);
-        waitTime();
+        time.waitTime(wait);
         server.startThread();
-        waitTime();
+        time.waitTime(wait);
         sock = new Sock(ip,port);
-        waitTime();
+        time.waitTime(wait);
         exception = false;
     }
     
     @AfterMethod
     private void deleteSock() throws IOException {
         sock.close();
-        waitTime();
+        time.waitTime(wait);
         server.close();
-        waitTime();
+        time.waitTime(wait);
     }
     
     @Test

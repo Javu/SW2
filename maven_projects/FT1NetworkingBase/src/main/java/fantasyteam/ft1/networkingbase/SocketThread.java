@@ -1,6 +1,5 @@
 package fantasyteam.ft1.networkingbase;
 
-import fantasyteam.ft1.Timing;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,21 +28,12 @@ public class SocketThread extends Thread {
      */
     private volatile String hash;
     /**
-     * The {@link MessageQueue} used to handle messages sent on socket (if this
-     * functionality is turned on).
-     */
-    private volatile MessageQueue messages;
-    /**
      * int used to determine the state of the class. Valid states are: 0 =
      * Thread not started yet 1 = Thread started, connection not confirmed on
      * other end 2 = Thread started, connection confirmed on other end 3 =
      * Thread has finished.
      */
     private volatile int state;
-    /**
-     * boolean used to determine whether to use {@link MessageQueue} or not.
-     */
-    private volatile boolean use_message_queue;
 
     /**
      * Logger for logging important actions and exceptions.
@@ -68,37 +58,6 @@ public class SocketThread extends Thread {
         this.server = server;
         this.hash = hash;
         state = 0;
-        use_message_queue = false;
-        messages = null;
-    }
-
-    /**
-     * Takes the {@link Sock} instance of the socket to interface with, The
-     * instance of {@link Server} that created this thread and the hash String
-     * assigned to this thread by the {@link Server}. This constructor is used
-     * to toggle advanced options on or off.
-     *
-     * @param sock {@link Sock} used to hold the socket connection this
-     * {@link SocketThread} interfaces with.
-     * @param server {@link Server} that created this {@link SocketThread}.
-     * Mainly used to handle/parse messages received into meaningful actions.
-     * @param hash String representing the unique hash associated with this
-     * {@link SocketThread} by the {@link Server} that created it.
-     * @param use_message_queue boolean flag used to determine whether to use a
-     * {@link MessageQueue} or not.
-     */
-    public SocketThread(Sock sock, Server server, String hash, boolean use_message_queue) {
-        // Initialise attributes
-        socket = sock;
-        this.server = server;
-        this.hash = hash;
-        state = 0;
-        this.use_message_queue = use_message_queue;
-        if (use_message_queue) {
-            messages = new MessageQueue(this);
-        } else {
-            messages = null;
-        }
     }
 
     /**
@@ -108,23 +67,6 @@ public class SocketThread extends Thread {
      */
     @Override
     public void run() {
-        if (use_message_queue) {
-            messages.start();
-            boolean started = false;
-            Timing timer = new Timing();
-            while (!started) {
-                if (messages.getRun() < 1) {
-                    timer.waitTime(5);
-                    if (timer.getTime() > 5000) {
-                        started = true;
-                        LOGGER.log(Level.SEVERE, "MessageQueue was created but did not start in time");
-                    }
-                } else {
-                    started = true;
-                    LOGGER.log(Level.INFO, "Successfully started MessageQueue for SocketThread {0}", hash);
-                }
-            }
-        }
         if (state == 0) {
             state = 1;
         }
@@ -146,7 +88,7 @@ public class SocketThread extends Thread {
                 if (message == null) {
                     LOGGER.log(Level.INFO, "Socket has been disconnected, attempting to close socket on Server. Hash {0}", hash);
                     message = "disconnect";
-                    state = 4;
+                    //state = 4;
                 } else {
                     LOGGER.log(Level.INFO, "Message received: {0}", message);
                 }
@@ -168,7 +110,7 @@ public class SocketThread extends Thread {
      *
      * @throws IOException if an exception is encountered running unblock().
      */
-    private void close() throws IOException {
+    private synchronized void close() throws IOException {
         if (socket != null) {
             try {
                 unblock();
@@ -177,9 +119,6 @@ public class SocketThread extends Thread {
                 throw new IOException("Failed to close Sock socket in SocketThread");
             }
         } else {
-            if (use_message_queue) {
-                messages.close();
-            }
             LOGGER.log(Level.INFO, "SocketThread has successfully closed");
         }
     }
@@ -221,24 +160,6 @@ public class SocketThread extends Thread {
     }
 
     /**
-     * Returns the attribute use_message_queue.
-     *
-     * @return the boolean use_message_queue.
-     */
-    public boolean getUseMessageQueue() {
-        return use_message_queue;
-    }
-
-    /**
-     * Returns the attribute messages.
-     *
-     * @return the {@link MessageQueue} messages.
-     */
-    public MessageQueue getMessageQueue() {
-        return messages;
-    }
-
-    /**
      * Sets the attribute hash. WARNING: You should avoid running this function
      * manually. Changing a {@link SocketThread}'s hash without moving it to a
      * new key corresponding to the new hash in {@link Server}.socket_list will
@@ -250,7 +171,7 @@ public class SocketThread extends Thread {
      *
      * @param hash String to set hash to.
      */
-    public void setHash(String hash) {
+    public synchronized void setHash(String hash) {
         this.hash = hash;
         LOGGER.log(Level.INFO, "Changed hash: {0}", hash);
     }
@@ -261,39 +182,8 @@ public class SocketThread extends Thread {
      *
      * @param state int to set state to.
      */
-    public void setRun(int state) {
+    public synchronized void setRun(int state) {
         this.state = state;
-    }
-
-    /**
-     * Toggles the option to use a {@link MessageQueue}. Passing true will
-     * construct a new {@link MessageQueue} if one hasn't already been
-     * constructed and passing false will close the {@link MessageQueue} if it
-     * has been constructed already.
-     *
-     * @param use boolean to set use_message_queue to.
-     */
-    public void setUseMessageQueue(boolean use) {
-        use_message_queue = use;
-        if (use_message_queue && messages == null) {
-            messages = new MessageQueue(this);
-            messages.start();
-        } else if (!use_message_queue && messages != null) {
-            messages.close();
-            messages = null;
-        }
-    }
-
-    /**
-     * Sets the attribute {@link MessageQueue} to the one that is passed to this
-     * method. The {@link MessageQueue}.socket attribute of the passed
-     * {@link MessageQueue} should be changed to the {@link SocketThread}
-     * calling this method.
-     *
-     * @param messages the {@link MessageQueue} to change messages to.
-     */
-    public void setMessageQueue(MessageQueue messages) {
-        this.messages = messages;
     }
 
     /**
@@ -304,7 +194,7 @@ public class SocketThread extends Thread {
      *
      * @throws IOException if an exception is encountered when closing the {@link Sock}.
      */
-    public void unblock() throws IOException {
+    public synchronized void unblock() throws IOException {
         boolean running = false;
         if (state >= 1 && state <= 3) {
             running = true;
@@ -328,17 +218,13 @@ public class SocketThread extends Thread {
      * @param message the String message to send through the {@link Sock}.
      */
     public void sendMessage(String message) {
-        if (use_message_queue && messages != null) {
-            messages.queueMessage(message);
-        } else {
-            try {
-                socket.sendMessage(message);
-                LOGGER.log(Level.INFO, "Sent message {0} through socket with hash {1}", new Object[]{message, hash});
-            } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Could not send message through socket with hash: {0}\nMessage was: '{1}'\nSocket data:\n{2}", new Object[]{hash, message, toString()});
-                LOGGER.log(Level.INFO, "Caught exception: {0}", e);
-                server.disconnect(hash);
-            }
+        try {
+            socket.sendMessage(message);
+            LOGGER.log(Level.INFO, "Sent message {0} through socket with hash {1}", new Object[]{message, hash});
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Could not send message through socket with hash: {0}\nMessage was: '{1}'\nSocket data:\n{2}", new Object[]{hash, message, toString()});
+            LOGGER.log(Level.INFO, "Caught exception: {0}", e);
+            server.disconnect(hash);
         }
     }
 
@@ -362,15 +248,12 @@ public class SocketThread extends Thread {
      * @return Attributes of {@link SocketThread} in a readable String form.
      */
     public String toString(String ch) {
-        String to_string = ch + "Hash: " + hash + "\n" + ch + "State: " + state + "\n" + ch + "Use Message Queue: " + use_message_queue;
+        String to_string = ch + "Hash: " + hash + "\n" + ch + "State: " + state;
         to_string += "\n" + ch + "Sock:";
         if (socket != null && socket.getSocket() != null) {
             to_string += "\n" + socket.toString(ch + "\t");
         } else {
             to_string += " Sock has been closed";
-        }
-        if (use_message_queue && messages != null) {
-            to_string += "\n" + ch + "MessageQueue details: " + "\n" + messages.toString(ch + "\t");
         }
         return to_string;
     }
