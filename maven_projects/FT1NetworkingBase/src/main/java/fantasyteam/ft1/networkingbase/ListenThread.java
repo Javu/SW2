@@ -23,7 +23,7 @@ public class ListenThread extends Thread {
     /**
      * The instance of {@link Server} that created this instance of {@link ListenThread}.
      */
-    private Server server;
+    private volatile Server server;
     private volatile int port;
     /**
      * Boolean used to determine if the thread is running or not.

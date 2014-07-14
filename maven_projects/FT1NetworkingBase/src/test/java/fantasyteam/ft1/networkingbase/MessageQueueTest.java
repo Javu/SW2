@@ -160,7 +160,13 @@ public class MessageQueueTest {
         Assert.assertEquals(server2.getQueueList().get(hash).getRun(), 3, "MessageQueue.run was not set to 3 (paused)");
         Assert.assertEquals(server2.getQueueList().get(hash).getMessages().get(0), "TEST", "MessageQueue was not paused");
         server2.getQueueList().get(hash).resumeQueue();
-        time.waitTime(wait);
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while(loop) {
+            if(server2.getQueueList().get(hash).getMessages().isEmpty() || new_timer.getTime() > 5000) {
+                loop = false;
+            }
+        }
         Assert.assertEquals(server2.getQueueList().get(hash).getRun(), 1, "MessageQueue.run was not set to 1 (resume)");
         Assert.assertTrue(server2.getQueueList().get(hash).getMessages().isEmpty(), "Messages in MessageQueue were not sent after queue was resumed");
         Assert.assertFalse(exception, "Exception found");
