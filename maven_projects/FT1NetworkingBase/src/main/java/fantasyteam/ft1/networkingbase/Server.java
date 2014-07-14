@@ -32,10 +32,10 @@ public class Server extends fantasyteam.ft1.Networking {
     public static final int LISTEN = 0;
     public static final int CLIENT = 1;
     public static final int CLOSED = 2;
-    
+
     /**
-     * Current state of the server. Valid states are: -1 - Error 0 - Listen Server 1 -
-     * Client 2 - Closed
+     * Current state of the server. Valid states are: -1 - Error 0 - Listen
+     * Server 1 - Client 2 - Closed
      */
     protected volatile int state;
     /**
@@ -53,10 +53,14 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     protected volatile boolean use_message_queues;
     /**
-     * HashMap used to hold {@link SocketThread}s and the hashed keys to
-     * associate them with.
+     * Map used to hold {@link SocketThread}s and the keys to associate them
+     * with.
      */
     protected volatile Map<String, SocketThread> socket_list;
+    /**
+     * Map used to hold {@link MessageQueue}s and the keys to associate them
+     * with.
+     */
     protected volatile Map<String, MessageQueue> queue_list;
     /**
      * ArrayList used to keep the hashes of disconnected sockets.
@@ -140,8 +144,8 @@ public class Server extends fantasyteam.ft1.Networking {
         }
         boolean not_disconnected = true;
         Timing timer = new Timing();
-        while(not_disconnected) {
-            if(socket_list.isEmpty() || timer.getTime() > 5000) {
+        while (not_disconnected) {
+            if (socket_list.isEmpty() || timer.getTime() > 5000) {
                 not_disconnected = false;
             }
         }
@@ -154,8 +158,8 @@ public class Server extends fantasyteam.ft1.Networking {
         }
         not_disconnected = true;
         timer.startTiming();
-        while(not_disconnected) {
-            if(queue_list.isEmpty() || timer.getTime() > 5000) {
+        while (not_disconnected) {
+            if (queue_list.isEmpty() || timer.getTime() > 5000) {
                 not_disconnected = false;
             }
         }
@@ -180,8 +184,8 @@ public class Server extends fantasyteam.ft1.Networking {
                 listen_thread.setRun(false);
                 boolean running = true;
                 Timing new_timer = new Timing();
-                while(running) {
-                    if(!listen_thread.getRun() || new_timer.getTime() > 5000) {
+                while (running) {
+                    if (!listen_thread.getRun() || new_timer.getTime() > 5000) {
                         running = false;
                     }
                 }
@@ -189,31 +193,31 @@ public class Server extends fantasyteam.ft1.Networking {
                 boolean attempt_disconnection = true;
                 Socket socket = null;
                 new_timer.startTiming();
-                while(not_closed) {
-                    if(listen_thread.getServerSocket() == null) {
+                while (not_closed) {
+                    if (listen_thread.getServerSocket() == null) {
                         not_closed = false;
-                    } else if(new_timer.getTime() > 5000 && listen_thread.getRun()) {
+                    } else if (new_timer.getTime() > 5000 && listen_thread.getRun()) {
                         attempt_disconnection = true;
                         not_closed = false;
-                    } else if(new_timer.getTime() > 5000 && listen_thread.getServerSocket() != null) {
+                    } else if (new_timer.getTime() > 5000 && listen_thread.getServerSocket() != null) {
                         attempt_disconnection = true;
                         not_closed = false;
-                    } else if(new_timer.getTime() > 5000) {
+                    } else if (new_timer.getTime() > 5000) {
                         not_closed = false;
                     }
-                    if(attempt_disconnection) {
-                        LOGGER.log(Level.INFO,"Creating blank connection to break blocking on ListenThread. ListenThread running is set to {0}",listen_thread.getRun());
-                        try{
+                    if (attempt_disconnection) {
+                        LOGGER.log(Level.INFO, "Creating blank connection to break blocking on ListenThread. ListenThread running is set to {0}", listen_thread.getRun());
+                        try {
                             socket = new Socket("127.0.0.1", port);
-                        } catch(SocketException e) {
-                            LOGGER.log(Level.INFO,"Connection refused on ListenThread");
+                        } catch (SocketException e) {
+                            LOGGER.log(Level.INFO, "Connection refused on ListenThread");
                         }
                         attempt_disconnection = false;
                     }
                 }
-                if(socket != null) {
+                if (socket != null) {
                     socket.close();
-                    LOGGER.log(Level.INFO,"Closed blank connection to ListenThread");
+                    LOGGER.log(Level.INFO, "Closed blank connection to ListenThread");
                 }
             } else {
                 LOGGER.log(Level.INFO, "Attempting to close non-running listen_thread on port {0}", listen_thread.getPort());
@@ -271,16 +275,24 @@ public class Server extends fantasyteam.ft1.Networking {
 
     /**
      * Sets the list of connections to the {@link Server} using a
-     * pre-constructed HashMap(String,{@link SocketThread}).
+     * pre-constructed Map(String,{@link SocketThread}).
      *
-     * @param socket_list HashMap({@link SocketThread}) to use as list of
+     * @param socket_list Map(String,{@link SocketThread}) to use as list of
      * {@link Server} connections.
      */
     public synchronized void setSocketList(Map<String, SocketThread> socket_list) {
         this.socket_list = socket_list;
         LOGGER.log(Level.INFO, "Changing socket_list: {0}", socket_list);
     }
-    
+
+    /**
+     * Sets the list of {@link MessageQueue}s associated with each
+     * {@link SocketThread} to the {@link Server} using a pre-constructed
+     * Map(String,{@link MessageQueue}).
+     *
+     * @param queue_list Map(String,{@link MessageQueue}) to use as a list of
+     * {@link MessageQueue}s on the {@link Server}.
+     */
     public synchronized void setQueueList(Map<String, MessageQueue> queue_list) {
         this.queue_list = queue_list;
         LOGGER.log(Level.INFO, "Changing queue_list: {0}", socket_list);
@@ -361,13 +373,19 @@ public class Server extends fantasyteam.ft1.Networking {
     /**
      * Returns the list of connections to the {@link Server}.
      *
-     * @return the HashMap(String,{@link SocketThread}) socket_list, the list of
+     * @return the Map(String,{@link SocketThread}) socket_list, the list of
      * connections to the {@link Server}.
      */
     public Map<String, SocketThread> getSocketList() {
         return socket_list;
     }
 
+    /**
+     * Returns the list of {@link MessageQueue}s associated with each
+     * {@link SocketThread} on the {@link Server}.
+     *
+     * @return the Map(String,{@link {MessageQueue}) queue_list, the list of {@link MessageQueue}s on the {@link Server}.
+     */
     public Map<String, MessageQueue> getQueueList() {
         return queue_list;
     }
@@ -432,30 +450,42 @@ public class Server extends fantasyteam.ft1.Networking {
         }
     }
 
+    /**
+     * This function is not used.
+     *
+     * @param action Not used.
+     * @param clientId Not used.
+     */
     @Override
     public synchronized void customNetwork1(List<String> action, String clientId) {
-        LOGGER.log(Level.INFO,"Server does not have an implementation for Networking.customNetwork1");
+        LOGGER.log(Level.INFO, "Server does not have an implementation for Networking.customNetwork1");
     }
 
+    /**
+     * Removes the {@link MessageQueue} specified by the key hash from the
+     * queue_list Map.
+     *
+     * @param hash String key to remove from the queue_list Map.
+     */
     public synchronized void removeQueue(String hash) {
-        LOGGER.log(Level.INFO,"Attempting to close MessageQueue with hash {0}", hash);
+        LOGGER.log(Level.INFO, "Attempting to close MessageQueue with hash {0}", hash);
         if (use_message_queues && !queue_list.isEmpty()) {
             if (queue_list.containsKey(hash)) {
                 queue_list.get(hash).close();
                 queue_list.remove(hash);
-                LOGGER.log(Level.INFO,"Removed MessageQueue {0} from queue_list", hash);
+                LOGGER.log(Level.INFO, "Removed MessageQueue {0} from queue_list", hash);
             } else {
-                LOGGER.log(Level.INFO,"MessageQueue with hash {0} does not exist in socket_list", hash);
+                LOGGER.log(Level.INFO, "MessageQueue with hash {0} does not exist in socket_list", hash);
             }
         } else {
-            LOGGER.log(Level.INFO,"use_message_queues is false or queue_list is empty. Will not attempt to close MessageQueue with hash {0}", hash);
+            LOGGER.log(Level.INFO, "use_message_queues is false or queue_list is empty. Will not attempt to close MessageQueue with hash {0}", hash);
         }
     }
 
     /**
      * Removes the specified hash from disconnected_sockets.
      *
-     * @param hash Hash to remove.
+     * @param hash String hash to remove.
      */
     public synchronized void removeDisconnectedSocket(String hash) {
         if (disconnected_sockets.contains(hash)) {
@@ -468,10 +498,9 @@ public class Server extends fantasyteam.ft1.Networking {
 
     /**
      * Starts the {@link SocketThread} at the location in socket_list specified
-     * by hash. If use_message_queues == true then this function will wait up to
-     * 5 seconds for the {@link SocketThread}s {@link MessageQueue} to start. if
-     * the {@link MessageQueue} does not start in time this function will throw
-     * an IOException.
+     * by hash. This function will wait up to 5 seconds for the
+     * {@link SocketThread} to start. if the {@link SocketThread} does not start
+     * in time this function will throw an IOException.
      *
      * @param hash the String key in socket_list corresponding to the
      * {@link SocketThread} to start.
@@ -498,6 +527,14 @@ public class Server extends fantasyteam.ft1.Networking {
         }
     }
 
+    /**
+     * Starts the {@link MessageQueue} at the location in queue_list specified
+     * by hash. This function will wait up to 5 seconds for the
+     * {@link MessageQueue} to start.
+     *
+     * @param hash the String key in queue_list corresponding to the
+     * {@link MessageQueue} to start.
+     */
     public synchronized void startQueue(String hash) {
         queue_list.get(hash).start();
         boolean started = false;
@@ -619,6 +656,14 @@ public class Server extends fantasyteam.ft1.Networking {
         return hash;
     }
 
+    /**
+     * Creates a new {@link MessageQueue} and places it in the queue_list Map at
+     * the key specified by hash if use_message_queues == true. This functions
+     * also starts the {@link MessageQueue} using the startQueue(String hash)
+     * function.
+     *
+     * @param hash The String key to associate with the new {@link MessageQueue}.
+     */
     public synchronized void addQueue(String hash) {
         if (use_message_queues) {
             MessageQueue new_queue = new MessageQueue(this, hash);
@@ -662,10 +707,10 @@ public class Server extends fantasyteam.ft1.Networking {
         while (exists) {
             hash = generateHash();
             exists = containsHash(hash);
-            if(disconnected_sockets != null && !disconnected_sockets.isEmpty()) {
+            if (disconnected_sockets != null && !disconnected_sockets.isEmpty()) {
                 exists = disconnected_sockets.contains(hash);
             }
-            if(queue_list != null && !queue_list.isEmpty()) {
+            if (queue_list != null && !queue_list.isEmpty()) {
                 exists = queue_list.containsKey(hash);
             }
             count++;
@@ -696,7 +741,7 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     public void replaceHash(String old_hash, String new_hash) {
         if (!socket_list.isEmpty() && socket_list.containsKey(old_hash)) {
-            if(old_hash.compareTo(new_hash) != 0) {
+            if (old_hash.compareTo(new_hash) != 0) {
                 if (socket_list.containsKey(new_hash)) {
                     disconnect(new_hash);
                     if (use_disconnected_sockets) {
@@ -706,7 +751,7 @@ public class Server extends fantasyteam.ft1.Networking {
                 socket_list.put(new_hash, socket_list.get(old_hash));
                 socket_list.get(new_hash).setHash(new_hash);
                 socket_list.remove(old_hash);
-                if(use_message_queues) {
+                if (use_message_queues) {
                     if (!queue_list.containsKey(new_hash)) {
                         queue_list.put(new_hash, queue_list.get(old_hash));
                         queue_list.get(new_hash).setHash(new_hash);
@@ -715,8 +760,8 @@ public class Server extends fantasyteam.ft1.Networking {
                         removeQueue(old_hash);
                         boolean disconnected = false;
                         Timing new_timer = new Timing();
-                        while(!disconnected) {
-                            if(!queue_list.containsKey(old_hash) || new_timer.getTime() > 5000) {
+                        while (!disconnected) {
+                            if (!queue_list.containsKey(old_hash) || new_timer.getTime() > 5000) {
                                 disconnected = true;
                             }
                         }
@@ -724,7 +769,7 @@ public class Server extends fantasyteam.ft1.Networking {
                 }
                 LOGGER.log(Level.INFO, "Moved socket details from hash {0} to hash {1}", new Object[]{old_hash, new_hash});
             } else {
-                LOGGER.log(Level.INFO,"old_hash is equal to new_hash. Cannot replace a hashes data with data from the same hash");
+                LOGGER.log(Level.INFO, "old_hash is equal to new_hash. Cannot replace a hashes data with data from the same hash");
             }
         } else {
             LOGGER.log(Level.INFO, "SocketThread with hash {0} does not exist in socket_list", old_hash);
@@ -752,21 +797,21 @@ public class Server extends fantasyteam.ft1.Networking {
         boolean exists = false;
         if (use_disconnected_sockets) {
             if (disconnected_sockets != null && !disconnected_sockets.isEmpty() && disconnected_sockets.contains(saved_hash)) {
-                if(current_hash.compareTo(saved_hash) != 0) {
+                if (current_hash.compareTo(saved_hash) != 0) {
                     replaceHash(current_hash, saved_hash);
                     if (use_message_queues) {
                         queue_list.get(saved_hash).resumeQueue();
                         LOGGER.log(Level.INFO, "Reconnected MessageQueue {0} for reconnected socket", saved_hash);
                     }
-                    if(disconnected_sockets.contains(saved_hash)) {
+                    if (disconnected_sockets.contains(saved_hash)) {
                         removeDisconnectedSocket(saved_hash);
                     }
                     exists = true;
                     LOGGER.log(Level.INFO, "Connected disconnected socket {1} using data from socket {0}. Hash {0} has been removed", new Object[]{current_hash, saved_hash});
                 } else {
-                    LOGGER.log(Level.INFO,"current_hash is the same as saved_hash. Cannot reconnect a socket with data from the same hash");
+                    LOGGER.log(Level.INFO, "current_hash is the same as saved_hash. Cannot reconnect a socket with data from the same hash");
                 }
-                
+
             } else {
                 LOGGER.log(Level.INFO, "SocketThread with hash {0} is not registered as disconnected, will not run reconnection process", saved_hash);
             }
@@ -827,7 +872,7 @@ public class Server extends fantasyteam.ft1.Networking {
         if (state == LISTEN) {
             String hash = "";
             Socket temp_socket = listen_thread.getServerSocket().accept();
-            LOGGER.log(Level.INFO,"Connection detected on ListenThread. ListenThread running is set to {0}",listen_thread.getRun());
+            LOGGER.log(Level.INFO, "Connection detected on ListenThread. ListenThread running is set to {0}", listen_thread.getRun());
             if (listen_thread.getRun()) {
                 Sock temp_sock = new Sock(temp_socket);
                 hash = generateUniqueHash();

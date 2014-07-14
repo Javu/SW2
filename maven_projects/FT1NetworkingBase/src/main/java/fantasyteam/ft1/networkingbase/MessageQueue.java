@@ -29,7 +29,7 @@ public class MessageQueue extends Thread {
     public static final int PAUSED = 3;
     public static final int DISCONNECT = 4;
     public static final int CLOSED = 5;
-    
+
     /**
      * ArraList<String> used to queue messages to be sent on the {@link Sock}.
      */
@@ -45,11 +45,21 @@ public class MessageQueue extends Thread {
      * message).
      */
     private Timing timer;
+    /**
+     * The long in milliseconds used when determining the timeout offset for all
+     * default timing operations such as waiting for a reconnection after a
+     * socket disconnects or error handling.
+     */
     private volatile long timeout;
+    /**
+     * The unique identifier this {@link MessageQueue} shares with its
+     * accompanying {@link SocketThread} given to it by its owning
+     * {@link Server}.
+     */
     private volatile String hash;
     /**
-     * The current state of the MessageQueue. Valid states are: 0 - New 1 -
-     * Running 2 - Errored 3 - Paused 4 - Disconnected 5 - Closed
+     * The current state of the MessageQueue. Valid states are: 0 - NEW 1 -
+     * RUNNING 2 - ERROR 3 - PAUSED 4 - DISCONNECT 5 - CLOSED
      */
     private volatile int state;
     /**
@@ -63,6 +73,8 @@ public class MessageQueue extends Thread {
      * not yet started).
      *
      * @param server The {@link Server} that created this {@link MessageQueue}.
+     * @param hash The String used as this {@link MessageQueue}'s unique
+     * identifier on its owning {@link Server}.
      */
     public MessageQueue(Server server, String hash) {
         messages = new ArrayList<String>();
@@ -110,13 +122,13 @@ public class MessageQueue extends Thread {
                         }
                     }
                 }
-            } else if(state == DISCONNECT) {
-                if(server.getUseDisconnectedSockets()) {
-                    if(timer == null) {
-                        LOGGER.log(Level.INFO,"SocketThread with hash {0} has been disconnected, waiting to re-establish connection", hash);
+            } else if (state == DISCONNECT) {
+                if (server.getUseDisconnectedSockets()) {
+                    if (timer == null) {
+                        LOGGER.log(Level.INFO, "SocketThread with hash {0} has been disconnected, waiting to re-establish connection", hash);
                         timer = new Timing();
-                    } else if(timer.getTime() > timeout) {
-                        LOGGER.log(Level.INFO,"SocketThread with hash {0} did not reconnect within the given timeout", hash);
+                    } else if (timer.getTime() > timeout) {
+                        LOGGER.log(Level.INFO, "SocketThread with hash {0} did not reconnect within the given timeout", hash);
                         server.removeDisconnectedSocket(hash);
                         server.removeQueue(hash);
                     } else {
@@ -124,14 +136,14 @@ public class MessageQueue extends Thread {
                     }
                 } else {
                     state = RUNNING;
-                    LOGGER.log(Level.INFO,"Server is not set to use disconnecting functionality. MessageQueue cannot be set to state DISCONNECT. State set to RUNNING");
-                }   
+                    LOGGER.log(Level.INFO, "Server is not set to use disconnecting functionality. MessageQueue cannot be set to state DISCONNECT. State set to RUNNING");
+                }
             }
         }
         messages.clear();
         messages = null;
         timer = null;
-        LOGGER.log(Level.INFO, "MessageQueue successfully closed. State {0}",state);
+        LOGGER.log(Level.INFO, "MessageQueue successfully closed. State {0}", state);
     }
 
     private SocketThread socket() {
@@ -147,14 +159,28 @@ public class MessageQueue extends Thread {
         this.messages = messages;
     }
 
+    /**
+     * Sets the attribute timeout. Timeout is the default value in milliseconds
+     * to wait on all timing functions such as disconnection timeouts or error
+     * handling.
+     *
+     * @param timeout long to set timeout to.
+     */
     public synchronized void setTimeout(long timeout) {
         this.timeout = timeout;
     }
-    
+
+    /**
+     * Sets the attribute hash. hash is the unique identifier this
+     * {@link MessageQueue} shares with its accompanying {@link SocketThread}
+     * given to it by its owning {@link Server}.
+     *
+     * @param hash Srring to set hash to.
+     */
     public synchronized void setHash(String hash) {
         this.hash = hash;
     }
-    
+
     /**
      * Sets the attribute state. Valid states are: 0 - New 1 - Running 2 -
      * Errored 3 - Paused 4 - Disconnected 5 - Closed
@@ -174,14 +200,24 @@ public class MessageQueue extends Thread {
         return messages;
     }
 
+    /**
+     * Returns the attribute timeout.
+     *
+     * @return the long timeout.
+     */
     public long getTimeout() {
         return timeout;
     }
-    
+
+    /**
+     * Returns the attribute hash.
+     *
+     * @return the String hash.
+     */
     public String getHash() {
         return hash;
     }
-    
+
     /**
      * Returns the attribute state.
      *
@@ -230,11 +266,15 @@ public class MessageQueue extends Thread {
         LOGGER.log(Level.INFO, "Cleared MessageQueue for SocketThread {0}", hash);
     }
 
+    /**
+     * Sets the MessageQueue to state DISCONNECT and waits for a reconnection or
+     * times out if timeout is reached before a reconnection is made.
+     */
     public synchronized void queueDisconnected() {
         state = DISCONNECT;
-        LOGGER.log(Level.INFO,"Set MessageQueue for SocketThread {0} to disconnected", hash);
+        LOGGER.log(Level.INFO, "Set MessageQueue for SocketThread {0} to disconnected", hash);
     }
-    
+
     /**
      * Puts the attribute states of {@link MessageQueue} in readable form.
      *
