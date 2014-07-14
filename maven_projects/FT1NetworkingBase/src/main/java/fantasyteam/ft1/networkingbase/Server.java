@@ -3,7 +3,6 @@ package fantasyteam.ft1.networkingbase;
 import fantasyteam.ft1.Game;
 import fantasyteam.ft1.Timing;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -29,8 +28,13 @@ import java.util.logging.Logger;
  */
 public class Server extends fantasyteam.ft1.Networking {
 
+    public static final int ERROR = -1;
+    public static final int LISTEN = 0;
+    public static final int CLIENT = 1;
+    public static final int CLOSED = 2;
+    
     /**
-     * Current state of the server. Valid states are: 0 - Listen Server 1 -
+     * Current state of the server. Valid states are: -1 - Error 0 - Listen Server 1 -
      * Client 2 - Closed
      */
     protected volatile int state;
@@ -83,7 +87,7 @@ public class Server extends fantasyteam.ft1.Networking {
         queue_list = Collections.synchronizedMap(new HashMap<String, MessageQueue>());
         disconnected_sockets = new ArrayList<String>();
         listen_thread = null;
-        state = 1;
+        state = CLIENT;
     }
 
     /**
@@ -114,7 +118,7 @@ public class Server extends fantasyteam.ft1.Networking {
             }
         } else {
             listen_thread = null;
-            state = 1;
+            state = CLIENT;
         }
     }
 
@@ -158,7 +162,7 @@ public class Server extends fantasyteam.ft1.Networking {
         socket_list = null;
         queue_list = null;
         disconnected_sockets = null;
-        state = 2;
+        state = CLOSED;
         LOGGER.log(Level.INFO, "Successfully closed Server");
     }
 
@@ -170,7 +174,7 @@ public class Server extends fantasyteam.ft1.Networking {
      * {@link ListenThread}.
      */
     public synchronized void closeListenThread() throws IOException {
-        if (state == 0 && listen_thread != null) {
+        if (state == LISTEN && listen_thread != null) {
             if (listen_thread.getRun()) {
                 LOGGER.log(Level.INFO, "Attempting to close running listen_thread on port {0}", listen_thread.getPort());
                 listen_thread.setRun(false);
@@ -306,11 +310,11 @@ public class Server extends fantasyteam.ft1.Networking {
         Timing timer = new Timing();
         try {
             listen_thread = new ListenThread(this);
-            state = 0;
+            state = LISTEN;
             started = true;
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Could not create ListenThread on port {0}", port);
-            state = -1;
+            state = ERROR;
             throw new IOException("Could not create ListenThread on port" + port + ". Exception received: " + e);
         }
     }
@@ -400,7 +404,7 @@ public class Server extends fantasyteam.ft1.Networking {
     @Override
     public synchronized void disconnect(String hash) {
         if (socket_list != null && socket_list.containsKey(hash)) {
-            if (socket_list.get(hash).getRun() >= 1 && socket_list.get(hash).getRun() <= 3) {
+            if (socket_list.get(hash).getRun() == SocketThread.RUNNING || socket_list.get(hash).getRun() == SocketThread.CONFIRMED || socket_list.get(hash).getRun() == SocketThread.ERROR) {
                 LOGGER.log(Level.INFO, "Attempting to close running SocketThread with hash {0}", hash);
             } else {
                 LOGGER.log(Level.INFO, "Attempting to close non-running SocketThread with hash {0}", hash);
@@ -415,7 +419,7 @@ public class Server extends fantasyteam.ft1.Networking {
             if (use_disconnected_sockets) {
                 disconnected_sockets.add(hash);
                 if (use_message_queues && queue_list.containsKey(hash)) {
-                    queue_list.get(hash).setRun(4);
+                    queue_list.get(hash).queueDisconnected();
                 }
                 LOGGER.log(Level.INFO, "Closed SocketThread's hash has been added to disconnected sockets list");
             } else {
@@ -479,7 +483,7 @@ public class Server extends fantasyteam.ft1.Networking {
         boolean started = false;
         Timing timer = new Timing();
         while (!started && socket_list.containsKey(hash)) {
-            if (socket_list.get(hash).getRun() < 1) {
+            if (socket_list.get(hash).getRun() == SocketThread.NEW) {
                 timer.waitTime(5);
                 if (timer.getTime() > 5000) {
                     started = true;
@@ -499,7 +503,7 @@ public class Server extends fantasyteam.ft1.Networking {
         boolean started = false;
         Timing timer = new Timing();
         while (!started) {
-            if (queue_list.get(hash).getRun() < 1) {
+            if (queue_list.get(hash).getRun() == MessageQueue.NEW) {
                 timer.waitTime(5);
                 if (timer.getTime() > 5000) {
                     started = true;
@@ -779,7 +783,7 @@ public class Server extends fantasyteam.ft1.Networking {
      * {@link ListenThread}.
      */
     public void startThread() throws IOException {
-        if (state == 0) {
+        if (state == LISTEN) {
             listen_thread.start();
             boolean started = false;
             Timing timer = new Timing();
@@ -820,7 +824,7 @@ public class Server extends fantasyteam.ft1.Networking {
      * is started.
      */
     public String listen() throws IOException {
-        if (state == 0) {
+        if (state == LISTEN) {
             String hash = "";
             Socket temp_socket = listen_thread.getServerSocket().accept();
             LOGGER.log(Level.INFO,"Connection detected on ListenThread. ListenThread running is set to {0}",listen_thread.getRun());
@@ -883,9 +887,9 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     public String toString(String ch) {
         String to_string = ch;
-        if (state == 0) {
+        if (state == LISTEN) {
             to_string += "Listen Server ";
-        } else if (state == 2) {
+        } else if (state == CLOSED) {
             to_string += "Closed Server ";
         } else {
             to_string += "Server ";
@@ -947,7 +951,7 @@ public class Server extends fantasyteam.ft1.Networking {
     @Override
     protected void sendMessage(String message, List<String> clientIds) {
         for (String hash : clientIds) {
-            if (socket_list.containsKey(hash) && socket_list.get(hash).getRun() <= 3 && socket_list.get(hash).getRun() >= 1) {
+            if (socket_list.containsKey(hash) && (socket_list.get(hash).getRun() == SocketThread.RUNNING || socket_list.get(hash).getRun() == SocketThread.CONFIRMED || socket_list.get(hash).getRun() == SocketThread.ERROR)) {
                 if (use_message_queues) {
                     queue_list.get(hash).queueMessage(message);
                 } else {
@@ -968,7 +972,7 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     @Override
     protected void sendMessage(String message, String clientId) {
-        if (socket_list.containsKey(clientId) && socket_list.get(clientId).getRun() <= 3 && socket_list.get(clientId).getRun() >= 1) {
+        if (socket_list.containsKey(clientId) && (socket_list.get(clientId).getRun() == SocketThread.RUNNING || socket_list.get(clientId).getRun() == SocketThread.CONFIRMED || socket_list.get(clientId).getRun() == SocketThread.ERROR)) {
             if (use_message_queues) {
                 queue_list.get(clientId).queueMessage(message);
             } else {

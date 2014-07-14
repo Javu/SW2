@@ -15,6 +15,12 @@ import java.util.logging.Logger;
  */
 public class SocketThread extends Thread {
 
+    public static final int NEW = 0;
+    public static final int RUNNING = 1;
+    public static final int CONFIRMED = 2;
+    public static final int ERROR = 3;
+    public static final int CLOSED = 4;
+    
     /**
      * {@link Sock} used to hold Socket connection and interface with it.
      */
@@ -57,7 +63,7 @@ public class SocketThread extends Thread {
         socket = sock;
         this.server = server;
         this.hash = hash;
-        state = 0;
+        state = NEW;
     }
 
     /**
@@ -67,10 +73,10 @@ public class SocketThread extends Thread {
      */
     @Override
     public void run() {
-        if (state == 0) {
-            state = 1;
+        if (state == NEW) {
+            state = RUNNING;
         }
-        while (state == 1 || state == 2) {
+        while (state == RUNNING || state == CONFIRMED) {
             boolean read = false;
             String message = "";
             // Block and wait for input from the socket
@@ -78,7 +84,7 @@ public class SocketThread extends Thread {
                 message = socket.readMessage();
                 read = true;
             } catch (IOException e) {
-                if (state == 1 || state == 2) {
+                if (state == RUNNING || state == CONFIRMED) {
                     if (server.getSocketList().containsKey(hash)) {
                         LOGGER.log(Level.SEVERE, "Could not read from socket. Hash {0}", hash);
                     }
@@ -92,7 +98,7 @@ public class SocketThread extends Thread {
                 } else {
                     LOGGER.log(Level.INFO, "Message received: {0}", message);
                 }
-                if (state > 0) {
+                if (state != NEW) {
                     server.receiveMessage(message, hash);
                 }
             }
@@ -119,6 +125,7 @@ public class SocketThread extends Thread {
                 throw new IOException("Failed to close Sock socket in SocketThread");
             }
         } else {
+            state = CLOSED;
             LOGGER.log(Level.INFO, "SocketThread has successfully closed");
         }
     }
@@ -196,10 +203,10 @@ public class SocketThread extends Thread {
      */
     public synchronized void unblock() throws IOException {
         boolean running = false;
-        if (state >= 1 && state <= 3) {
+        if (state == RUNNING || state == CONFIRMED || state == ERROR) {
             running = true;
         }
-        state = 4;
+        state = CLOSED;
         if (socket != null) {
             socket.close();
             socket = null;

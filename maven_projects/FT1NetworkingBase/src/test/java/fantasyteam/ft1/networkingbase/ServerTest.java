@@ -962,7 +962,13 @@ public class ServerTest {
         Assert.assertEquals("TEST2", test_queue.get(1), "MessageQueue was not paused");
         
         server2.getQueueList().get(hash).resumeQueue();
-        time.waitTime(wait);
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while(loop) {
+            if(server2.getQueueList().get(hash).getMessages().isEmpty() || new_timer.getTime() > 5000) {
+                loop = false;
+            }
+        }
         test_queue = server2.getQueueList().get(hash).getMessages();
         Assert.assertEquals(server2.getQueueList().get(hash).getRun(), 1, "MessageQueue state was not changed to 1 (Running)");
         Assert.assertTrue(test_queue.isEmpty(), "MessageQueue was not resumed");

@@ -23,6 +23,13 @@ import java.util.logging.Logger;
  */
 public class MessageQueue extends Thread {
 
+    public static final int NEW = 0;
+    public static final int RUNNING = 1;
+    public static final int ERROR = 2;
+    public static final int PAUSED = 3;
+    public static final int DISCONNECT = 4;
+    public static final int CLOSED = 5;
+    
     /**
      * ArraList<String> used to queue messages to be sent on the {@link Sock}.
      */
@@ -63,14 +70,14 @@ public class MessageQueue extends Thread {
         this.hash = hash;
         timer = null;
         timeout = 300000;
-        state = 0;
+        state = NEW;
     }
 
     /**
      * Closes the {@link MessageQueue}. Sets the state to 4 (Closed).
      */
     public synchronized void close() {
-        state = 5;
+        state = CLOSED;
     }
 
     /**
@@ -79,20 +86,20 @@ public class MessageQueue extends Thread {
      */
     @Override
     public void run() {
-        state = 1;
+        state = RUNNING;
         while (state >= 1 && state <= 4) {
-            if (state < 3) {
-                if (!messages.isEmpty() && server.getSocketList() != null && server.getSocketList().containsKey(hash) && socket().getRun() >= 1 && socket().getRun() <= 3) {
+            if (state == RUNNING || state == ERROR) {
+                if (!messages.isEmpty() && server.getSocketList() != null && server.getSocketList().containsKey(hash) && (socket().getRun() == SocketThread.RUNNING || socket().getRun() == SocketThread.CONFIRMED || socket().getRun() == SocketThread.ERROR)) {
                     try {
                         LOGGER.log(Level.INFO, "Attempting to send message {0} through MessageQueue for SocketThread {1}", new Object[]{messages.get(0), hash});
                         socket().getSocket().sendMessage(messages.get(0));
                         messages.remove(0);
-                        state = 1;
+                        state = RUNNING;
                         if (timer != null) {
                             timer = null;
                         }
                     } catch (IOException e) {
-                        state = 2;
+                        state = ERROR;
                         if (timer == null) {
                             timer = new Timing();
                         }
@@ -103,7 +110,7 @@ public class MessageQueue extends Thread {
                         }
                     }
                 }
-            } else if(state == 4) {
+            } else if(state == DISCONNECT) {
                 if(server.getUseDisconnectedSockets()) {
                     if(timer == null) {
                         LOGGER.log(Level.INFO,"SocketThread with hash {0} has been disconnected, waiting to re-establish connection", hash);
@@ -116,15 +123,15 @@ public class MessageQueue extends Thread {
                         messages.clear();
                     }
                 } else {
-                    state = 1;
-                    LOGGER.log(Level.INFO,"Server is not set to use disconnecting functionality. MessageQueue cannot be set to state 4. State set to 1");
+                    state = RUNNING;
+                    LOGGER.log(Level.INFO,"Server is not set to use disconnecting functionality. MessageQueue cannot be set to state DISCONNECT. State set to RUNNING");
                 }   
             }
         }
         messages.clear();
         messages = null;
         timer = null;
-        LOGGER.log(Level.INFO, "MessageQueue successfully closed");
+        LOGGER.log(Level.INFO, "MessageQueue successfully closed. State {0}",state);
     }
 
     private SocketThread socket() {
@@ -190,7 +197,7 @@ public class MessageQueue extends Thread {
      *
      * @param message the String to queue in messages.
      */
-    public void queueMessage(String message) {
+    public synchronized void queueMessage(String message) {
         LOGGER.log(Level.INFO, "Queued message {0} for SocketThread {1}", new Object[]{message, hash});
         messages.add(message);
     }
@@ -200,8 +207,8 @@ public class MessageQueue extends Thread {
      * 3 the queue will still loop however it will not try to process any
      * messages.
      */
-    public void pauseQueue() {
-        state = 3;
+    public synchronized void pauseQueue() {
+        state = PAUSED;
         LOGGER.log(Level.INFO, "Paused MessageQueue for SocketThread {0}", hash);
     }
 
@@ -209,8 +216,8 @@ public class MessageQueue extends Thread {
      * Resumes the {@link MessageQueue} by setting its state to 1. When state ==
      * 1 the queue will loop and process messages as normal.
      */
-    public void resumeQueue() {
-        state = 1;
+    public synchronized void resumeQueue() {
+        state = RUNNING;
         LOGGER.log(Level.INFO, "Resumed MessageQueue for SocketThread {0}", hash);
     }
 
@@ -218,11 +225,16 @@ public class MessageQueue extends Thread {
      * Clears the ArrayList(String) messages. All messages still queued and not
      * handled will be discarded.
      */
-    public void clearQueue() {
+    public synchronized void clearQueue() {
         messages.clear();
         LOGGER.log(Level.INFO, "Cleared MessageQueue for SocketThread {0}", hash);
     }
 
+    public synchronized void queueDisconnected() {
+        state = DISCONNECT;
+        LOGGER.log(Level.INFO,"Set MessageQueue for SocketThread {0} to disconnected", hash);
+    }
+    
     /**
      * Puts the attribute states of {@link MessageQueue} in readable form.
      *
