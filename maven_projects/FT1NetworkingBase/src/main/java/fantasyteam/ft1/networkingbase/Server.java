@@ -28,14 +28,32 @@ import java.util.logging.Logger;
  */
 public class Server extends fantasyteam.ft1.Networking {
 
+    /**
+     * Valid state for {@link Server}. Used when there is an error starting the
+     * {@link Server}.
+     */
     public static final int ERROR = -1;
+
+    /**
+     * Valid state for {@link Server}. Used when it is set to use
+     * {@link ListenThread} to listen on a port for new connections.
+     */
     public static final int LISTEN = 0;
+
+    /**
+     * Valid state for {@link Server}. Used when it is not set to use
+     * {@link ListenThread} to listen on a port for new connections.
+     */
     public static final int CLIENT = 1;
+
+    /**
+     * Valid state for {@link Server}. Used when it has closed.
+     */
     public static final int CLOSED = 2;
 
     /**
-     * Current state of the server. Valid states are: -1 - Error 0 - Listen
-     * Server 1 - Client 2 - Closed
+     * Current state of the server. Valid states are: -1 - ERROR 0 - LISTEN 1 -
+     * CLIENT 2 - CLOSED
      */
     protected volatile int state;
     /**
@@ -75,7 +93,7 @@ public class Server extends fantasyteam.ft1.Networking {
     /**
      * Logger for logging important actions and exceptions.
      */
-    protected static final Logger LOGGER = Logger.getLogger(Server.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 
     /**
      * Takes an instance of Game as a parameter.
@@ -405,7 +423,7 @@ public class Server extends fantasyteam.ft1.Networking {
 
     /**
      * Returns the int representing the current state of the {@link Server}.
-     * Valid states are: 0 - Listen Server 1 - Client 2 - Closed
+     * Valid states are: -1 - ERROR 0 - LISTEN 1 - CLIENT 2 - CLOSED
      *
      * @return the int representing the current state of the {@link Server}.
      */
@@ -662,7 +680,8 @@ public class Server extends fantasyteam.ft1.Networking {
      * also starts the {@link MessageQueue} using the startQueue(String hash)
      * function.
      *
-     * @param hash The String key to associate with the new {@link MessageQueue}.
+     * @param hash The String key to associate with the new
+     * {@link MessageQueue}.
      */
     public synchronized void addQueue(String hash) {
         if (use_message_queues) {

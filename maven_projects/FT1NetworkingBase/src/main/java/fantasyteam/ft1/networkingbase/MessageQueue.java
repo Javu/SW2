@@ -23,11 +23,40 @@ import java.util.logging.Logger;
  */
 public class MessageQueue extends Thread {
 
+    /**
+     * Valid state for {@link MessageQueue}. Used when the queue has just been
+     * constructed but has not started run() yet.
+     */
     public static final int NEW = 0;
+
+    /**
+     * Valid state for {@link MessageQueue}. Used when the queue is meant to be
+     * running normally.
+     */
     public static final int RUNNING = 1;
+
+    /**
+     * Valid state for {@link MessageQueue}. Used when there is an error sending
+     * messages through the socket.
+     */
     public static final int ERROR = 2;
+
+    /**
+     * Valid state for {@link MessageQueue}. Used when the queue is meant to be
+     * paused.
+     */
     public static final int PAUSED = 3;
+
+    /**
+     * Valid state for {@link MessageQueue}. Used when its accompanying
+     * {@link SocketThread} on the {@link Server} has been disconnected.
+     */
     public static final int DISCONNECT = 4;
+
+    /**
+     * Valid state for {@link MessageQueue}. Used when it is flagged to be
+     * closed.
+     */
     public static final int CLOSED = 5;
 
     /**
@@ -182,8 +211,8 @@ public class MessageQueue extends Thread {
     }
 
     /**
-     * Sets the attribute state. Valid states are: 0 - New 1 - Running 2 -
-     * Errored 3 - Paused 4 - Disconnected 5 - Closed
+     * Sets the attribute state. Valid states are: 0 - NEW 1 - RUNNING 2 - ERROR
+     * 3 - PAUSED 4 - DISCONNECT 5 - CLOSED.
      *
      * @param state the int to set state to.
      */

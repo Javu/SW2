@@ -13,28 +13,53 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
+ * Unit tests for the {@link MessageQueue} class. Please note, a lot of this
+ * classes testing is also handled in the test class ServerTest.
  *
  * @author Javu
  */
 public class MessageQueueTest {
-    
-    private Server server1;
-    private Server server2;
-    int port;
-    boolean exception;
-    String hash;
-    Timing time = new Timing();
+
     /**
-     * This int is the parameter used when running the waitTime function in
+     * This Server is built as a listen Server by the BeforeMethod.
+     */
+    private Server server1;
+    /**
+     * This Server is built as a client Server by the BeforeMethod. Use this
+     * Server to create new connections to port for testing.
+     */
+    private Server server2;
+    /**
+     * Port number used to listen on.
+     */
+    private int port;
+    /**
+     * This boolean is set to true in any test if an exception is found. The
+     * test should the assert that this boolean is false to ensure no exceptions
+     * were encountered during testing.
+     */
+    private boolean exception;
+    /**
+     * String used to store the identifier given to the SocketThread created in
+     * BeforeMethod by running server2.addSocket(). Can be used to get the
+     * MessageQueue stored on this Server.
+     */
+    private String hash;
+    /**
+     * Global Timing for use by any test if real time testing is needed.
+     */
+    private Timing time = new Timing();
+    /**
+     * This long is the parameter used when running the waitTime function in
      * these tests. Change this value to increase or decrease the time waited
      * when waitTime is called.
      */
-    long wait = 10;
+    private long wait = 10;
 
     /**
      * Logger for logging important actions and exceptions.
      */
-    protected static final Logger LOGGER = Logger.getLogger(MessageQueueTest.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(MessageQueueTest.class.getName());
 
     /**
      * waitTime tells the test to wait for a specified amount of time, which is
@@ -52,31 +77,35 @@ public class MessageQueueTest {
         }
     }
 
+    /**
+     * Constructs both {@link Server}s, starts the {@link ListenThread} and
+     * creates a connection between the {@link Server}s.
+     *
+     * @throws IOException if {@link ListenThread} fails to start or the
+     * connection fails to connect.
+     */
     @BeforeMethod
     private void setupQueue() throws IOException {
         port = 22222;
         exception = false;
         Game game = EasyMock.createMock(Game.class);
-        LOGGER.log(Level.INFO,"Building Server1");
+        LOGGER.log(Level.INFO, "Building Server1");
         server1 = new Server(game, port, true);
-        LOGGER.log(Level.INFO,"Building Server2");
+        LOGGER.log(Level.INFO, "Building Server2");
         server2 = new Server(game, port, false);
         server1.setUseMessageQueues(true);
         server2.setUseMessageQueues(true);
-        try {
-            server1.startThread();
-        } catch (IOException ex) {
-            exception = true;
-        }
+        server1.startThread();
         time.waitTime(wait);
-        try {
-            hash = server2.addSocket("127.0.0.1",port);
-        } catch (IOException ex) {
-            exception = true;
-        }
+        hash = server2.addSocket("127.0.0.1", port);
         time.waitTime(wait);
     }
-    
+
+    /**
+     * Closes both {@link Server}s and frees up port ready for the next test.
+     *
+     * @throws IOException if either {@link Server} fails to close.
+     */
     @AfterMethod
     private void deleteQueue() throws IOException {
         LOGGER.log(Level.INFO, "+++++ CLOSING server2 (CLIENT SERVER) +++++");
@@ -86,7 +115,11 @@ public class MessageQueueTest {
         server1.close();
         time.waitTime(wait);
     }
-    
+
+    /**
+     * Tests the {@link MessageQueue}.setMessages(ArrayList(String) messages)
+     * function and ensures it changes the value of messages correctly.
+     */
     @Test
     public void testMessageQueueSetMessages() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetMessages -----");
@@ -98,16 +131,24 @@ public class MessageQueueTest {
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetMessages COMPLETED -----");
     }
-    
+
+    /**
+     * Tests the {@link MessageQueue}.setRun(int state) function and ensures it
+     * sets the value of state correctly.
+     */
     @Test
     public void testMessageQueueSetRun() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetRun -----");
-        server2.getQueueList().get(hash).setRun(2);
-        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), 2, "MessageQueue.run was not set to 2");
+        server2.getQueueList().get(hash).setRun(MessageQueue.ERROR);
+        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), MessageQueue.ERROR, "MessageQueue.run was not set to 2");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetRun COMPLETED -----");
     }
-    
+
+    /**
+     * Tests the {@link MessageQueue}.setHash(String hash) function and ensures
+     * it sets the value of hash correctly.
+     */
     @Test
     public void testMessageQueueSetHash() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetHash -----");
@@ -116,7 +157,11 @@ public class MessageQueueTest {
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetHash COMPLETED -----");
     }
-    
+
+    /**
+     * Tests the {@link MessageQueue}.getTimeout() function and ensures it
+     * returns the correct value of timeout.
+     */
     @Test
     public void testMessageQueueGetTimeout() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueGetTimeout -----");
@@ -129,7 +174,11 @@ public class MessageQueueTest {
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueueGetTimeout COMPLETED -----");
     }
-    
+
+    /**
+     * Tests the {@link MessageQueue}.getHash() function and ensures it returns
+     * the correct value of hash.
+     */
     @Test
     public void testMessageQueueGetHash() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueGetHash -----");
@@ -139,40 +188,57 @@ public class MessageQueueTest {
         LOGGER.log(Level.INFO, "----- TEST testMessageQueueGetHash COMPLETED -----");
     }
 
+    /**
+     * Tests the {@link MessageQueue}.pauseQueue() and
+     * {@link MessageQueue}.clearQueue() functions and ensures that messages
+     * will not be sent when state is set to {@link MessageQueue}.PAUSED and
+     * that the messages ArrayList is cleared when clearQueue is run.
+     */
     @Test
     public void testMessageQueuePauseAndClearQueue() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueuePauseAndClearQueue -----");
         server2.getQueueList().get(hash).pauseQueue();
-        server2.sendMessage("TEST",hash);
-        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), 3, "MessageQueue.run was not set to 3 (paused)");
+        server2.sendMessage("TEST", hash);
+        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), MessageQueue.PAUSED, "MessageQueue.run was not set to 3 (paused)");
         Assert.assertEquals(server2.getQueueList().get(hash).getMessages().get(0), "TEST", "MessageQueue was not paused");
         server2.getQueueList().get(hash).clearQueue();
         Assert.assertTrue(server2.getQueueList().get(hash).getMessages().isEmpty(), "MessageQueue was not cleared");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueuePauseAndClearQueue COMPLETED -----");
     }
-    
+
+    /**
+     * Tests the {@link MessageQueue}.pauseQueue() and
+     * {@link MessageQueue}.resumeQueue() functions and ensures that messages
+     * will not be sent when state is set to {@link MessageQueue}.PAUSED and
+     * that messages will start sending again when state is set to
+     * {@link MessageQueue}.RUNNING.
+     */
     @Test
     public void testMessageQueuePauseAndResumeQueue() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueuePauseAndResumeQueue -----");
         server2.getQueueList().get(hash).pauseQueue();
-        server2.sendMessage("TEST",hash);
-        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), 3, "MessageQueue.run was not set to 3 (paused)");
+        server2.sendMessage("TEST", hash);
+        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), MessageQueue.PAUSED, "MessageQueue.run was not set to 3 (paused)");
         Assert.assertEquals(server2.getQueueList().get(hash).getMessages().get(0), "TEST", "MessageQueue was not paused");
         server2.getQueueList().get(hash).resumeQueue();
         boolean loop = true;
         Timing new_timer = new Timing();
-        while(loop) {
-            if(server2.getQueueList().get(hash).getMessages().isEmpty() || new_timer.getTime() > 5000) {
+        while (loop) {
+            if (server2.getQueueList().get(hash).getMessages().isEmpty() || new_timer.getTime() > 5000) {
                 loop = false;
             }
         }
-        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), 1, "MessageQueue.run was not set to 1 (resume)");
+        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), MessageQueue.RUNNING, "MessageQueue.run was not set to 1 (resume)");
         Assert.assertTrue(server2.getQueueList().get(hash).getMessages().isEmpty(), "Messages in MessageQueue were not sent after queue was resumed");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueuePauseAndResumeQueue COMPLETED -----");
     }
-    
+
+    /**
+     * Tests the {@link MessageQueue}.toString() function. Check the output from
+     * LOGGER to assess human readability.
+     */
     @Test
     public void testToStringMessageQueue() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringMessageQueue -----");

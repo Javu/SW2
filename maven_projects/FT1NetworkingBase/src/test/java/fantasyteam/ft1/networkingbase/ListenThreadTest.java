@@ -12,24 +12,44 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
+ * Unit tests for the {@link ListenThread} class. Please note, a lot of this
+ * classes testing is also handled in the test class ServerTest.
  *
  * @author javu
  */
 public class ListenThreadTest {
-    
-    private Server server;
-    private int port;
-    private boolean exception;
-    Timing time = new Timing();
+
     /**
-     * This int is the parameter used when running the waitTime function in
+     * Server class used for all ListenThread testing. This Server is built in
+     * the BeforeMethod and the ListenThread is started ready for testing.
+     */
+    private Server server;
+    /**
+     * Port number used to listen on.
+     */
+    private int port;
+    /**
+     * This boolean is set to true in any test if an exception is found. The
+     * test should the assert that this boolean is false to ensure no exceptions
+     * were encountered during testing.
+     */
+    private boolean exception;
+    /**
+     * Global Timing for use by any test if real time testing is needed.
+     */
+    private Timing time = new Timing();
+    /**
+     * This long is the parameter used when running the waitTime function in
      * these tests. Change this value to increase or decrease the time waited
      * when waitTime is called.
      */
-    long wait = 10;
-    
-    protected static final Logger LOGGER = Logger.getLogger(ListenThreadTest.class.getName());
-    
+    private long wait = 10;
+
+    /**
+     * Logger for logging important actions and exceptions.
+     */
+    private static final Logger LOGGER = Logger.getLogger(ListenThreadTest.class.getName());
+
     /**
      * waitTime tells the test to wait for a specified amount of time, which is
      * useful when dealing with sockets and connections as they need to be given
@@ -45,23 +65,39 @@ public class ListenThreadTest {
             Thread.currentThread().interrupt();
         }
     }
-    
+
+    /**
+     * This is run before every test to ensure basic setup is done ready for
+     * testing.
+     *
+     * @throws IOException if {@link ListenThread} fails to start.
+     */
     @BeforeMethod
     private void setupListenThread() throws IOException {
         port = 22224;
         Game game = EasyMock.createMock(Game.class);
-        server = new Server(game,port,true);
+        server = new Server(game, port, true);
         server.startThread();
         time.waitTime(wait);
         exception = false;
     }
-    
+
+    /**
+     * Closes the {@link Server} ready to be reconstructed for the next test and
+     * freeing up the port number.
+     *
+     * @throws IOException if {@link Server} fails to close.
+     */
     @AfterMethod
     private void deleteListenThread() throws IOException {
         server.close();
         time.waitTime(wait);
     }
-    
+
+    /**
+     * Tests the {@link ListenThread}.toString() function. Check the output from
+     * LOGGER to assess human readability.
+     */
     @Test
     public void testToString() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToString -----");

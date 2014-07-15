@@ -15,12 +15,38 @@ import java.util.logging.Logger;
  */
 public class SocketThread extends Thread {
 
+    /**
+     * Valid state for {@link SocketThread}. Used when the thread has just been
+     * constructed but has not started run() yet.
+     */
     public static final int NEW = 0;
+
+    /**
+     * Valid state for {@link SocketThread}. Used when the thread is meant to be
+     * running normally but has not received an acknowledgment from remote the
+     * {@link Server} that has finished creating the connection on it's end.
+     */
     public static final int RUNNING = 1;
+
+    /**
+     * Valid state for {@link SocketThread}. Used when the thread is meant to be
+     * running normally and has received an acknowledgment from remote the
+     * {@link Server} that has finished creating the connection on it's end.
+     */
     public static final int CONFIRMED = 2;
+
+    /**
+     * Valid state for {@link SocketThread}. Used when there is an error reading
+     * messages through the socket.
+     */
     public static final int ERROR = 3;
+
+    /**
+     * Valid state for {@link SocketThread}. Used when it is flagged to be
+     * closed.
+     */
     public static final int CLOSED = 4;
-    
+
     /**
      * {@link Sock} used to hold Socket connection and interface with it.
      */
@@ -34,10 +60,8 @@ public class SocketThread extends Thread {
      */
     private volatile String hash;
     /**
-     * int used to determine the state of the class. Valid states are: 0 =
-     * Thread not started yet 1 = Thread started, connection not confirmed on
-     * other end 2 = Thread started, connection confirmed on other end 3 =
-     * Thread has finished.
+     * int used to determine the state of the class. Valid states are: 0 - NEW 1
+     * - RUNNING 2 - CONFIRMED 3 - ERROR 4 - CLOSED
      */
     private volatile int state;
 
@@ -94,7 +118,6 @@ public class SocketThread extends Thread {
                 if (message == null) {
                     LOGGER.log(Level.INFO, "Socket has been disconnected, attempting to close socket on Server. Hash {0}", hash);
                     message = "disconnect";
-                    //state = 4;
                 } else {
                     LOGGER.log(Level.INFO, "Message received: {0}", message);
                 }
@@ -184,8 +207,8 @@ public class SocketThread extends Thread {
     }
 
     /**
-     * Sets the attribute state. Setting state not equal to 1 or 2 while the thread is
-     * started will cause the thread to close.
+     * Sets the attribute state. Setting state not equal to 1 or 2 while the
+     * thread is started will cause the thread to close.
      *
      * @param state int to set state to.
      */
@@ -199,7 +222,8 @@ public class SocketThread extends Thread {
      * {@link SocketThread} to exit its loop and terminate by setting it's state
      * to 4.
      *
-     * @throws IOException if an exception is encountered when closing the {@link Sock}.
+     * @throws IOException if an exception is encountered when closing the
+     * {@link Sock}.
      */
     public synchronized void unblock() throws IOException {
         boolean running = false;
