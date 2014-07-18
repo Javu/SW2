@@ -6,13 +6,13 @@ import org.testng.annotations.Test;
 
 /**
  *
- * @author Study
+ * @author Javu
  */
 public class TimingTest {
     
     private Timing timer;
     
-    protected static final Logger LOGGER = Logger.getLogger(TimingTest.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(TimingTest.class.getName());
     
     @BeforeMethod
     private void setupTiming() {
