@@ -24,6 +24,9 @@ public class ListenThread extends Thread {
      * {@link ListenThread}.
      */
     private volatile Server server;
+    /**
+     * Port number to listen on.
+     */
     private volatile int port;
     /**
      * Boolean used to determine if the thread is running or not.

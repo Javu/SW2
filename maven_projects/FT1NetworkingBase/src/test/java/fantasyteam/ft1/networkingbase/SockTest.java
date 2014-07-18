@@ -53,6 +53,11 @@ public class SockTest {
      * when waitTime is called.
      */
     private long wait = 10;
+    /**
+     * The time waited before asserting that a function did not work as
+     * intended.
+     */
+    private long timeout = 5000;
 
     /**
      * Logger for logging important actions and exceptions.
@@ -76,6 +81,76 @@ public class SockTest {
     }
 
     /**
+     * Waits for listen_thread to set run to true. Use this when running
+     * Server.startThread and you want to ensure the ListenThread is ready to
+     * accept connections before continuing.
+     *
+     * @param server The Server to check the listen_thread on.
+     */
+    private void waitListenThreadStart(Server server) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getListenThread().getRun() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertTrue(server.getListenThread().getRun(), "ListenThread did not start in time");
+    }
+
+    /**
+     * Ensures the socket_list attribute of Server is not empty.
+     *
+     * @param server The Server to check socket_list on.
+     */
+    private void waitSocketThreadAddNotEmpty(Server server) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (!server.getSocketList().isEmpty() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertFalse(server.getSocketList().isEmpty(), "SocketThread was not constructed");
+    }
+
+    /**
+     * Checks the state of the specified Server. Use this when waiting for a
+     * Server to finish closing.
+     *
+     * @param server The Server to check the state of.
+     * @param state The state expected on the Server.
+     */
+    private void waitServerState(Server server, int state) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getState() == state || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertEquals(server.getState(), state, "Server state was not set in time");
+    }
+
+    /**
+     * Ensures that the specified Sock is closed.
+     *
+     * @param sock The Sock to check if closed.
+     */
+    private void waitSockClose(Sock sock) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if ((sock.getSocket() == null && sock.getIn() == null && sock.getOut() == null) || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertEquals(sock.getSocket(), null, "Sock socket not set to null");
+        Assert.assertEquals(sock.getIn(), null, "Sock in not set to null");
+        Assert.assertEquals(sock.getOut(), null, "Sock out not set to null");
+    }
+
+    /**
      * Constructs {@link Server}, starts the {@link ListenThread} and constructs
      * a new {@link Sock} connected to the {@link Server}.
      *
@@ -88,11 +163,10 @@ public class SockTest {
         port = 22227;
         Game game = EasyMock.createMock(Game.class);
         server = new Server(game, port, true);
-        time.waitTime(wait);
         server.startThread();
-        time.waitTime(wait);
+        waitListenThreadStart(server);
         sock = new Sock(ip, port);
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server);
         exception = false;
     }
 
@@ -106,9 +180,9 @@ public class SockTest {
     @AfterMethod
     private void deleteSock() throws IOException {
         sock.close();
-        time.waitTime(wait);
+        waitSockClose(sock);
         server.close();
-        time.waitTime(wait);
+        waitServerState(server, Server.CLOSED);
     }
 
     /**
@@ -124,10 +198,11 @@ public class SockTest {
         Assert.assertEquals(sock1.getIn(), null, "Value of in in Sock not set to null");
         LOGGER.log(Level.INFO, "----- TEST testDefaultConstructor COMPLETED -----");
         try {
-            sock.close();
+            sock1.close();
         } catch (IOException ex) {
             exception = true;
         }
+        waitSockClose(sock1);
         Assert.assertFalse(exception, "Exception found");
     }
 

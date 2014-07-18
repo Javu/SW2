@@ -51,7 +51,8 @@ public class Sock {
      * Takes a Socket as an argument.
      *
      * @param socket socket used to construct the Sock with.
-     * @throws java.io.IOException if an exception is encountered when starting the new PrinterWriter or BufferedReader. 
+     * @throws java.io.IOException if an exception is encountered when starting
+     * the new PrinterWriter or BufferedReader.
      */
     public Sock(Socket socket) throws IOException {
         this.socket = socket;
@@ -66,7 +67,8 @@ public class Sock {
      *
      * @param ip IP address to connect the socket to.
      * @param port Port number to connect to.
-     * @throws IOException if an exception is encountered when starting the new Socket, PrinterWriter or BufferedReader.
+     * @throws IOException if an exception is encountered when starting the new
+     * Socket, PrinterWriter or BufferedReader.
      */
     public Sock(String ip, int port) throws IOException {
         socket = new Socket(ip, port);
@@ -78,13 +80,14 @@ public class Sock {
     /**
      * Closes the {@link Sock}.
      *
-     * @throws IOException if an exception is encountered when closing the Socket.
+     * @throws IOException if an exception is encountered when closing the
+     * Socket.
      */
     public synchronized void close() throws IOException {
         LOGGER.log(Level.INFO, "Attempting to close Sock");
-        if(socket != null) {
-           socket.close();
-           socket = null; 
+        if (socket != null) {
+            socket.close();
+            socket = null;
         }
         in = null;
         out = null;
@@ -92,36 +95,37 @@ public class Sock {
 
     /**
      * Returns the value of socket.
-     * 
+     *
      * @return the Socket socket.
      */
     public Socket getSocket() {
         return socket;
     }
-    
+
     /**
      * Returns the value of out.
-     * 
+     *
      * @return the PrintWriter out.
      */
     public PrintWriter getOut() {
         return out;
     }
-    
+
     /**
      * Returns the value of in.
-     * 
+     *
      * @return the BufferedReader in.
      */
     public BufferedReader getIn() {
         return in;
     }
-    
+
     /**
      * Sends a string message through the PrintWriter {@link out}.
      *
      * @param message String message to send through the connection.
-     * @throws IOException if an exception is encountered when sending a message through out.
+     * @throws IOException if an exception is encountered when sending a message
+     * through out.
      */
     public void sendMessage(String message) throws IOException {
         out.println(message);
@@ -132,14 +136,15 @@ public class Sock {
      * Reads message received through the BufferedReader {@link in}.
      *
      * @return message received through connection.
-     * @throws IOException if an exception is encountered when reading a message from in.
+     * @throws IOException if an exception is encountered when reading a message
+     * from in.
      */
     public String readMessage() throws IOException {
         String message = in.readLine();
         LOGGER.log(Level.INFO, "Read message {0}", message);
         return message;
     }
-    
+
     /**
      * Puts the attribute states of {@link Sock} in readable form.
      *
@@ -150,16 +155,16 @@ public class Sock {
         String to_string = toString("");
         return to_string;
     }
-    
+
     /**
-     * Puts the attribute states of {@link Sock} in readable form. Takes
-     * String input to assist formatting. Useful to add special characters to
-     * assist formatting such as \t or \n.
+     * Puts the attribute states of {@link Sock} in readable form. Takes String
+     * input to assist formatting. Useful to add special characters to assist
+     * formatting such as \t or \n.
      *
      * @param ch Adds the String ch to the start of each line in the String.
      * @return Attributes of {@link Sock} in a readable String form.
      */
-        public String toString(String ch) {
+    public String toString(String ch) {
         String to_string = ch + "socket: " + socket.toString() + "\n" + ch + "out: " + out.toString() + "\n" + ch + "in: " + in.toString();
         return to_string;
     }

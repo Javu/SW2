@@ -144,12 +144,12 @@ public class SocketThread extends Thread {
             try {
                 unblock();
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Failed to close Sock socket in SocketThread");
-                throw new IOException("Failed to close Sock socket in SocketThread");
+                LOGGER.log(Level.SEVERE, "Failed to close Sock in SocketThread {0}", hash);
+                throw new IOException("Failed to close Sock in SocketThread " + hash);
             }
         } else {
             state = CLOSED;
-            LOGGER.log(Level.INFO, "SocketThread has successfully closed");
+            LOGGER.log(Level.INFO, "SocketThread {0} has successfully closed", hash);
         }
     }
 
@@ -234,7 +234,7 @@ public class SocketThread extends Thread {
         if (socket != null) {
             socket.close();
             socket = null;
-            LOGGER.log(Level.INFO, "Successfully closed Sock socket");
+            LOGGER.log(Level.INFO, "Successfully closed Sock");
         }
         if (!running) {
             close();

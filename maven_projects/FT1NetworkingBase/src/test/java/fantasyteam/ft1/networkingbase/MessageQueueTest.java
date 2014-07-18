@@ -55,6 +55,11 @@ public class MessageQueueTest {
      * when waitTime is called.
      */
     private long wait = 10;
+    /**
+     * The time waited before asserting that a function did not work as
+     * intended.
+     */
+    private long timeout = 5000;
 
     /**
      * Logger for logging important actions and exceptions.
@@ -78,6 +83,113 @@ public class MessageQueueTest {
     }
 
     /**
+     * Waits for listen_thread to set run to true. Use this when running
+     * Server.startThread and you want to ensure the ListenThread is ready to
+     * accept connections before continuing.
+     *
+     * @param server The Server to check the listen_thread on.
+     */
+    private void waitListenThreadStart(Server server) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getListenThread().getRun() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertTrue(server.getListenThread().getRun(), "ListenThread did not start in time");
+    }
+
+    /**
+     * Ensures the socket_list attribute of Server is not empty.
+     *
+     * @param server The Server to check socket_list on.
+     */
+    private void waitSocketThreadAddNotEmpty(Server server) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (!server.getSocketList().isEmpty() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertFalse(server.getSocketList().isEmpty(), "SocketThread was not constructed");
+    }
+
+    /**
+     * Checks the state of a SocketThread on a Server. Use this when waiting for
+     * a new SocketThread to start before continuing.
+     *
+     * @param server The Server containing the SocketThread.
+     * @param hash the hash of the SocketThread.
+     * @param state the state expected on the SocketThread.
+     */
+    private void waitSocketThreadState(Server server, String hash, int state) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getSocketList().get(hash).getRun() == state || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertEquals(server.getSocketList().get(hash).getRun(), state, "SocketThread state was not set correctly");
+    }
+
+    /**
+     * Ensures the queue_list attribute of Server is not empty.
+     *
+     * @param server The Server to check queue_list on.
+     */
+    private void waitMessageQueueAddNotEmpty(Server server) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (!server.getQueueList().isEmpty() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertFalse(server.getQueueList().isEmpty(), "MessageQueue was not constructed");
+    }
+
+    /**
+     * Checks the state of a MessageQueue on a Server. Use this when waiting for
+     * a new MessageQueue to start before continuing, or waiting for a
+     * MessageQueue to register that it should be disconnected.
+     *
+     * @param server The Server containing the MessageQueue.
+     * @param hash the hash of the MessageQueue.
+     * @param state the state expected on the MessageQueue.
+     */
+    private void waitMessageQueueState(Server server, String hash, int state) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getQueueList().get(hash).getRun() == state || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertEquals(server.getQueueList().get(hash).getRun(), state, "MessageQueue state was not set correctly");
+    }
+
+    /**
+     * Checks the state of the specified Server. Use this when waiting for a
+     * Server to finish closing.
+     *
+     * @param server The Server to check the state of.
+     * @param state The state expected on the Server.
+     */
+    private void waitServerState(Server server, int state) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getState() == state || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertEquals(server.getState(), state, "Server state was not set in time");
+    }
+
+    /**
      * Constructs both {@link Server}s, starts the {@link ListenThread} and
      * creates a connection between the {@link Server}s.
      *
@@ -96,9 +208,12 @@ public class MessageQueueTest {
         server1.setUseMessageQueues(true);
         server2.setUseMessageQueues(true);
         server1.startThread();
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         hash = server2.addSocket("127.0.0.1", port);
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, hash, MessageQueue.RUNNING);
     }
 
     /**
@@ -110,10 +225,10 @@ public class MessageQueueTest {
     private void deleteQueue() throws IOException {
         LOGGER.log(Level.INFO, "+++++ CLOSING server2 (CLIENT SERVER) +++++");
         server2.close();
-        time.waitTime(wait);
+        waitServerState(server2, Server.CLOSED);
         LOGGER.log(Level.INFO, "+++++ CLOSING server1 (LISTEN SERVER) +++++");
         server1.close();
-        time.waitTime(wait);
+        waitServerState(server1, Server.CLOSED);
     }
 
     /**
@@ -165,12 +280,12 @@ public class MessageQueueTest {
     @Test
     public void testMessageQueueGetTimeout() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueGetTimeout -----");
-        long timeout = server2.getQueueList().get(hash).getTimeout();
-        Assert.assertEquals(timeout, 300000, "Did not return the correct timeout value");
+        long current_timeout = server2.getQueueList().get(hash).getTimeout();
+        Assert.assertEquals(current_timeout, 300000, "Did not return the correct timeout value");
         long new_timeout = 5;
         server2.getQueueList().get(hash).setTimeout(new_timeout);
-        timeout = server2.getQueueList().get(hash).getTimeout();
-        Assert.assertEquals(timeout, new_timeout, "Did not return the correct timeout value after changing it using MessageQueue.setTimeout(long timeout)");
+        current_timeout = server2.getQueueList().get(hash).getTimeout();
+        Assert.assertEquals(current_timeout, new_timeout, "Did not return the correct timeout value after changing it using MessageQueue.setTimeout(long timeout)");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueueGetTimeout COMPLETED -----");
     }

@@ -5,6 +5,7 @@ import fantasyteam.ft1.Timing;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static org.easymock.EasyMock.*;
@@ -58,6 +59,11 @@ public class ServerTest {
      * when waitTime is called.
      */
     private long wait = 20;
+    /**
+     * The time waited before asserting that a function did not work as
+     * intended.
+     */
+    private long timeout = 5000;
 
     /**
      * Logger for logging important actions and exceptions.
@@ -78,6 +84,159 @@ public class ServerTest {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    /**
+     * Gets the hash of the last SocketThread in the socket_list Map on Server.
+     *
+     * @param server The Server to check for the hash on.
+     * @return the String hash for the last SocketThread
+     */
+    private String getServerLastSocketHash(Server server) {
+        String server_hash = "";
+        for (SocketThread socket : server.getSocketList().values()) {
+            server_hash = socket.getHash();
+        }
+        return server_hash;
+    }
+
+    /**
+     * Waits for listen_thread to set run to true. Use this when running
+     * Server.startThread and you want to ensure the ListenThread is ready to
+     * accept connections before continuing.
+     *
+     * @param server The Server to check the listen_thread on.
+     */
+    private void waitListenThreadStart(Server server) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getListenThread().getRun() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertTrue(server.getListenThread().getRun(), "ListenThread did not start in time");
+    }
+
+    /**
+     * Ensures the socket_list attribute of Server is not empty.
+     *
+     * @param server The Server to check socket_list on.
+     */
+    private void waitSocketThreadAddNotEmpty(Server server) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (!server.getSocketList().isEmpty() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertFalse(server.getSocketList().isEmpty(), "SocketThread was not constructed");
+    }
+
+    /**
+     * Checks the state of a SocketThread on a Server. Use this when waiting for
+     * a new SocketThread to start before continuing.
+     *
+     * @param server The Server containing the SocketThread.
+     * @param hash the hash of the SocketThread.
+     * @param state the state expected on the SocketThread.
+     */
+    private void waitSocketThreadState(Server server, String hash, int state) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getSocketList().get(hash).getRun() == state || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertEquals(server.getSocketList().get(hash).getRun(), state, "SocketThread state was not set correctly");
+    }
+
+    /**
+     * Ensures the queue_list attribute of Server is not empty.
+     *
+     * @param server The Server to check queue_list on.
+     */
+    private void waitMessageQueueAddNotEmpty(Server server) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (!server.getQueueList().isEmpty() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertFalse(server.getQueueList().isEmpty(), "MessageQueue was not constructed");
+    }
+
+    /**
+     * Checks the state of a MessageQueue on a Server. Use this when waiting for
+     * a new MessageQueue to start before continuing, or waiting for a
+     * MessageQueue to register that it should be disconnected.
+     *
+     * @param server The Server containing the MessageQueue.
+     * @param hash the hash of the MessageQueue.
+     * @param state the state expected on the MessageQueue.
+     */
+    private void waitMessageQueueState(Server server, String hash, int state) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getQueueList().get(hash).getRun() == state || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertEquals(server.getQueueList().get(hash).getRun(), state, "MessageQueue state was not set correctly");
+    }
+
+    /**
+     * Ensures the socket_list attribute of Server is empty.
+     *
+     * @param server The Server to check socket_list on.
+     */
+    private void waitSocketThreadRemoveEmpty(Server server) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getSocketList().isEmpty() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertTrue(server.getSocketList().isEmpty(), "SocketThread was not removed");
+    }
+
+    /**
+     * Ensures the queue_list attribute of Server is empty.
+     *
+     * @param server The Server to check queue_list on.
+     */
+    private void waitMessageQueueRemoveEmpty(Server server) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getQueueList().isEmpty() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertTrue(server.getQueueList().isEmpty(), "MessageQueue was not removed");
+    }
+
+    /**
+     * Checks the state of the specified Server. Use this when waiting for a
+     * Server to finish closing.
+     *
+     * @param server The Server to check the state of.
+     * @param state The state expected on the Server.
+     */
+    private void waitServerState(Server server, int state) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getState() == state || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertEquals(server.getState(), state, "Server state was not set in time");
     }
 
     /**
@@ -104,29 +263,15 @@ public class ServerTest {
     @AfterMethod
     private void deleteServer() throws IOException {
         LOGGER.log(Level.INFO, "+++++ CLOSING server2 (CLIENT SERVER) +++++");
-        if (server2.getState() != 2) {
+        if (server2.getState() != Server.CLOSED) {
             server2.close();
         }
-        //time.waitTime(wait);
-        boolean loop = true;
-        Timing new_timer = new Timing();
-        while (loop) {
-            if (server2.getState() == 2 || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
+        waitServerState(server2, Server.CLOSED);
         LOGGER.log(Level.INFO, "+++++ CLOSING server1 (LISTEN SERVER) +++++");
-        if (server1.getState() != 2) {
+        if (server1.getState() != Server.CLOSED) {
             server1.close();
         }
-        //time.waitTime(wait);
-        loop = true;
-        new_timer.startTiming();
-        while (loop) {
-            if (server1.getState() == 2 || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
+        waitServerState(server1, Server.CLOSED);
         LOGGER.log(Level.INFO, "+++++ CLOSING SERVERS COMPLETE +++++");
     }
 
@@ -143,6 +288,7 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
+        waitServerState(server2, Server.CLOSED);
         server2 = new Server(game);
         Assert.assertFalse(exception, "Exception found");
         Assert.assertEquals(server2.getPort(), 0, "Server not constructed");
@@ -163,6 +309,7 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
+        waitServerState(server2, Server.CLOSED);
         server2 = new Server(game);
         Assert.assertFalse(exception, "Exception found");
         Assert.assertEquals(server2.getPort(), 0, "Server not constructed");
@@ -182,6 +329,7 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
+        waitServerState(server2, Server.CLOSED);
         try {
             server2 = new Server(game, 12457, true);
         } catch (IOException ex) {
@@ -205,6 +353,7 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
+        waitServerState(server2, Server.CLOSED);
         try {
             server2 = new Server(game, 12457, false);
         } catch (IOException ex) {
@@ -250,6 +399,72 @@ public class ServerTest {
     }
 
     /**
+     * This test ensures that the setuseMessageQueues function correctly
+     * constructs and starts a {@link MessageQueue} for each existing
+     * {@link SocketThread} in socket_list if true is passed as a parameter and
+     * use_message_queues == false.
+     */
+    @Test
+    public void testUseMessageQueuesTrueWithSockets() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testUseMessageQueuesTrueWithSockets -----");
+        try {
+            server1.startThread();
+        } catch (IOException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        String client_hash = "";
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        String server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        server1.setUseMessageQueues(true);
+        waitMessageQueueAddNotEmpty(server1);
+        waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
+        LOGGER.log(Level.INFO, "----- TEST testUseMessageQueuesTrueWithSockets COMPLETED -----");
+    }
+
+    /**
+     * This test ensures that the setuseMessageQueues function correctly closes
+     * and removes all {@link MessageQueue}s for each existing
+     * {@link SocketThread} in socket_list if false is passed as a parameter and
+     * use_message_queues == true.
+     */
+    @Test
+    public void testUseMessageQueuesFalseWithSockets() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testUseMessageQueuesFalseWithSockets -----");
+        server1.setUseMessageQueues(true);
+        try {
+            server1.startThread();
+        } catch (IOException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        String client_hash = "";
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        String server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitMessageQueueAddNotEmpty(server1);
+        waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
+        server1.setUseMessageQueues(false);
+        waitMessageQueueRemoveEmpty(server1);
+        LOGGER.log(Level.INFO, "----- TEST testUseMessageQueuesFalseWithSockets COMPLETED -----");
+    }
+
+    /**
      * Test of an attribute setter for the socket_list attribute.
      */
     @Test
@@ -258,6 +473,21 @@ public class ServerTest {
         server2.setSocketList(server1.getSocketList());
         Assert.assertEquals(server2.getSocketList(), server1.getSocketList(), "Socket List not changed");
         LOGGER.log(Level.INFO, "----- TEST testSetSocketList COMPLETED -----");
+    }
+
+    /**
+     * Test of an attribute setter for the socket_list attribute.
+     */
+    @Test
+    public void testSetQueueList() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetQueueList -----");
+        server1.setUseMessageQueues(true);
+        HashMap<String, MessageQueue> new_queue_list = new HashMap<String, MessageQueue>();
+        new_queue_list.put("TEST", new MessageQueue(server1, "TEST"));
+        server1.setQueueList(new_queue_list);
+        Assert.assertEquals(server1.getQueueList(), new_queue_list, "Queue List not changed");
+        Assert.assertEquals(server1.getQueueList().get("TEST").getHash(), "TEST", "Queue List values not set correctly");
+        LOGGER.log(Level.INFO, "----- TEST testSetQueueList COMPLETED -----");
     }
 
     /**
@@ -283,7 +513,7 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testSetListenThreadClient -----");
         boolean flag1 = false;
         boolean flag2 = false;
-        if (server2.getState() == 1) {
+        if (server2.getState() == Server.CLIENT) {
             flag1 = true;
         }
         if (flag1) {
@@ -293,7 +523,7 @@ public class ServerTest {
             } catch (IOException ex) {
                 exception = true;
             }
-            if (server2.getState() == 0) {
+            if (server2.getState() == Server.LISTEN) {
                 flag2 = true;
             }
         }
@@ -311,7 +541,7 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testSetListenThreadServer -----");
         boolean flag1 = false;
         boolean flag2 = false;
-        if (server1.getState() == 0) {
+        if (server1.getState() == Server.LISTEN) {
             flag1 = true;
         }
         if (flag1) {
@@ -321,7 +551,7 @@ public class ServerTest {
             } catch (IOException ex) {
                 exception = true;
             }
-            if (server1.getState() == 0) {
+            if (server1.getState() == Server.LISTEN) {
                 flag2 = true;
             }
         }
@@ -340,7 +570,7 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testSetListenThreadServerOnSamePort -----");
         boolean flag1 = false;
         boolean flag2 = false;
-        if (server1.getState() == 0) {
+        if (server1.getState() == Server.LISTEN) {
             flag1 = true;
         }
         if (flag1) {
@@ -349,7 +579,7 @@ public class ServerTest {
             } catch (IOException ex) {
                 exception = true;
             }
-            if (server1.getState() == 0) {
+            if (server1.getState() == Server.LISTEN) {
                 flag2 = true;
             }
         }
@@ -369,7 +599,7 @@ public class ServerTest {
         boolean flag1 = false;
         boolean flag2 = false;
         int count = 0;
-        if (server2.getState() == 1) {
+        if (server2.getState() == Server.CLIENT) {
             flag1 = true;
         }
         if (flag1) {
@@ -379,23 +609,26 @@ public class ServerTest {
             } catch (IOException ex) {
                 exception = true;
             }
-            if (server2.getState() == 0) {
+            if (server2.getState() == Server.LISTEN) {
                 flag2 = true;
                 try {
                     server2.startThread();
                 } catch (IOException e) {
                     exception = true;
                 }
-                time.waitTime(wait);
+                waitListenThreadStart(server2);
             }
         }
         if (flag2) {
+            String client_hash = "";
             try {
-                server1.addSocket("127.0.0.1", 23231);
+                client_hash = server1.addSocket("127.0.0.1", 23231);
             } catch (IOException ex) {
                 exception = true;
             }
-            time.waitTime(wait);
+            waitSocketThreadAddNotEmpty(server1);
+            waitSocketThreadState(server1, client_hash, SocketThread.RUNNING);
+            waitSocketThreadAddNotEmpty(server2);
             if (server2.getSocketList() != null && !server2.getSocketList().isEmpty()) {
                 for (SocketThread socket : server2.getSocketList().values()) {
                     count++;
@@ -406,6 +639,33 @@ public class ServerTest {
         Assert.assertTrue(flag2, "server2 not set as a listen server");
         Assert.assertEquals(count, 1, "No connection was established");
         LOGGER.log(Level.INFO, "----- TEST testSetListenThreadAndListen COMPLETED -----");
+    }
+
+    /**
+     * Tests whether an IOException is correctly thrown when attempting to start
+     * a new ListenThread on a port that is in use.
+     */
+    @Test
+    public void testListenPortInUse() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testListenPortInUse -----");
+        Server server3 = null;
+        try {
+            server3 = new Server(game, port, true);
+        } catch (IOException e) {
+            exception = true;
+            LOGGER.log(Level.INFO, "{0}", e.toString());
+        }
+        Assert.assertTrue(exception, "Exception was not thrown for running Server(Game,port,true) when port was in use");
+        if (server3 != null) {
+            try {
+                server3.close();
+            } catch (IOException e) {
+                exception = false;
+            }
+            waitServerState(server3, Server.CLOSED);
+            Assert.assertTrue(exception, "Exception found");
+        }
+        LOGGER.log(Level.INFO, "----- TEST testListenPortInUse COMPLETED -----");
     }
 
     /**
@@ -421,7 +681,7 @@ public class ServerTest {
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         ArrayList<String> string_array = new ArrayList<String>();
         string_array.add("r");
         string_array.add("b");
@@ -429,6 +689,41 @@ public class ServerTest {
         server1.removeDisconnectedSocket("r");
         Assert.assertEquals(server1.getDisconnectedSockets().get(0), "b", "Hash not removed from disconnected_sockets changed");
         LOGGER.log(Level.INFO, "----- TEST testRemoveDisconnectedSocket COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.removeQueue function using a hash that does not
+     * exist.
+     */
+    public void testRemoveQueueNotExist() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testRemoveQueueNotExist -----");
+        server1.setUseMessageQueues(true);
+        server2.setUseMessageQueues(true);
+        try {
+            server1.startThread();
+        } catch (IOException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        Assert.assertTrue(server1.getListenThread().getRun(), "ListenThread did not start in time");
+        String client_hash = "";
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException ex) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadAddNotEmpty(server1);
+        String server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitMessageQueueAddNotEmpty(server1);
+        waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
+        server1.removeQueue("TEST");
+        Assert.assertFalse(server1.getQueueList().isEmpty(), "queue_list was emptied. No MessageQueues should have been removed");
+        Assert.assertTrue(server1.getQueueList().containsKey(server_hash), "MessageQueue with hash " + server_hash + "should not have been removed from server");
+        Assert.assertEquals(server1.getQueueList().get(server_hash).getRun(), MessageQueue.RUNNING, "MessageQueue with hash " + server_hash + "should not have stopped running");
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testRemoveQueueNotExist COMPLETED -----");
     }
 
     /**
@@ -440,12 +735,13 @@ public class ServerTest {
     public void testServerClientConnectSocket() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientConnectSocket -----");
         String client_hash = "";
+        String server_hash = "";
         try {
             server1.startThread();
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         Socket socket = null;
         try {
             socket = new Socket("127.0.0.1", port);
@@ -457,10 +753,11 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        Assert.assertFalse(exception, "Exception found");
-        Assert.assertFalse(client_hash.isEmpty(), "Client not connected");
-        Assert.assertFalse(server2.getSocketList().isEmpty(), "SocketThread not added to socket_list");
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         LOGGER.log(Level.INFO, "----- TEST testServerClientConnectSocket COMPLETED -----");
     }
 
@@ -473,12 +770,13 @@ public class ServerTest {
     public void testServerClientConnectSock() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientConnectSock -----");
         String client_hash = "";
+        String server_hash = "";
         try {
             server1.startThread();
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         Sock sock = null;
         try {
             sock = new Sock("127.0.0.1", port);
@@ -490,10 +788,11 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        Assert.assertFalse(exception, "Exception found");
-        Assert.assertFalse(client_hash.isEmpty(), "Client not connected");
-        Assert.assertFalse(server2.getSocketList().isEmpty(), "SocketThread not added to socket_list");
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         LOGGER.log(Level.INFO, "----- TEST testServerClientConnectSock COMPLETED -----");
     }
 
@@ -506,24 +805,24 @@ public class ServerTest {
     public void testServerClientConnectIp() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientConnectIp -----");
         String client_hash = "";
+        String server_hash = "";
         try {
             server1.startThread();
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
-            server2.addSocket("127.0.0.1");
+            client_hash = server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        for (SocketThread sockets : server1.getSocketList().values()) {
-            client_hash = sockets.getHash();
-        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         Assert.assertFalse(exception, "Exception found");
-        Assert.assertFalse(client_hash.isEmpty(), "Client not connected");
-        Assert.assertFalse(server2.getSocketList().isEmpty(), "SocketThread not added to socket_list");
         LOGGER.log(Level.INFO, "----- TEST testServerClientConnectIp COMPLETED -----");
     }
 
@@ -536,27 +835,28 @@ public class ServerTest {
     public void testServerClientConnectIpPort() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientConnectIpPort -----");
         String client_hash = "";
+        String server_hash = "";
         try {
             server1.startThread();
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
-            server2.addSocket("127.0.0.1", port);
+            client_hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        for (SocketThread sockets : server1.getSocketList().values()) {
-            client_hash = sockets.getHash();
-        }
-        if (server1.containsHash(client_hash) == true) {
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        if (server1.containsHash(server_hash) == true) {
             client_hash = "connected";
         }
         Assert.assertFalse(exception, "Exception found");
         Assert.assertEquals(client_hash, "connected", "Client not connected");
-        Assert.assertFalse(server2.getSocketList().isEmpty(), "SocketThread not added to socket_list");
         LOGGER.log(Level.INFO, "----- TEST testServerClientConnectIpPort COMPLETED -----");
     }
 
@@ -569,8 +869,6 @@ public class ServerTest {
     @Test
     public void testServerClientConnectWithMessageQueue() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientConnectWithMessageQueue -----");
-        int runningServer = 0;
-        int runningClient = 0;
         String server_hash = "";
         String client_hash = "";
         server1.setUseMessageQueues(true);
@@ -580,41 +878,22 @@ public class ServerTest {
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        boolean loop = true;
-        Timing new_timer = new Timing();
-        while (loop) {
-            if (!server1.getSocketList().isEmpty() || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        for (SocketThread socket : server1.getSocketList().values()) {
-            server_hash = socket.getHash();
-        }
-        loop = true;
-        new_timer.startTiming();
-        while (loop) {
-            if (!server1.getQueueList().isEmpty() || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        loop = true;
-        new_timer.startTiming();
-        while (loop) {
-            if (server1.getQueueList().get(server_hash).getRun() == MessageQueue.RUNNING || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        runningServer = server1.getQueueList().get(server_hash).getRun();
-        runningClient = server2.getQueueList().get(client_hash).getRun();
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        waitMessageQueueAddNotEmpty(server1);
+        waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
         Assert.assertFalse(exception, "Exception found");
-        Assert.assertEquals(runningServer, MessageQueue.RUNNING, "Server MessageQueue not started");
-        Assert.assertEquals(runningClient, MessageQueue.RUNNING, "Client MessageQueue not started");
         LOGGER.log(Level.INFO, "----- TEST testServerClientConnectWithMessageQueue COMPLETED -----");
     }
 
@@ -627,38 +906,35 @@ public class ServerTest {
     public void testServerClientDisconnect() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientDisconnect -----");
         String client_hash = "";
+        String server_hash = "";
         try {
             server1.startThread();
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
-            server2.addSocket("127.0.0.1");
+            client_hash = server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        for (SocketThread sockets : server1.getSocketList().values()) {
-            client_hash = sockets.getHash();
-        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         try {
             server2.close();
         } catch (IOException ex) {
             exception = true;
         }
-        boolean loop = true;
-        Timing new_timer = new Timing();
-        while (loop) {
-            if (server1.getSocketList().isEmpty() || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        if (server1.containsHash(client_hash) != true || server1.getSocketList().get(client_hash).getRun() == SocketThread.CLOSED) {
-            client_hash = "disconnected";
+        waitServerState(server2, Server.CLOSED);
+        waitSocketThreadRemoveEmpty(server1);
+        if (server1.containsHash(server_hash) != true || server1.getSocketList().get(server_hash).getRun() == SocketThread.CLOSED) {
+            server_hash = "disconnected";
         }
         Assert.assertFalse(exception, "Exception found");
-        Assert.assertEquals(client_hash, "disconnected", "Connection not closed successfully");
+        Assert.assertEquals(server_hash, "disconnected", "Connection not closed successfully");
         LOGGER.log(Level.INFO, "----- TEST testServerClientDisconnect COMPLETED -----");
     }
 
@@ -673,31 +949,73 @@ public class ServerTest {
     public void testServerClientDisconnectWithHash() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientDisconnectWithHash -----");
         String client_hash = "";
+        String server_hash = "";
         server1.setUseDisconnectedSockets(true);
         try {
             server1.startThread();
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
-            server2.addSocket("127.0.0.1");
+            client_hash = server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        for (SocketThread sockets : server1.getSocketList().values()) {
-            client_hash = sockets.getHash();
-        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         try {
             server2.close();
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitServerState(server2, Server.CLOSED);
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (!server1.getDisconnectedSockets().isEmpty() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertFalse(server1.getDisconnectedSockets().isEmpty(), "Hash not added to disconnected_sockets");
         Assert.assertFalse(exception, "Exception found");
-        Assert.assertEquals(server1.getDisconnectedSockets().get(0), client_hash, "Disconnected sockets hash not logged");
+        Assert.assertEquals(server1.getDisconnectedSockets().get(0), server_hash, "Disconnected sockets hash not logged");
         LOGGER.log(Level.INFO, "----- TEST testServerClientDisconnectWithHash COMPLETED -----");
+    }
+
+    /**
+     * This test ensures that the disconnect method correctly removes the
+     * SocketThread corresponding to the given hash String from the socket_list
+     * map. It also ensures the Thread is gracefully ended.
+     */
+    @Test
+    public void testServerClientDisconnectNonRunningSocketThread() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientDisconnectNonRunningSocketThread -----");
+        String server_hash = "";
+        try {
+            server1.startThread();
+        } catch (IOException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            Sock new_sock = new Sock("127.0.0.1", port);
+            server2.getSocketList().put("TEST", new SocketThread(new_sock, server2, "TEST"));
+        } catch (IOException ex) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        server2.disconnect("TEST");
+        waitSocketThreadRemoveEmpty(server2);
+        waitSocketThreadRemoveEmpty(server1);
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testServerClientDisconnectNonRunningSocketThread COMPLETED -----");
     }
 
     /**
@@ -714,7 +1032,7 @@ public class ServerTest {
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         boolean flag1 = false;
         boolean flag2 = false;
         if (server1.getListenThread().getRun()) {
@@ -726,7 +1044,7 @@ public class ServerTest {
             } catch (IOException ex) {
                 exception = true;
             }
-            time.waitTime(wait);
+            waitServerState(server1, Server.CLOSED);
             if (!server1.getListenThread().getRun()) {
                 flag1 = true;
             }
@@ -745,6 +1063,10 @@ public class ServerTest {
     public void testReplaceHash() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testReplaceHash -----");
         ArrayList<String> string_array = new ArrayList<String>();
+        ArrayList<String> disconnected_socket = new ArrayList<String>();
+        String client_hash = "";
+        String client_hash2 = "";
+        String server_hash = "";
         Server server3 = null;
         try {
             server3 = new Server(game, port, false);
@@ -757,23 +1079,35 @@ public class ServerTest {
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
-            server2.addSocket("127.0.0.1");
+            client_hash = server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         try {
-            server3.addSocket("127.0.0.1");
+            client_hash2 = server3.addSocket("127.0.0.1");
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server3);
+        waitSocketThreadState(server3, client_hash2, SocketThread.RUNNING);
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server1.getSocketList().size() == 2 || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertEquals(server1.getSocketList().size(), 2, "SocketThread not constructed and added in time");
         for (SocketThread sockets : server1.getSocketList().values()) {
             string_array.add(sockets.getHash());
         }
-        ArrayList<String> disconnected_socket = new ArrayList<String>();
         disconnected_socket.add(string_array.get(0));
         server1.setDisconnectedSockets(disconnected_socket);
         boolean flag = server1.connectDisconnectedSocket(string_array.get(1), string_array.get(0));
@@ -784,6 +1118,7 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
+        waitServerState(server3, Server.CLOSED);
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testReplaceHash COMPLETED -----");
     }
@@ -796,6 +1131,9 @@ public class ServerTest {
     @Test
     public void testPingSocket() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testPingSocket -----");
+        String client_hash = "";
+        String client_hash2 = "";
+        server1.setUseDisconnectedSockets(true);
         Server server3 = null;
         try {
             server3 = new Server(game, port, false);
@@ -807,18 +1145,28 @@ public class ServerTest {
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
-            server2.addSocket("127.0.0.1");
+            client_hash = server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
             exception = true;
         }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
         try {
-            server3.addSocket("127.0.0.1");
+            client_hash2 = server3.addSocket("127.0.0.1");
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server3);
+        waitSocketThreadState(server3, client_hash2, SocketThread.RUNNING);
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server1.getSocketList().size() == 2 || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
         try {
             server1.pingSockets();
         } catch (IOException ex) {
@@ -832,6 +1180,7 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
+        waitServerState(server3, Server.CLOSED);
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testPingSocket COMPLETED -----");
     }
@@ -848,20 +1197,20 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitServerState(server1, Server.CLOSED);
         Server server3 = null;
         try {
             server3 = new Server(game, port, true);
         } catch (IOException ex) {
             exception = true;
         }
-        Assert.assertEquals(server3.getState(), 0, "Server not set as state 0. Port could not be listened on");
+        Assert.assertEquals(server3.getState(), Server.LISTEN, "Server not set as state LISTEN. Port could not be listened on");
         try {
             server3.close();
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitServerState(server3, Server.CLOSED);
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testReleasePortNumber COMPLETED -----");
     }
@@ -878,13 +1227,13 @@ public class ServerTest {
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
             server1.close();
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitServerState(server1, Server.CLOSED);
         Server server3 = null;
         try {
             LOGGER.log(Level.INFO, "Building Server3");
@@ -892,13 +1241,13 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        Assert.assertEquals(server3.getState(), 0, "Server not set as state 0. Port could not be listened on");
+        Assert.assertEquals(server3.getState(), Server.LISTEN, "Server not set as state LISTEN. Port could not be listened on");
         try {
             server3.close();
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitServerState(server3, Server.CLOSED);
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testReleasePortNumberRunning COMPLETED -----");
     }
@@ -916,7 +1265,7 @@ public class ServerTest {
             exception = true;
         }
         time.waitTime(wait);
-        Assert.assertEquals(server2.getState(), 1, "server2 not set as client server");
+        Assert.assertEquals(server2.getState(), Server.CLIENT, "server2 not set as client server");
         Assert.assertEquals(server2.getListenThread(), null, "ListenThread started on client server");
         LOGGER.log(Level.INFO, "----- TEST testStartThreadClient COMPLETED -----");
     }
@@ -935,7 +1284,7 @@ public class ServerTest {
             exception = true;
         }
         Assert.assertFalse(exception, "Exception found");
-        Assert.assertEquals(server2.getState(), 1, "server2 not set as client server");
+        Assert.assertEquals(server2.getState(), Server.CLIENT, "server2 not set as client server");
         Assert.assertEquals(listen, null, "Client server attempted to listen");
         LOGGER.log(Level.INFO, "----- TEST testListenClient COMPLETED -----");
     }
@@ -948,6 +1297,8 @@ public class ServerTest {
     @Test
     public void testServerUseMessageQueueSend() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerUseMessageQueueSend -----");
+        String client_hash = "";
+        String server_hash = "";
         server1.setUseMessageQueues(true);
         server2.setUseMessageQueues(true);
         try {
@@ -955,25 +1306,27 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        String hash = "";
+        waitListenThreadStart(server1);
         try {
-            hash = server2.addSocket("127.0.0.1", port);
+            client_hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        server2.sendMessage("TEST", hash);
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        server2.sendMessage("TEST", client_hash);
         boolean loop = true;
         Timing new_timer = new Timing();
         while (loop) {
-            if (server2.getQueueList().get(hash).getMessages().isEmpty() || new_timer.getTime() > 5000) {
+            if (server2.getQueueList().get(client_hash).getMessages().isEmpty() || new_timer.getTime() > 5000) {
                 loop = false;
             }
         }
-        ArrayList<String> test_queue = server2.getQueueList().get(hash).getMessages();
         Assert.assertFalse(exception, "Exception found");
-        Assert.assertTrue(test_queue.isEmpty(), "Message was not sent through MessageQueue");
+        Assert.assertTrue(server2.getQueueList().get(client_hash).getMessages().isEmpty(), "Message was not sent through MessageQueue");
         LOGGER.log(Level.INFO, "----- TEST testServerUseMessageQueueSend COMPLETED -----");
     }
 
@@ -985,6 +1338,7 @@ public class ServerTest {
     @Test
     public void testServerUseMessageQueueWithPauseAndResume() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerUseMessageQueueWithPauseAndResume -----");
+        String client_hash = "";
         server1.setUseMessageQueues(true);
         server2.setUseMessageQueues(true);
         try {
@@ -992,34 +1346,35 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        String hash = "";
+        waitListenThreadStart(server1);
         try {
-            hash = server2.addSocket("127.0.0.1", port);
+            client_hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        server2.getQueueList().get(hash).pauseQueue();
-        time.waitTime(wait);
-        server2.sendMessage("TEST", hash);
-        server2.sendMessage("TEST2", hash);
-        ArrayList<String> test_queue = server2.getQueueList().get(hash).getMessages();
-        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), MessageQueue.PAUSED, "MessageQueue state was not changed to 3 (Paused)");
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        server2.getQueueList().get(client_hash).pauseQueue();
+        waitMessageQueueState(server2, client_hash, MessageQueue.PAUSED);
+        server2.sendMessage("TEST", client_hash);
+        server2.sendMessage("TEST2", client_hash);
+        ArrayList<String> test_queue = server2.getQueueList().get(client_hash).getMessages();
         Assert.assertEquals("TEST", test_queue.get(0), "MessageQueue was not paused");
         Assert.assertEquals("TEST2", test_queue.get(1), "MessageQueue was not paused");
 
-        server2.getQueueList().get(hash).resumeQueue();
+        server2.getQueueList().get(client_hash).resumeQueue();
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
         boolean loop = true;
         Timing new_timer = new Timing();
         while (loop) {
-            if (server2.getQueueList().get(hash).getMessages().isEmpty() || new_timer.getTime() > 5000) {
+            if (server2.getQueueList().get(client_hash).getMessages().isEmpty() || new_timer.getTime() > 5000) {
                 loop = false;
             }
         }
-        test_queue = server2.getQueueList().get(hash).getMessages();
-        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), MessageQueue.RUNNING, "MessageQueue state was not changed to 1 (Running)");
-        Assert.assertTrue(test_queue.isEmpty(), "MessageQueue was not resumed");
+        test_queue = server2.getQueueList().get(client_hash).getMessages();
+        Assert.assertTrue(test_queue.isEmpty(), "MessageQueue sending was not resumed");
 
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testServerUseMessageQueueWithPauseAndResume COMPLETED -----");
@@ -1034,6 +1389,8 @@ public class ServerTest {
     @Test
     public void testNetworkingEncodeParseMessage() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testNetworkingEncodeParseMessage -----");
+        String client_hash = "";
+        String server_hash = "";
         ArrayList<String> parameters = new ArrayList<String>();
         parameters.add("ACTION");
         parameters.add("PARAM1");
@@ -1046,20 +1403,24 @@ public class ServerTest {
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
-        String client_hash = "";
+        waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        String old_hash = "";
-        for (SocketThread socket : server1.getSocketList().values()) {
-            old_hash = socket.getHash();
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        server1.replaceHash(server_hash, hash);
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server1.containsHash(hash) || new_timer.getTime() > timeout) {
+                loop = false;
+            }
         }
-        server1.replaceHash(old_hash, hash);
-        time.waitTime(wait);
         String action = "ACTION";
         ArrayList<String> action_parameters = new ArrayList<String>();
         action_parameters.add("PARAM1");
@@ -1082,8 +1443,9 @@ public class ServerTest {
     @Test
     public void testServerClientDisconnectAndReconnect() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientDisconnectAndReconnect -----");
-        boolean loop = true;
-        Timing new_timer = new Timing();
+        String client_hash = "";
+        String server_hash = "";
+        String server_hash2 = "";
         server1.setUseMessageQueues(true);
         server1.setUseDisconnectedSockets(true);
         server2.setUseMessageQueues(true);
@@ -1092,55 +1454,32 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        String client_hash = "";
-        String server_hash = "";
+        waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        new_timer.startTiming();
-        while (loop) {
-            if (!server1.getSocketList().isEmpty() || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        loop = true;
-        for (SocketThread socket : server1.getSocketList().values()) {
-            server_hash = socket.getHash();
-        }
-        new_timer.startTiming();
-        while (loop) {
-            if (server1.getSocketList().get(server_hash).getRun() == SocketThread.RUNNING || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        loop = true;
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitMessageQueueAddNotEmpty(server1);
+        waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
         server1.getQueueList().get(server_hash).pauseQueue();
-        new_timer.startTiming();
-        while (loop) {
-            if (server1.getQueueList().get(server_hash).getRun() == MessageQueue.PAUSED || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        loop = true;
+        waitMessageQueueState(server1, server_hash, MessageQueue.PAUSED);
         server1.sendMessage("TEST", server_hash);
         server1.sendMessage("TEST2", server_hash);
-        new_timer.startTiming();
+        boolean loop = true;
+        Timing new_timer = new Timing();
         while (loop) {
-            if (server1.getQueueList().get(server_hash).getMessages().size() == 2 || new_timer.getTime() > 5000) {
+            if (server1.getQueueList().get(server_hash).getMessages().size() == 2 || new_timer.getTime() > timeout) {
                 loop = false;
             }
         }
-        loop = true;
         server2.disconnect(client_hash);
-        new_timer.startTiming();
-        while (loop) {
-            if (server1.getQueueList().get(server_hash).getRun() == MessageQueue.DISCONNECT || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
+        waitMessageQueueState(server1, server_hash, MessageQueue.DISCONNECT);
         loop = true;
         new_timer.startTiming();
         while (loop) {
@@ -1148,21 +1487,15 @@ public class ServerTest {
                 loop = false;
             }
         }
-        loop = true;
-        Assert.assertEquals(server1.getQueueList().get(server_hash).getRun(), MessageQueue.DISCONNECT, "MessageQueue on server not set to sate 4 after client disconnection");
-        Assert.assertTrue(server1.getQueueList().get(server_hash).getMessages().isEmpty(), "MessageQueue not cleared after state set to 4");
+        Assert.assertTrue(server1.getQueueList().get(server_hash).getMessages().isEmpty(), "MessageQueue not cleared after state set to DISCONNECT");
         Assert.assertTrue(server1.getDisconnectedSockets().contains(server_hash), "Disconnected hash was not put into disconnected_sockets list");
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        new_timer.startTiming();
-        while (loop) {
-            if (!server1.getSocketList().isEmpty() || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
         loop = true;
         new_timer.startTiming();
         while (loop) {
@@ -1170,37 +1503,31 @@ public class ServerTest {
                 loop = false;
             }
         }
-        loop = true;
-        String server_hash2 = "";
         for (SocketThread socket : server1.getSocketList().values()) {
-            server_hash2 = socket.getHash();
+            if (socket.getHash().compareTo(server_hash) != 0) {
+                server_hash2 = socket.getHash();
+            }
         }
+        waitSocketThreadState(server1, server_hash2, SocketThread.RUNNING);
         loop = true;
         new_timer.startTiming();
         while (loop) {
-            if (server1.getSocketList().get(server_hash2).getRun() == SocketThread.RUNNING || new_timer.getTime() > 5000) {
+            if (server1.getQueueList().containsKey(server_hash2) || new_timer.getTime() > timeout) {
                 loop = false;
             }
         }
-        loop = true;
-        new_timer.startTiming();
-        while (loop) {
-            if (server1.getQueueList().get(server_hash2).getRun() == MessageQueue.RUNNING || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
+        waitMessageQueueState(server1, server_hash2, MessageQueue.RUNNING);
         boolean connected = server1.connectDisconnectedSocket(server_hash2, server_hash);
+        loop = true;
         new_timer.startTiming();
         while (loop) {
-            if (server1.getDisconnectedSockets().isEmpty() || new_timer.getTime() > 5000) {
+            if (server1.getDisconnectedSockets().isEmpty() || new_timer.getTime() > timeout) {
                 loop = false;
             }
         }
-        loop = true;
         for (SocketThread socket : server1.getSocketList().values()) {
             server_hash2 = socket.getHash();
         }
-        Assert.assertEquals(server1.getQueueList().get(server_hash).getRun(), MessageQueue.RUNNING, "MessageQueue on server not set to sate 1 after client reconnection");
         Assert.assertTrue(server1.getDisconnectedSockets().isEmpty(), "Disconnected hash was not removed from disconnected_sockets list");
         Assert.assertTrue(server1.getSocketList().containsKey(server_hash), "Reconnected sockt was not moved into old key in socket_list");
         Assert.assertEquals(server_hash2, server_hash, "Reconnected sockets hash was not set to saved hash");
@@ -1221,8 +1548,9 @@ public class ServerTest {
     @Test
     public void testServerClientDisconnectAndTimeout() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientDisconnectAndTimeout -----");
-        boolean loop = true;
-        Timing new_timer = new Timing();
+        String client_hash = "";
+        String server_hash = "";
+        String server_hash2 = "";
         long disconnect_timeout = 50;
         server1.setUseMessageQueues(true);
         server1.setUseDisconnectedSockets(true);
@@ -1232,106 +1560,60 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
-        String client_hash = "";
-        String server_hash = "";
+        waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        new_timer.startTiming();
-        while (loop) {
-            if (!server1.getSocketList().isEmpty() || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        loop = true;
-        for (SocketThread socket : server1.getSocketList().values()) {
-            server_hash = socket.getHash();
-        }
-        new_timer.startTiming();
-        while (loop) {
-            if (server1.getSocketList().get(server_hash).getRun() == SocketThread.RUNNING || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        loop = true;
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitMessageQueueAddNotEmpty(server1);
+        waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
         server1.getQueueList().get(server_hash).setTimeout(disconnect_timeout);
         server1.getQueueList().get(server_hash).pauseQueue();
-        new_timer.startTiming();
-        while (loop) {
-            if (server1.getQueueList().get(server_hash).getRun() == MessageQueue.PAUSED || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        loop = true;
+        waitMessageQueueState(server1, server_hash, MessageQueue.PAUSED);
         server1.sendMessage("TEST", server_hash);
         server1.sendMessage("TEST2", server_hash);
-        new_timer.startTiming();
+        boolean loop = true;
+        Timing new_timer = new Timing();
         while (loop) {
-            if (server1.getQueueList().get(server_hash).getMessages().size() == 2 || new_timer.getTime() > 5000) {
+            if (server1.getQueueList().get(server_hash).getMessages().size() == 2 || new_timer.getTime() > timeout) {
                 loop = false;
             }
         }
-        loop = true;
         server2.disconnect(client_hash);
         new_timer.startTiming();
-        while (loop) {
-            if (server1.getQueueList().get(server_hash).getRun() == MessageQueue.DISCONNECT || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
+        waitMessageQueueState(server1, server_hash, MessageQueue.DISCONNECT);
         loop = true;
         new_timer.startTiming();
         while (loop) {
-            if (server1.getQueueList().get(server_hash).getMessages().isEmpty() || new_timer.getTime() > 5000) {
+            if (server1.getQueueList().get(server_hash).getMessages().isEmpty() || new_timer.getTime() > timeout) {
                 loop = false;
             }
         }
-        loop = true;
-        Assert.assertEquals(server1.getQueueList().get(server_hash).getRun(), MessageQueue.DISCONNECT, "MessageQueue on server not set to state 4 after client disconnection");
         Assert.assertTrue(server1.getQueueList().get(server_hash).getMessages().isEmpty(), "MessageQueue not cleared after state set to 4");
         Assert.assertTrue(server1.getDisconnectedSockets().contains(server_hash), "Disconnected hash was not put into disconnected_sockets list");
         Timing timer = new Timing();
         timer.waitTime(disconnect_timeout + wait);
-        new_timer.startTiming();
-        while (loop) {
-            if (server1.getQueueList().isEmpty() || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        loop = true;
+        waitMessageQueueRemoveEmpty(server2);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        new_timer.startTiming();
-        while (loop) {
-            if (!server1.getSocketList().isEmpty() || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
-        loop = true;
-        String server_hash2 = "";
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadAddNotEmpty(server1);
         for (SocketThread socket : server1.getSocketList().values()) {
-            server_hash2 = socket.getHash();
-        }
-        loop = true;
-        new_timer.startTiming();
-        while (loop) {
-            if (server1.getSocketList().get(server_hash2).getRun() == SocketThread.RUNNING || new_timer.getTime() > 5000) {
-                loop = false;
+            if (socket.getHash().compareTo(server_hash) != 0) {
+                server_hash2 = socket.getHash();
             }
         }
-        loop = true;
-        new_timer.startTiming();
-        while (loop) {
-            if (server1.getQueueList().get(server_hash2).getRun() == MessageQueue.RUNNING || new_timer.getTime() > 5000) {
-                loop = false;
-            }
-        }
+        waitSocketThreadState(server1, server_hash2, SocketThread.RUNNING);
+        waitMessageQueueAddNotEmpty(server1);
+        waitMessageQueueState(server1, server_hash2, MessageQueue.RUNNING);
         boolean connected = server1.connectDisconnectedSocket(server_hash2, server_hash);
         time.waitTime(wait);
 
@@ -1409,6 +1691,8 @@ public class ServerTest {
     @Test
     public void testToStringServer() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServer -----");
+        String server_hash = "";
+        String server_hash2 = "";
         String to_string = null;
         server1.setUseDisconnectedSockets(true);
         try {
@@ -1416,13 +1700,14 @@ public class ServerTest {
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
             server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
         Server server3 = null;
         try {
             server3 = new Server(game, port, false);
@@ -1434,13 +1719,33 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server3);
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server1.getSocketList().size() == 2 || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        for (SocketThread socket : server1.getSocketList().values()) {
+            if (socket.getHash().compareTo(server_hash) != 0) {
+                server_hash2 = socket.getHash();
+            }
+        }
+        waitSocketThreadState(server1, server_hash2, SocketThread.RUNNING);
         try {
             server3.close();
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitServerState(server3, Server.CLOSED);
+        loop = true;
+        new_timer.startTiming();
+        while (loop) {
+            if (server1.getDisconnectedSockets().contains(server_hash2) || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
         to_string = server1.toString();
         boolean server_type = false;
         if (to_string != null) {
@@ -1468,6 +1773,8 @@ public class ServerTest {
     @Test
     public void testToStringServerCh() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServerCh -----");
+        String server_hash = "";
+        String server_hash2 = "";
         String to_string = null;
         server1.setUseDisconnectedSockets(true);
         try {
@@ -1475,13 +1782,14 @@ public class ServerTest {
         } catch (IOException e) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
             server2.addSocket("127.0.0.1");
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
         Server server3 = null;
         try {
             server3 = new Server(game, port, false);
@@ -1493,13 +1801,33 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server3);
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server1.getSocketList().size() == 2 || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        for (SocketThread socket : server1.getSocketList().values()) {
+            if (socket.getHash().compareTo(server_hash) != 0) {
+                server_hash2 = socket.getHash();
+            }
+        }
+        waitSocketThreadState(server1, server_hash2, SocketThread.RUNNING);
         try {
             server3.close();
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitServerState(server3, Server.CLOSED);
+        loop = true;
+        new_timer.startTiming();
+        while (loop) {
+            if (server1.getDisconnectedSockets().contains(server_hash2) || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
         to_string = server1.toString("\t");
         boolean server_type = false;
         if (to_string != null) {
@@ -1548,6 +1876,7 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
+        waitServerState(server2, Server.CLOSED);
         to_string = server2.toString();
         Assert.assertFalse(exception, "Exception found");
         Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String with added character");
@@ -1569,6 +1898,7 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
+        waitServerState(server1, Server.CLOSED);
         to_string = server1.toString();
         Assert.assertFalse(exception, "Exception found");
         Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String with added character");
@@ -1592,13 +1922,14 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
         String to_string = server2.toString();
         Assert.assertFalse(exception, "Exception found");
         Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String");
@@ -1623,13 +1954,16 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, hash, MessageQueue.RUNNING);
         String to_string = server2.toString("\t");
         Assert.assertFalse(exception, "Exception found");
         Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String");
@@ -1639,9 +1973,9 @@ public class ServerTest {
     }
 
     /**
-     * Tests the {@link Server}.toString() function if
-     * use_message_queues == true and {@link MessageQueue}.messages is not empty.
-     * Check the output from LOGGER to assess human readability.
+     * Tests the {@link Server}.toString() function if use_message_queues ==
+     * true and {@link MessageQueue}.messages is not empty. Check the output
+     * from LOGGER to assess human readability.
      */
     @Test
     public void testToStringServerMessageQueueWithMessages() {
@@ -1654,13 +1988,15 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitMessageQueueAddNotEmpty(server2);
         server2.getQueueList().get(hash).pauseQueue();
         server2.sendMessage("TEST", hash);
         server2.sendMessage("TEST2", hash);
@@ -1675,8 +2011,8 @@ public class ServerTest {
 
     /**
      * Tests the {@link Server}.toString(String ch) function if
-     * use_message_queues == true and {@link MessageQueue}.messages is not empty.
-     * Check the output from LOGGER to assess human readability.
+     * use_message_queues == true and {@link MessageQueue}.messages is not
+     * empty. Check the output from LOGGER to assess human readability.
      */
     @Test
     public void testToStringServerMessageQueueWithMessagesCh() {
@@ -1689,13 +2025,15 @@ public class ServerTest {
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1", port);
         } catch (IOException ex) {
             exception = true;
         }
-        time.waitTime(wait);
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitMessageQueueAddNotEmpty(server2);
         server2.getQueueList().get(hash).pauseQueue();
         server2.sendMessage("TEST", hash);
         server2.sendMessage("TEST2", hash);

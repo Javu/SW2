@@ -44,6 +44,11 @@ public class ListenThreadTest {
      * when waitTime is called.
      */
     private long wait = 10;
+    /**
+     * The time waited before asserting that a function did not work as
+     * intended.
+     */
+    private long timeout = 5000;
 
     /**
      * Logger for logging important actions and exceptions.
@@ -67,6 +72,42 @@ public class ListenThreadTest {
     }
 
     /**
+     * Waits for listen_thread to set run to true. Use this when running
+     * Server.startThread and you want to ensure the ListenThread is ready to
+     * accept connections before continuing.
+     *
+     * @param server The Server to check the listen_thread on.
+     */
+    private void waitListenThreadStart(Server server) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getListenThread().getRun() || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertTrue(server.getListenThread().getRun(), "ListenThread did not start in time");
+    }
+
+    /**
+     * Checks the state of the specified Server. Use this when waiting for a
+     * Server to finish closing.
+     *
+     * @param server The Server to check the state of.
+     * @param state The state expected on the Server.
+     */
+    private void waitServerState(Server server, int state) {
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while (loop) {
+            if (server.getState() == state || new_timer.getTime() > timeout) {
+                loop = false;
+            }
+        }
+        Assert.assertEquals(server.getState(), state, "Server state was not set in time");
+    }
+
+    /**
      * This is run before every test to ensure basic setup is done ready for
      * testing.
      *
@@ -78,7 +119,7 @@ public class ListenThreadTest {
         Game game = EasyMock.createMock(Game.class);
         server = new Server(game, port, true);
         server.startThread();
-        time.waitTime(wait);
+        waitListenThreadStart(server);
         exception = false;
     }
 
@@ -91,7 +132,7 @@ public class ListenThreadTest {
     @AfterMethod
     private void deleteListenThread() throws IOException {
         server.close();
-        time.waitTime(wait);
+        waitServerState(server, Server.CLOSED);
     }
 
     /**
