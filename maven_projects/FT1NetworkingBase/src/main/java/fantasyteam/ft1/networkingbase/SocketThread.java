@@ -16,33 +16,33 @@ import java.util.logging.Logger;
 public class SocketThread extends Thread {
 
     /**
-     * Valid state for {@link SocketThread}. Used when the thread has just been
+     * Valid state for {@link SocketThread}, used when the thread has just been
      * constructed but has not started run() yet.
      */
     public static final int NEW = 0;
 
     /**
-     * Valid state for {@link SocketThread}. Used when the thread is meant to be
+     * Valid state for {@link SocketThread}, used when the thread is meant to be
      * running normally but has not received an acknowledgment from remote the
      * {@link Server} that has finished creating the connection on it's end.
      */
     public static final int RUNNING = 1;
 
     /**
-     * Valid state for {@link SocketThread}. Used when the thread is meant to be
+     * Valid state for {@link SocketThread}, used when the thread is meant to be
      * running normally and has received an acknowledgment from remote the
      * {@link Server} that has finished creating the connection on it's end.
      */
     public static final int CONFIRMED = 2;
 
     /**
-     * Valid state for {@link SocketThread}. Used when there is an error reading
+     * Valid state for {@link SocketThread}, used when there is an error reading
      * messages through the socket.
      */
     public static final int ERROR = 3;
 
     /**
-     * Valid state for {@link SocketThread}. Used when it is flagged to be
+     * Valid state for {@link SocketThread}, used when it is flagged to be
      * closed.
      */
     public static final int CLOSED = 4;
@@ -190,14 +190,16 @@ public class SocketThread extends Thread {
     }
 
     /**
-     * Sets the attribute hash. WARNING: You should avoid running this function
-     * manually. Changing a {@link SocketThread}'s hash without moving it to a
-     * new key corresponding to the new hash in {@link Server}.socket_list will
-     * cause problems. If the {@link SocketThread} is stored in a
-     * {@link Server}'s socket_list attribute, you should use the function
-     * {@link Server}.replaceHash(String old_hash, String new_hash) which will
-     * move the {@link SocketThread} to a key corresponding to the new hash and
-     * also update the hash on the {@link SocketThread}.
+     * Sets the attribute hash, the unique identifier assigned to this
+     * {@link SocketThread} by the {@link Server}. WARNING: You should avoid
+     * running this function manually. Changing a {@link SocketThread}'s hash
+     * without moving it to a new key corresponding to the new hash in
+     * {@link Server}.socket_list will cause problems. If the
+     * {@link SocketThread} is stored in a {@link Server}'s socket_list
+     * attribute, you should use the function {@link Server}.replaceHash(String
+     * old_hash, String new_hash) which will move the {@link SocketThread} to a
+     * key corresponding to the new hash and also update the hash on the
+     * {@link SocketThread}.
      *
      * @param hash String to set hash to.
      */
@@ -207,7 +209,7 @@ public class SocketThread extends Thread {
     }
 
     /**
-     * Sets the attribute state. Setting state not equal to 1 or 2 while the
+     * Sets the attribute state, the current state of the {@link SocketThread}. Setting state not equal to 1 or 2 while the
      * thread is started will cause the thread to close.
      *
      * @param state int to set state to.

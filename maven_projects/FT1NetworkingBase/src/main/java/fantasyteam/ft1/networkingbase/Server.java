@@ -29,25 +29,25 @@ import java.util.logging.Logger;
 public class Server extends fantasyteam.ft1.Networking {
 
     /**
-     * Valid state for {@link Server}. Used when there is an error starting the
+     * Valid state for {@link Server}, used when there is an error starting the
      * {@link Server}.
      */
     public static final int ERROR = -1;
 
     /**
-     * Valid state for {@link Server}. Used when it is set to use
+     * Valid state for {@link Server}, used when it is set to use
      * {@link ListenThread} to listen on a port for new connections.
      */
     public static final int LISTEN = 0;
 
     /**
-     * Valid state for {@link Server}. Used when it is not set to use
+     * Valid state for {@link Server}, used when it is not set to use
      * {@link ListenThread} to listen on a port for new connections.
      */
     public static final int CLIENT = 1;
 
     /**
-     * Valid state for {@link Server}. Used when it has closed.
+     * Valid state for {@link Server}, used when it has closed.
      */
     public static final int CLOSED = 2;
 
@@ -395,7 +395,7 @@ public class Server extends fantasyteam.ft1.Networking {
      * Returns the list of {@link MessageQueue}s associated with each
      * {@link SocketThread} on the {@link Server}.
      *
-     * @return the Map(String,{@link {MessageQueue}) queue_list, the list of {@link MessageQueue}s on the {@link Server}.
+     * @return the Map(String,{@link MessageQueue}) queue_list, the list of {@link MessageQueue}s on the {@link Server}.
      */
     public Map<String, MessageQueue> getQueueList() {
         return queue_list;

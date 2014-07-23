@@ -7,12 +7,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The {@link MessageQueue} class is used to queue messages sent through a
- * {@link Sock} rather than just send them straight through the {@link Sock}.
- * Each {@link MessageQueue} is intended to be coupled with a
- * {@link SocketThread}, which then queues any messages sent through its
- * {@link Sock} on its {@link MessageQueue}, which will action the messages
- * depending on the queues state.
+ * The {@link MessageQueue} class is used to queue messages and other advanced
+ * message handling logic sent through a Socket rather than just send them
+ * straight through the Socket. Each {@link MessageQueue} is intended to be
+ * coupled with a {@link SocketThread}, which then queues any messages sent
+ * through its {@link Sock} on its {@link MessageQueue}, which will action the
+ * messages depending on the queues state.
  *
  * The implementation currently only has options to pause, resume and clear the
  * queue. It will be fleshed out to include error handling and a system for
@@ -24,37 +24,37 @@ import java.util.logging.Logger;
 public class MessageQueue extends Thread {
 
     /**
-     * Valid state for {@link MessageQueue}. Used when the queue has just been
+     * Valid state for {@link MessageQueue}, used when the queue has just been
      * constructed but has not started run() yet.
      */
     public static final int NEW = 0;
 
     /**
-     * Valid state for {@link MessageQueue}. Used when the queue is meant to be
+     * Valid state for {@link MessageQueue}, used when the queue is meant to be
      * running normally.
      */
     public static final int RUNNING = 1;
 
     /**
-     * Valid state for {@link MessageQueue}. Used when there is an error sending
+     * Valid state for {@link MessageQueue}, used when there is an error sending
      * messages through the socket.
      */
     public static final int ERROR = 2;
 
     /**
-     * Valid state for {@link MessageQueue}. Used when the queue is meant to be
+     * Valid state for {@link MessageQueue}, used when the queue is meant to be
      * paused.
      */
     public static final int PAUSED = 3;
 
     /**
-     * Valid state for {@link MessageQueue}. Used when its accompanying
+     * Valid state for {@link MessageQueue}, used when its accompanying
      * {@link SocketThread} on the {@link Server} has been disconnected.
      */
     public static final int DISCONNECT = 4;
 
     /**
-     * Valid state for {@link MessageQueue}. Used when it is flagged to be
+     * Valid state for {@link MessageQueue}, used when it is flagged to be
      * closed.
      */
     public static final int CLOSED = 5;
@@ -97,9 +97,10 @@ public class MessageQueue extends Thread {
     private static final Logger LOGGER = Logger.getLogger(MessageQueue.class.getName());
 
     /**
-     * Takes an instance of the {@link SocketThread} that is creating this
-     * instance of {@link MessageQueue}. Sets the state to 0 (New MessageQueue,
-     * not yet started).
+     * Takes an instance of the {@link Server} that is creating this instance of
+     * {@link MessageQueue} and the unique identifier given to the
+     * {@link MessageQueue} by the {@link Server}. Sets the state to 0 (New
+     * MessageQueue, not yet started).
      *
      * @param server The {@link Server} that created this {@link MessageQueue}.
      * @param hash The String used as this {@link MessageQueue}'s unique
@@ -115,7 +116,7 @@ public class MessageQueue extends Thread {
     }
 
     /**
-     * Closes the {@link MessageQueue}. Sets the state to 4 (Closed).
+     * Closes the {@link MessageQueue}. Sets the state to CLOSED.
      */
     public synchronized void close() {
         state = CLOSED;
@@ -123,7 +124,7 @@ public class MessageQueue extends Thread {
 
     /**
      * Loop used to handle messages in the messages ArrayList. If state is set
-     * to 5 (Closed) the loop will exit and the Thread will terminate.
+     * to CLOSED the loop will exit and the Thread will terminate.
      */
     @Override
     public void run() {
@@ -180,7 +181,8 @@ public class MessageQueue extends Thread {
     }
 
     /**
-     * Sets the attribute messages.
+     * Sets the attribute messages, the ArrayList used to hold all the queued
+     * message for the socket.
      *
      * @param messages ArrayList(String) to set messages to.
      */
@@ -200,9 +202,10 @@ public class MessageQueue extends Thread {
     }
 
     /**
-     * Sets the attribute hash. hash is the unique identifier this
-     * {@link MessageQueue} shares with its accompanying {@link SocketThread}
-     * given to it by its owning {@link Server}.
+     * Sets the attribute hash, the unique identifier given to this
+     * {@link MessageQueue}. This identifier is generally shared with its
+     * accompanying {@link SocketThread} and is given to it by its owning
+     * {@link Server}.
      *
      * @param hash Srring to set hash to.
      */
@@ -211,7 +214,7 @@ public class MessageQueue extends Thread {
     }
 
     /**
-     * Sets the attribute state. Valid states are: 0 - NEW 1 - RUNNING 2 - ERROR
+     * Sets the attribute state, the current state of the {@link MessageQueue}. Valid states are: 0 - NEW 1 - RUNNING 2 - ERROR
      * 3 - PAUSED 4 - DISCONNECT 5 - CLOSED.
      *
      * @param state the int to set state to.

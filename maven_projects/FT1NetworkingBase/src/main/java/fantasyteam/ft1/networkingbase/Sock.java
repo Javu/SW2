@@ -11,8 +11,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The {@link Sock} class is essentially a structure used to hold a Socket and
- * an input and output stream to send and received messages through the Socket.
+ * The {@link Sock} class is a structure used to hold a Socket and
+ * an input and output stream to send and receive messages through the Socket.
  *
  * @author javu
  */

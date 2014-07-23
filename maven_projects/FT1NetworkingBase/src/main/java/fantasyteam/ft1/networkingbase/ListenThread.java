@@ -91,7 +91,7 @@ public class ListenThread extends Thread {
     }
 
     /**
-     * Returns server_socket.
+     * Returns the ServerSocket used to listen for new connections.
      *
      * @return The ServerSocket attribute server_socket.
      */
@@ -109,7 +109,7 @@ public class ListenThread extends Thread {
     }
 
     /**
-     * Returns the attribute run.
+     * Returns the state of the ListenThread.
      *
      * @return the boolean run.
      */
@@ -118,7 +118,7 @@ public class ListenThread extends Thread {
     }
 
     /**
-     * Sets the attribute run. Setting run to false while the thread is started
+     * Sets the current state of the listen thread. Setting run to false while the thread is started
      * will cause the thread to close.
      *
      * @param run boolean to set run to.
