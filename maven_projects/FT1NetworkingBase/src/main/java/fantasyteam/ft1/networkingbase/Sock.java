@@ -51,7 +51,7 @@ public class Sock {
      * Takes a Socket as an argument.
      *
      * @param socket socket used to construct the Sock with.
-     * @throws java.io.IOException if an exception is encountered when starting
+     * @throws IOException if an exception is encountered when starting
      * the new PrinterWriter or BufferedReader.
      */
     public Sock(Socket socket) throws IOException {

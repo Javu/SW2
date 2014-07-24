@@ -2,6 +2,12 @@ package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
 import fantasyteam.ft1.Timing;
+import fantasyteam.ft1.networkingbase.exceptions.FeatureNotUsedException;
+import fantasyteam.ft1.networkingbase.exceptions.HashNotFoundException;
+import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
+import fantasyteam.ft1.networkingbase.exceptions.NullException;
+import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
+import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -245,7 +251,7 @@ public class ServerTest {
      * @throws IOException if either {@link Server} fails to construct.
      */
     @BeforeMethod
-    private void setupServer() throws IOException {
+    private void setupServer() throws IOException, ServerSocketCloseException, TimeoutException {
         port = 22222;
         exception = false;
         game = createMock(Game.class);
@@ -261,7 +267,7 @@ public class ServerTest {
      * @throws IOException if either {@link Server} fails to close.
      */
     @AfterMethod
-    private void deleteServer() throws IOException {
+    private void deleteServer() throws IOException, ServerSocketCloseException, TimeoutException {
         LOGGER.log(Level.INFO, "+++++ CLOSING server2 (CLIENT SERVER) +++++");
         if (server2.getState() != Server.CLOSED) {
             server2.close();
@@ -285,7 +291,7 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerConstructor -----");
         try {
             server2.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server2, Server.CLOSED);
@@ -306,7 +312,7 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerConstructorListen -----");
         try {
             server2.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server2, Server.CLOSED);
@@ -326,13 +332,13 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerConstructorPort -----");
         try {
             server2.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server2, Server.CLOSED);
         try {
             server2 = new Server(game, 12457, true);
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         Assert.assertFalse(exception, "Exception found");
@@ -350,13 +356,13 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerConstructorListenPort -----");
         try {
             server2.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server2, Server.CLOSED);
         try {
             server2 = new Server(game, 12457, false);
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         Assert.assertFalse(exception, "Exception found");
@@ -393,7 +399,11 @@ public class ServerTest {
     @Test
     public void testUseMessageQueues() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testUseMessageQueues -----");
-        server1.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         Assert.assertEquals(server1.getUseMessageQueues(), true, "Use Message Queues flag not changed");
         LOGGER.log(Level.INFO, "----- TEST testUseMessageQueues COMPLETED -----");
     }
@@ -409,14 +419,14 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testUseMessageQueuesTrueWithSockets -----");
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         String client_hash = "";
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException e) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -424,7 +434,11 @@ public class ServerTest {
         waitSocketThreadAddNotEmpty(server1);
         String server_hash = getServerLastSocketHash(server1);
         waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
-        server1.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         waitMessageQueueAddNotEmpty(server1);
         waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
         LOGGER.log(Level.INFO, "----- TEST testUseMessageQueuesTrueWithSockets COMPLETED -----");
@@ -439,17 +453,21 @@ public class ServerTest {
     @Test
     public void testUseMessageQueuesFalseWithSockets() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testUseMessageQueuesFalseWithSockets -----");
-        server1.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         String client_hash = "";
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException e) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -459,7 +477,11 @@ public class ServerTest {
         waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         waitMessageQueueAddNotEmpty(server1);
         waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
-        server1.setUseMessageQueues(false);
+        try {
+            server1.setUseMessageQueues(false);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         waitMessageQueueRemoveEmpty(server1);
         LOGGER.log(Level.INFO, "----- TEST testUseMessageQueuesFalseWithSockets COMPLETED -----");
     }
@@ -481,7 +503,11 @@ public class ServerTest {
     @Test
     public void testSetQueueList() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testSetQueueList -----");
-        server1.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         HashMap<String, MessageQueue> new_queue_list = new HashMap<String, MessageQueue>();
         new_queue_list.put("TEST", new MessageQueue(server1, "TEST"));
         server1.setQueueList(new_queue_list);
@@ -520,7 +546,7 @@ public class ServerTest {
             server2.setPort(23231);
             try {
                 server2.setListenThread();
-            } catch (IOException ex) {
+            } catch (IOException | ServerSocketCloseException | TimeoutException e) {
                 exception = true;
             }
             if (server2.getState() == Server.LISTEN) {
@@ -548,7 +574,7 @@ public class ServerTest {
             server1.setPort(23231);
             try {
                 server1.setListenThread();
-            } catch (IOException ex) {
+            } catch (IOException | ServerSocketCloseException | TimeoutException e) {
                 exception = true;
             }
             if (server1.getState() == Server.LISTEN) {
@@ -576,7 +602,7 @@ public class ServerTest {
         if (flag1) {
             try {
                 server1.setListenThread();
-            } catch (IOException ex) {
+            } catch (IOException | ServerSocketCloseException | TimeoutException e) {
                 exception = true;
             }
             if (server1.getState() == Server.LISTEN) {
@@ -606,14 +632,14 @@ public class ServerTest {
             server2.setPort(23231);
             try {
                 server2.setListenThread();
-            } catch (IOException ex) {
+            } catch (IOException | ServerSocketCloseException | TimeoutException e) {
                 exception = true;
             }
             if (server2.getState() == Server.LISTEN) {
                 flag2 = true;
                 try {
                     server2.startThread();
-                } catch (IOException e) {
+                } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
                     exception = true;
                 }
                 waitListenThreadStart(server2);
@@ -623,7 +649,7 @@ public class ServerTest {
             String client_hash = "";
             try {
                 client_hash = server1.addSocket("127.0.0.1", 23231);
-            } catch (IOException ex) {
+            } catch (IOException | TimeoutException e) {
                 exception = true;
             }
             waitSocketThreadAddNotEmpty(server1);
@@ -651,7 +677,7 @@ public class ServerTest {
         Server server3 = null;
         try {
             server3 = new Server(game, port, true);
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
             LOGGER.log(Level.INFO, "{0}", e.toString());
         }
@@ -659,7 +685,7 @@ public class ServerTest {
         if (server3 != null) {
             try {
                 server3.close();
-            } catch (IOException e) {
+            } catch (IOException | ServerSocketCloseException | TimeoutException e) {
                 exception = false;
             }
             waitServerState(server3, Server.CLOSED);
@@ -678,7 +704,7 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testRemoveDisconnectedSocket -----");
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
@@ -686,8 +712,13 @@ public class ServerTest {
         string_array.add("r");
         string_array.add("b");
         server1.setDisconnectedSockets(string_array);
-        server1.removeDisconnectedSocket("r");
+        try {
+            server1.removeDisconnectedSocket("r");
+        } catch (HashNotFoundException | NullException e) {
+            exception = true;
+        }
         Assert.assertEquals(server1.getDisconnectedSockets().get(0), "b", "Hash not removed from disconnected_sockets changed");
+        Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testRemoveDisconnectedSocket COMPLETED -----");
     }
 
@@ -698,11 +729,20 @@ public class ServerTest {
     @Test
     public void testRemoveQueueNotExist() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testRemoveQueueNotExist -----");
-        server1.setUseMessageQueues(true);
-        server2.setUseMessageQueues(true);
+        boolean queue_not_exist = false;
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
@@ -710,7 +750,7 @@ public class ServerTest {
         String client_hash = "";
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -719,7 +759,14 @@ public class ServerTest {
         waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         waitMessageQueueAddNotEmpty(server1);
         waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
-        server1.removeQueue("TEST");
+        try {
+            server1.removeQueue("TEST");
+        } catch (HashNotFoundException e) {
+            queue_not_exist = true;
+        } catch (NullException e) {
+            exception = true;
+        }
+        Assert.assertTrue(queue_not_exist, "Successfully removed queue, should have received a HashNotFoundException");
         Assert.assertFalse(server1.getQueueList().isEmpty(), "queue_list was emptied. No MessageQueues should have been removed");
         Assert.assertTrue(server1.getQueueList().containsKey(server_hash), "MessageQueue with hash " + server_hash + "should not have been removed from server");
         Assert.assertEquals(server1.getQueueList().get(server_hash).getRun(), MessageQueue.RUNNING, "MessageQueue with hash " + server_hash + "should not have stopped running");
@@ -728,19 +775,36 @@ public class ServerTest {
     }  
     
     @Test
-    public void testRemoveQueueEmpty() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testRemoveQueueEmpty -----");
-        server1.setUseMessageQueues(true);
-        server1.removeQueue("TEST");
+    public void testRemoveQueueNull() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testRemoveQueueNull -----");
+        boolean queue_null = false;
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        server1.setQueueList(null);
+        try {
+            server1.removeQueue("TEST");
+        } catch (NullException e) {
+            queue_null = true;
+        } catch (HashNotFoundException e) {
+            exception = true;
+        }
+        Assert.assertTrue(queue_null, "Successfully removed queue, should have received a NullException error");
         Assert.assertFalse(exception, "Exception found");
-        LOGGER.log(Level.INFO, "----- TEST testRemoveQueueEmpty COMPLETED -----");
+        LOGGER.log(Level.INFO, "----- TEST testRemoveQueueNull COMPLETED -----");
     }
     
     @Test
     public void testRemoveDisconnectedSocketNotExist() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testRemoveDisconnectedSocketNotExist -----");
-        server1.removeDisconnectedSocket("TEST");
-        Assert.assertFalse(exception, "Exception found");
+        try {
+            server1.removeDisconnectedSocket("TEST");
+        } catch (HashNotFoundException | NullException e) {
+            exception = true;
+        }
+        Assert.assertTrue(exception, "Successfully removed disconnected socket, should have received an exception");
         LOGGER.log(Level.INFO, "----- TEST testRemoveDisconnectedSocketNotExist COMPLETED -----");
     }
 
@@ -756,7 +820,7 @@ public class ServerTest {
         String server_hash = "";
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
@@ -768,7 +832,7 @@ public class ServerTest {
         }
         try {
             client_hash = server2.addSocket(socket);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -791,7 +855,7 @@ public class ServerTest {
         String server_hash = "";
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
@@ -803,7 +867,7 @@ public class ServerTest {
         }
         try {
             client_hash = server2.addSocket(sock);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -826,13 +890,13 @@ public class ServerTest {
         String server_hash = "";
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -856,13 +920,13 @@ public class ServerTest {
         String server_hash = "";
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -889,17 +953,25 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientConnectWithMessageQueue -----");
         String server_hash = "";
         String client_hash = "";
-        server1.setUseMessageQueues(true);
-        server2.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -927,13 +999,13 @@ public class ServerTest {
         String server_hash = "";
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -943,7 +1015,7 @@ public class ServerTest {
         waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         try {
             server2.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server2, Server.CLOSED);
@@ -971,13 +1043,13 @@ public class ServerTest {
         server1.setUseDisconnectedSockets(true);
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -987,7 +1059,7 @@ public class ServerTest {
         waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         try {
             server2.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server2, Server.CLOSED);
@@ -1015,7 +1087,7 @@ public class ServerTest {
         String server_hash = "";
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
@@ -1047,7 +1119,7 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClose -----");
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
@@ -1059,7 +1131,7 @@ public class ServerTest {
         if (flag2) {
             try {
                 server1.close();
-            } catch (IOException ex) {
+            } catch (IOException | ServerSocketCloseException | TimeoutException e) {
                 exception = true;
             }
             waitServerState(server1, Server.CLOSED);
@@ -1088,19 +1160,19 @@ public class ServerTest {
         Server server3 = null;
         try {
             server3 = new Server(game, port, false);
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         server1.setUseDisconnectedSockets(true);
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -1110,7 +1182,7 @@ public class ServerTest {
         waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         try {
             client_hash2 = server3.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server3);
@@ -1128,12 +1200,15 @@ public class ServerTest {
         }
         disconnected_socket.add(string_array.get(0));
         server1.setDisconnectedSockets(disconnected_socket);
-        boolean flag = server1.connectDisconnectedSocket(string_array.get(1), string_array.get(0));
+        try {
+            server1.connectDisconnectedSocket(string_array.get(1), string_array.get(0));
+        } catch (HashNotFoundException | InvalidArgumentException | FeatureNotUsedException e) {
+            exception = true;
+        }
         time.waitTime(wait);
-        Assert.assertTrue(flag, "Sockets hash not changed");
         try {
             server3.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server3, Server.CLOSED);
@@ -1155,25 +1230,25 @@ public class ServerTest {
         Server server3 = null;
         try {
             server3 = new Server(game, port, false);
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
         waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
         try {
             client_hash2 = server3.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server3);
@@ -1187,7 +1262,7 @@ public class ServerTest {
         }
         try {
             server1.pingSockets();
-        } catch (IOException ex) {
+        } catch (IOException e) {
             exception = true;
         }
         time.waitTime(wait);
@@ -1195,7 +1270,7 @@ public class ServerTest {
         Assert.assertTrue(not_disconnected, "Could not ping sockets");
         try {
             server3.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server3, Server.CLOSED);
@@ -1212,20 +1287,20 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testReleasePortNumber -----");
         try {
             server1.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server1, Server.CLOSED);
         Server server3 = null;
         try {
             server3 = new Server(game, port, true);
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         Assert.assertEquals(server3.getState(), Server.LISTEN, "Server not set as state LISTEN. Port could not be listened on");
         try {
             server3.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server3, Server.CLOSED);
@@ -1242,13 +1317,13 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testReleasePortNumberRunning -----");
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             server1.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server1, Server.CLOSED);
@@ -1256,13 +1331,13 @@ public class ServerTest {
         try {
             LOGGER.log(Level.INFO, "Building Server3");
             server3 = new Server(game, port, true);
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         Assert.assertEquals(server3.getState(), Server.LISTEN, "Server not set as state LISTEN. Port could not be listened on");
         try {
             server3.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server3, Server.CLOSED);
@@ -1279,7 +1354,7 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testStartThreadClient -----");
         try {
             server2.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         time.waitTime(wait);
@@ -1298,12 +1373,11 @@ public class ServerTest {
         String listen = "";
         try {
             listen = server2.listen();
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException | FeatureNotUsedException | NullException e) {
             exception = true;
         }
-        Assert.assertFalse(exception, "Exception found");
+        Assert.assertTrue(exception, "Successfully ran listen on client server, should have received an exception");
         Assert.assertEquals(server2.getState(), Server.CLIENT, "server2 not set as client server");
-        Assert.assertEquals(listen, null, "Client server attempted to listen");
         LOGGER.log(Level.INFO, "----- TEST testListenClient COMPLETED -----");
     }
 
@@ -1377,13 +1451,13 @@ public class ServerTest {
         server1.setUseDisconnectedSockets(true);
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server1);
@@ -1391,12 +1465,12 @@ public class ServerTest {
         Server server3 = null;
         try {
             server3 = new Server(game, port, false);
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException| TimeoutException e) {
             exception = true;
         }
         try {
             server3.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server3);
@@ -1415,7 +1489,7 @@ public class ServerTest {
         waitSocketThreadState(server1, server_hash2, SocketThread.RUNNING);
         try {
             server3.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server3, Server.CLOSED);
@@ -1459,13 +1533,13 @@ public class ServerTest {
         server1.setUseDisconnectedSockets(true);
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server1);
@@ -1473,12 +1547,12 @@ public class ServerTest {
         Server server3 = null;
         try {
             server3 = new Server(game, port, false);
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         try {
             server3.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server3);
@@ -1497,7 +1571,7 @@ public class ServerTest {
         waitSocketThreadState(server1, server_hash2, SocketThread.RUNNING);
         try {
             server3.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server3, Server.CLOSED);
@@ -1553,7 +1627,7 @@ public class ServerTest {
         String to_string = null;
         try {
             server2.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server2, Server.CLOSED);
@@ -1575,7 +1649,7 @@ public class ServerTest {
         String to_string = null;
         try {
             server1.close();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         waitServerState(server1, Server.CLOSED);
@@ -1594,18 +1668,26 @@ public class ServerTest {
     @Test
     public void testToStringServerMessageQueueEmpty() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServerMessageQueueEmpty -----");
-        server1.setUseMessageQueues(true);
-        server2.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         String hash = "";
         try {
             server1.startThread();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -1626,18 +1708,26 @@ public class ServerTest {
     @Test
     public void testToStringServerMessageQueueEmptyCh() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServerMessageQueueEmptyCh -----");
-        server1.setUseMessageQueues(true);
-        server2.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         String hash = "";
         try {
             server1.startThread();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -1660,18 +1750,26 @@ public class ServerTest {
     @Test
     public void testToStringServerMessageQueueWithMessages() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServerMessageQueueWithMessages -----");
-        server1.setUseMessageQueues(true);
-        server2.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         String hash = "";
         try {
             server1.startThread();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -1697,18 +1795,26 @@ public class ServerTest {
     @Test
     public void testToStringServerMessageQueueWithMessagesCh() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringServerMessageQueueWithMessagesCh -----");
-        server1.setUseMessageQueues(true);
-        server2.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         String hash = "";
         try {
             server1.startThread();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);

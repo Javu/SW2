@@ -2,6 +2,12 @@ package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
 import fantasyteam.ft1.Timing;
+import fantasyteam.ft1.exceptions.FT1EngineError;
+import fantasyteam.ft1.networkingbase.exceptions.FeatureNotUsedException;
+import fantasyteam.ft1.networkingbase.exceptions.HashNotFoundException;
+import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
+import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
+import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -241,7 +247,7 @@ public class NetworkingBaseTest {
      * @throws IOException if either {@link Server} fails to construct.
      */
     @BeforeMethod
-    private void setupServer() throws IOException {
+    private void setupServer() throws IOException, ServerSocketCloseException, TimeoutException {
         port = 22222;
         exception = false;
         game = createMock(Game.class);
@@ -257,7 +263,7 @@ public class NetworkingBaseTest {
      * @throws IOException if either {@link Server} fails to close.
      */
     @AfterMethod
-    private void deleteServer() throws IOException {
+    private void deleteServer() throws IOException, ServerSocketCloseException, TimeoutException {
         LOGGER.log(Level.INFO, "+++++ CLOSING server2 (CLIENT SERVER) +++++");
         if (server2.getState() != Server.CLOSED) {
             server2.close();
@@ -281,17 +287,25 @@ public class NetworkingBaseTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerUseMessageQueueSend -----");
         String client_hash = "";
         String server_hash = "";
-        server1.setUseMessageQueues(true);
-        server2.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         try {
             server1.startThread();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -321,17 +335,25 @@ public class NetworkingBaseTest {
     public void testServerUseMessageQueueWithPauseAndResume() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerUseMessageQueueWithPauseAndResume -----");
         String client_hash = "";
-        server1.setUseMessageQueues(true);
-        server2.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException ex) {
+            exception = true;
+        }
         try {
             server1.startThread();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -382,20 +404,24 @@ public class NetworkingBaseTest {
         replay(game);
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
         waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        server1.replaceHash(server_hash, hash);
+        try {
+            server1.replaceHash(server_hash, hash);
+        } catch (HashNotFoundException | InvalidArgumentException e) {
+            exception = true;
+        }
         boolean loop = true;
         Timing new_timer = new Timing();
         while (loop) {
@@ -428,18 +454,26 @@ public class NetworkingBaseTest {
         String client_hash = "";
         String server_hash = "";
         String server_hash2 = "";
-        server1.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         server1.setUseDisconnectedSockets(true);
-        server2.setUseMessageQueues(true);
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         try {
             server1.startThread();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -473,7 +507,7 @@ public class NetworkingBaseTest {
         Assert.assertTrue(server1.getDisconnectedSockets().contains(server_hash), "Disconnected hash was not put into disconnected_sockets list");
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -499,7 +533,11 @@ public class NetworkingBaseTest {
             }
         }
         waitMessageQueueState(server1, server_hash2, MessageQueue.RUNNING);
-        boolean connected = server1.connectDisconnectedSocket(server_hash2, server_hash);
+        try {
+            server1.connectDisconnectedSocket(server_hash2, server_hash);
+        } catch (HashNotFoundException | InvalidArgumentException | FeatureNotUsedException e) {
+            exception = true;
+        }
         loop = true;
         new_timer.startTiming();
         while (loop) {
@@ -513,7 +551,6 @@ public class NetworkingBaseTest {
         Assert.assertTrue(server1.getDisconnectedSockets().isEmpty(), "Disconnected hash was not removed from disconnected_sockets list");
         Assert.assertTrue(server1.getSocketList().containsKey(server_hash), "Reconnected sockt was not moved into old key in socket_list");
         Assert.assertEquals(server_hash2, server_hash, "Reconnected sockets hash was not set to saved hash");
-        Assert.assertTrue(connected, "connectDisconnectedSocket did not return true after successful reconnection");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testServerClientDisconnectAndReconnect COMPLETED -----");
     }
@@ -530,22 +567,31 @@ public class NetworkingBaseTest {
     @Test
     public void testServerClientDisconnectAndTimeout() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerClientDisconnectAndTimeout -----");
+        boolean timed_out = false;
         String client_hash = "";
         String server_hash = "";
         String server_hash2 = "";
         long disconnect_timeout = 50;
-        server1.setUseMessageQueues(true);
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         server1.setUseDisconnectedSockets(true);
-        server2.setUseMessageQueues(true);
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
         try {
             server1.startThread();
-        } catch (IOException ex) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -554,7 +600,11 @@ public class NetworkingBaseTest {
         waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
         waitMessageQueueAddNotEmpty(server1);
         waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
-        server1.getQueueList().get(server_hash).setTimeout(disconnect_timeout);
+        try {
+            server1.getQueueList().get(server_hash).setTimeout(disconnect_timeout);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
         server1.getQueueList().get(server_hash).pauseQueue();
         waitMessageQueueState(server1, server_hash, MessageQueue.PAUSED);
         server1.sendMessage("TEST", server_hash);
@@ -583,7 +633,7 @@ public class NetworkingBaseTest {
         waitMessageQueueRemoveEmpty(server2);
         try {
             client_hash = server2.addSocket("127.0.0.1", port);
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -596,15 +646,19 @@ public class NetworkingBaseTest {
         waitSocketThreadState(server1, server_hash2, SocketThread.RUNNING);
         waitMessageQueueAddNotEmpty(server1);
         waitMessageQueueState(server1, server_hash2, MessageQueue.RUNNING);
-        boolean connected = server1.connectDisconnectedSocket(server_hash2, server_hash);
+        try {
+            server1.connectDisconnectedSocket(server_hash2, server_hash);
+        } catch (HashNotFoundException | InvalidArgumentException | FeatureNotUsedException e) {
+            timed_out = true;
+        }
         time.waitTime(wait);
 
         Assert.assertFalse(server1.getQueueList().containsKey(server_hash), "MessageQueue did not close itself after timeout period");
         Assert.assertFalse(server1.getDisconnectedSockets().contains(server_hash), "Timed out sockets hash was not removed from disconnected_sockets list");
         Assert.assertFalse(server1.getSocketList().containsKey(server_hash), "socket_list should no longer contain a value for the timed out sockets hash");
-        Assert.assertFalse(connected, "connectDisconnectedSocket did not return false after attempting reconnection for timed out socket");
         Assert.assertTrue(server1.getSocketList().containsKey(server_hash2), "New SocketThreaad was removed after attempting to reconnect with old SocketThreads hash");
         Assert.assertTrue(server1.getQueueList().containsKey(server_hash2), "New MessageQueue was removed after attempting to reconnect with old SocketThreads hash");
+        Assert.assertTrue(timed_out, "Successfully connected disconnected socket, socket should have timed out");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testServerClientDisconnectAndTimeout COMPLETED -----");
     }

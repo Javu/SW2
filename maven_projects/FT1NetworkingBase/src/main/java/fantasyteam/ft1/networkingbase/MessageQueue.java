@@ -1,6 +1,9 @@
 package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Timing;
+import fantasyteam.ft1.networkingbase.exceptions.HashNotFoundException;
+import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
+import fantasyteam.ft1.networkingbase.exceptions.NullException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -159,8 +162,17 @@ public class MessageQueue extends Thread {
                         timer = new Timing();
                     } else if (timer.getTime() > timeout) {
                         LOGGER.log(Level.INFO, "SocketThread with hash {0} did not reconnect within the given timeout", hash);
-                        server.removeDisconnectedSocket(hash);
-                        server.removeQueue(hash);
+                        try {
+                            server.removeDisconnectedSocket(hash);
+                        } catch (HashNotFoundException | NullException e) {
+                            LOGGER.log(Level.SEVERE, "Failed to remove disconnected sockets hash from disconnected_sockets list", e);
+                        }
+                        try {
+                            server.removeQueue(hash);
+                        } catch (HashNotFoundException | NullException e) {
+                            LOGGER.log(Level.SEVERE, "Failed to remove self from queue_list on server", e);
+                            state = CLOSED;
+                        }
                     } else {
                         messages.clear();
                     }
@@ -196,9 +208,14 @@ public class MessageQueue extends Thread {
      * handling.
      *
      * @param timeout long to set timeout to.
+     * @throws InvalidArgumentException if the parameter timeout is not >= 0.
      */
-    public synchronized void setTimeout(long timeout) {
-        this.timeout = timeout;
+    public synchronized void setTimeout(long timeout) throws InvalidArgumentException {
+        if(timeout >= 0) {
+            this.timeout = timeout;
+        } else {
+            throw new InvalidArgumentException("Value of timeout must be greater than or equal to 0");
+        }
     }
 
     /**
@@ -207,7 +224,7 @@ public class MessageQueue extends Thread {
      * accompanying {@link SocketThread} and is given to it by its owning
      * {@link Server}.
      *
-     * @param hash Srring to set hash to.
+     * @param hash String to set hash to.
      */
     public synchronized void setHash(String hash) {
         this.hash = hash;
@@ -218,9 +235,14 @@ public class MessageQueue extends Thread {
      * 3 - PAUSED 4 - DISCONNECT 5 - CLOSED.
      *
      * @param state the int to set state to.
+     * @throws InvalidArgumentException if parameter state != NEW, RUNNING, ERROR, PAUSED, DISCONNECT or CLOSED.
      */
-    public synchronized void setRun(int state) {
-        this.state = state;
+    public synchronized void setRun(int state) throws InvalidArgumentException {
+        if(state == NEW || state == RUNNING || state == ERROR || state == PAUSED || state == DISCONNECT || state == CLOSED){
+            this.state = state;
+        } else {
+            throw new InvalidArgumentException("State must equal NEW, RUNNING, ERROR, PAUSED, DISCONNECT or CLOSED. State equals " + state);
+        }
     }
 
     /**

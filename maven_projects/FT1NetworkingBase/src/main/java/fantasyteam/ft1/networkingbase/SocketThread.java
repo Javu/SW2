@@ -1,5 +1,6 @@
 package fantasyteam.ft1.networkingbase;
 
+import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -209,13 +210,21 @@ public class SocketThread extends Thread {
     }
 
     /**
-     * Sets the attribute state, the current state of the {@link SocketThread}. Setting state not equal to 1 or 2 while the
-     * thread is started will cause the thread to close.
+     * Sets the attribute state, the current state of the {@link SocketThread}.
+     * Valid states are 0 - NEW 1 - RUNNING 2 - CONFIRMED 3 - ERROR 4 - CLOSED.
+     * Setting state not equal to RUNNING or CONFIRMED while the thread is
+     * started will cause the thread to close.
      *
      * @param state int to set state to.
+     * @throws InvalidArgumentException if parameter state != NEW, RUNNING,
+     * CONFIRMED, ERROR or CLOSED.
      */
-    public synchronized void setRun(int state) {
-        this.state = state;
+    public synchronized void setRun(int state) throws InvalidArgumentException {
+        if (state == NEW || state == RUNNING || state == CONFIRMED || state == ERROR || state == CLOSED) {
+            this.state = state;
+        } else {
+            throw new InvalidArgumentException("State must equal NEW, RUNNING, CONFIRMED, ERROR or CLOSED. State equals " + state);
+        }
     }
 
     /**

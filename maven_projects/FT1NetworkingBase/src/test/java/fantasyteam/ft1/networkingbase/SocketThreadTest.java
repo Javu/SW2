@@ -2,6 +2,10 @@ package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
 import fantasyteam.ft1.Timing;
+import fantasyteam.ft1.networkingbase.exceptions.FeatureNotUsedException;
+import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
+import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
+import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -151,7 +155,7 @@ public class SocketThreadTest {
      * @throws IOException if either {@link Server} fails to construct.
      */
     @BeforeMethod
-    private void setupSocketThread() throws IOException {
+    private void setupSocketThread() throws IOException, ServerSocketCloseException, TimeoutException {
         port = 22223;
         exception = false;
         Game game = EasyMock.createMock(Game.class);
@@ -165,7 +169,7 @@ public class SocketThreadTest {
      * @throws IOException if either {@link Server} fails to close.
      */
     @AfterMethod
-    private void deleteSocketThread() throws IOException {
+    private void deleteSocketThread() throws IOException, ServerSocketCloseException, TimeoutException {
         LOGGER.log(Level.INFO, "+++++ CLOSING server2 (CLIENT SERVER) +++++");
         server2.close();
         waitServerState(server2, Server.CLOSED);
@@ -184,13 +188,13 @@ public class SocketThreadTest {
         String hash = "";
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -213,13 +217,13 @@ public class SocketThreadTest {
         String hash = "";
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -238,18 +242,22 @@ public class SocketThreadTest {
         String hash = "";
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
         waitSocketThreadState(server2, hash, SocketThread.RUNNING);
-        server2.getSocketList().get(hash).setRun(SocketThread.CONFIRMED);
+        try {
+            server2.getSocketList().get(hash).setRun(SocketThread.CONFIRMED);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
         waitSocketThreadState(server2, hash, SocketThread.CONFIRMED);
         Assert.assertFalse(exception, "Exception found");
         Assert.assertEquals(server2.getSocketList().get(hash).getRun(), SocketThread.CONFIRMED, "SocketThread " + hash + " state was not set correctly");
@@ -265,7 +273,7 @@ public class SocketThreadTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testCloseBeforeUnblock -----");
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
@@ -312,13 +320,13 @@ public class SocketThreadTest {
         String hash = "";
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);
         try {
             hash = server2.addSocket("127.0.0.1");
-        } catch (IOException ex) {
+        } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
@@ -340,7 +348,7 @@ public class SocketThreadTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testToStringSockClosed -----");
         try {
             server1.startThread();
-        } catch (IOException e) {
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
             exception = true;
         }
         waitListenThreadStart(server1);

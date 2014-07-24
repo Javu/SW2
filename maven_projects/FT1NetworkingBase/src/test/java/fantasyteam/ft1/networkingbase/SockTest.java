@@ -2,6 +2,9 @@ package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
 import fantasyteam.ft1.Timing;
+import fantasyteam.ft1.networkingbase.exceptions.FeatureNotUsedException;
+import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
+import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -158,7 +161,7 @@ public class SockTest {
      * connection fails to connect.
      */
     @BeforeMethod
-    private void setupSock() throws IOException {
+    private void setupSock() throws IOException, ServerSocketCloseException, TimeoutException, FeatureNotUsedException {
         ip = "127.0.0.1";
         port = 22227;
         Game game = EasyMock.createMock(Game.class);
@@ -178,7 +181,7 @@ public class SockTest {
      * close.
      */
     @AfterMethod
-    private void deleteSock() throws IOException {
+    private void deleteSock() throws IOException, ServerSocketCloseException, TimeoutException {
         sock.close();
         waitSockClose(sock);
         server.close();

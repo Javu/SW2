@@ -1,8 +1,12 @@
 package fantasyteam.ft1.networkingbase;
 
-import fantasyteam.ft1.networkingbase.exceptions.SocketCloseException;
+import fantasyteam.ft1.networkingbase.exceptions.FeatureNotUsedException;
+import fantasyteam.ft1.networkingbase.exceptions.NullException;
+import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
+import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,7 +32,7 @@ public class ListenThread extends Thread {
     /**
      * Port number to listen on.
      */
-    private volatile int port;
+    private final int port;
     /**
      * Boolean used to determine if the thread is running or not.
      */
@@ -64,15 +68,26 @@ public class ListenThread extends Thread {
         while (run) {
             try {
                 server.listen();
+            } catch (SocketException e) {
+                LOGGER.log(Level.INFO, "ServerSocket has been closed. ListenThread will now terminate");
+                run = false;
+            } catch (TimeoutException e) {
+                LOGGER.log(Level.SEVERE, "New SocketThread failed to start in time. TimeoutException details", e);
+            } catch (NullException e) {
+                LOGGER.log(Level.SEVERE, "server.listen_thread is null, cannot run listen. ListenThread will terminate");
+                run = false;
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Failed to accept new connection. ListenThread will now terminate", e);
+                run = false;
+            } catch (FeatureNotUsedException e) {
+                LOGGER.log(Level.SEVERE, "server.state is not set to LISTEN. ListenThread will terminate", e);
                 run = false;
             }
         }
         LOGGER.log(Level.INFO, "Listen loop has exited on port {0}", port);
         try {
             this.close();
-        } catch (SocketCloseException e) {
+        } catch (ServerSocketCloseException e) {
             LOGGER.log(Level.SEVERE, "Failed to close and interrupt ListenThread. Thread may not have terminated correctly and could be tieing up system resources", e);
         }
     }
@@ -80,17 +95,18 @@ public class ListenThread extends Thread {
     /**
      * Closes server_socket and interrupts the thread.
      *
-     * @throws SocketCloseException if an exception is encountered when closing the
+     * @throws ServerSocketCloseException if an exception is encountered when closing the
      * ServerSocket.
      */
-    public synchronized void close() throws SocketCloseException {
+    public synchronized void close() throws ServerSocketCloseException {
         if (server_socket != null) {
             try {
                 server_socket.close();
                 server_socket = null;
                 LOGGER.log(Level.INFO, "Closed ListenThread on port {0}", port);
+                run = false;
             } catch(IOException e) {
-                throw new SocketCloseException("Failed to close ServerSocket on ListenThread. Port may still be in use", e);
+                throw new ServerSocketCloseException("Failed to close ServerSocket on ListenThread. Port may still be in use", e);
             }  
         } else {
             LOGGER.log(Level.INFO, "ListenThread is already closed");

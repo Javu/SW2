@@ -2,6 +2,9 @@ package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
 import fantasyteam.ft1.Timing;
+import fantasyteam.ft1.networkingbase.exceptions.FeatureNotUsedException;
+import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
+import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -114,7 +117,7 @@ public class ListenThreadTest {
      * @throws IOException if {@link ListenThread} fails to start.
      */
     @BeforeMethod
-    private void setupListenThread() throws IOException {
+    private void setupListenThread() throws IOException, ServerSocketCloseException, TimeoutException, FeatureNotUsedException {
         port = 22224;
         Game game = EasyMock.createMock(Game.class);
         server = new Server(game, port, true);
@@ -130,7 +133,7 @@ public class ListenThreadTest {
      * @throws IOException if {@link Server} fails to close.
      */
     @AfterMethod
-    private void deleteListenThread() throws IOException {
+    private void deleteListenThread() throws IOException, ServerSocketCloseException, TimeoutException {
         server.close();
         waitServerState(server, Server.CLOSED);
     }

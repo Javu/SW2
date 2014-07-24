@@ -2,6 +2,10 @@ package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
 import fantasyteam.ft1.Timing;
+import fantasyteam.ft1.networkingbase.exceptions.FeatureNotUsedException;
+import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
+import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
+import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -197,7 +201,7 @@ public class MessageQueueTest {
      * connection fails to connect.
      */
     @BeforeMethod
-    private void setupQueue() throws IOException {
+    private void setupQueue() throws IOException, ServerSocketCloseException, TimeoutException, FeatureNotUsedException {
         port = 22222;
         exception = false;
         Game game = EasyMock.createMock(Game.class);
@@ -222,7 +226,7 @@ public class MessageQueueTest {
      * @throws IOException if either {@link Server} fails to close.
      */
     @AfterMethod
-    private void deleteQueue() throws IOException {
+    private void deleteQueue() throws IOException, ServerSocketCloseException, TimeoutException {
         LOGGER.log(Level.INFO, "+++++ CLOSING server2 (CLIENT SERVER) +++++");
         server2.close();
         waitServerState(server2, Server.CLOSED);
@@ -254,7 +258,11 @@ public class MessageQueueTest {
     @Test
     public void testMessageQueueSetRun() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetRun -----");
-        server2.getQueueList().get(hash).setRun(MessageQueue.ERROR);
+        try {
+            server2.getQueueList().get(hash).setRun(MessageQueue.ERROR);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
         Assert.assertEquals(server2.getQueueList().get(hash).getRun(), MessageQueue.ERROR, "MessageQueue.run was not set to 2");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetRun COMPLETED -----");
@@ -283,7 +291,11 @@ public class MessageQueueTest {
         long current_timeout = server2.getQueueList().get(hash).getTimeout();
         Assert.assertEquals(current_timeout, 300000, "Did not return the correct timeout value");
         long new_timeout = 5;
-        server2.getQueueList().get(hash).setTimeout(new_timeout);
+        try {
+            server2.getQueueList().get(hash).setTimeout(new_timeout);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
         current_timeout = server2.getQueueList().get(hash).getTimeout();
         Assert.assertEquals(current_timeout, new_timeout, "Did not return the correct timeout value after changing it using MessageQueue.setTimeout(long timeout)");
         Assert.assertFalse(exception, "Exception found");
