@@ -1,11 +1,16 @@
 package fantasyteam.ft1.networkingbase.exceptions;
 
-import java.io.IOException;
-
 /**
  *
  * @author jsvu
  */
-public class NetworkingBaseException extends IOException {
+public class NetworkingBaseException extends Exception {
     
+    public NetworkingBaseException(String message) {
+        super(message);
+    }
+    
+    public NetworkingBaseException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

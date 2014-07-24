@@ -1,5 +1,6 @@
 package fantasyteam.ft1.networkingbase;
 
+import fantasyteam.ft1.networkingbase.exceptions.SocketCloseException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.logging.Level;
@@ -71,7 +72,7 @@ public class ListenThread extends Thread {
         LOGGER.log(Level.INFO, "Listen loop has exited on port {0}", port);
         try {
             this.close();
-        } catch (IOException e) {
+        } catch (SocketCloseException e) {
             LOGGER.log(Level.SEVERE, "Failed to close and interrupt ListenThread. Thread may not have terminated correctly and could be tieing up system resources", e);
         }
     }
@@ -79,15 +80,21 @@ public class ListenThread extends Thread {
     /**
      * Closes server_socket and interrupts the thread.
      *
-     * @throws IOException if an exception is encountered when closing the
+     * @throws SocketCloseException if an exception is encountered when closing the
      * ServerSocket.
      */
-    public synchronized void close() throws IOException {
+    public synchronized void close() throws SocketCloseException {
         if (server_socket != null) {
-            server_socket.close();
-            server_socket = null;
+            try {
+                server_socket.close();
+                server_socket = null;
+                LOGGER.log(Level.INFO, "Closed ListenThread on port {0}", port);
+            } catch(IOException e) {
+                throw new SocketCloseException("Failed to close ServerSocket on ListenThread. Port may still be in use", e);
+            }  
+        } else {
+            LOGGER.log(Level.INFO, "ListenThread is already closed");
         }
-        LOGGER.log(Level.INFO, "Closed ListenThread on port {0}", port);
     }
 
     /**

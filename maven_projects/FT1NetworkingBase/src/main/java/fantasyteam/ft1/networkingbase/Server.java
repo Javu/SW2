@@ -2,6 +2,7 @@ package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
 import fantasyteam.ft1.Timing;
+import fantasyteam.ft1.networkingbase.exceptions.SocketCloseException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
@@ -122,8 +123,11 @@ public class Server extends fantasyteam.ft1.Networking {
      * or client.
      * @throws IOException if an exception is found when running
      * setListenThread().
+     * @throws SocketCloseException if the ServerSocket on ListenThread fails to
+     * close when attempting to create a new {@link ListenThread} when one is
+     * already running.
      */
-    public Server(Game game, int port, boolean listen) throws IOException {
+    public Server(Game game, int port, boolean listen) throws IOException, SocketCloseException {
         super(game);
         this.port = port;
         use_disconnected_sockets = false;
@@ -149,8 +153,10 @@ public class Server extends fantasyteam.ft1.Networking {
      *
      * @throws IOException if an exception is encountered when running
      * closeListenThread().
+     * @throws SocketCloseException if the ServerSocket on ListenThread fails to
+     * close.
      */
-    public synchronized void close() throws IOException {
+    public synchronized void close() throws IOException, SocketCloseException {
         use_disconnected_sockets = false;
         closeListenThread();
         if (socket_list != null && !socket_list.isEmpty()) {
@@ -194,8 +200,10 @@ public class Server extends fantasyteam.ft1.Networking {
      *
      * @throws IOException if an exception is encountered when closing the
      * {@link ListenThread}.
+     * @throws SocketCloseException if the ServerSocket on ListenThread fails to
+     * close.
      */
-    public synchronized void closeListenThread() throws IOException {
+    public synchronized void closeListenThread() throws IOException, SocketCloseException {
         if (state == LISTEN && listen_thread != null) {
             if (listen_thread.getRun()) {
                 LOGGER.log(Level.INFO, "Attempting to close running listen_thread on port {0}", listen_thread.getPort());
@@ -329,8 +337,11 @@ public class Server extends fantasyteam.ft1.Networking {
      *
      * @throws IOException if an exception is found when creating a new
      * {@link ListenThread}.
+     * @throws SocketCloseException if the ServerSocket on ListenThread fails to
+     * close when attempting to create a new {@link ListenThread} when one is
+     * already running.
      */
-    public synchronized void setListenThread() throws IOException {
+    public synchronized void setListenThread() throws IOException, SocketCloseException {
         closeListenThread();
         try {
             listen_thread = new ListenThread(this);
@@ -395,7 +406,8 @@ public class Server extends fantasyteam.ft1.Networking {
      * Returns the list of {@link MessageQueue}s associated with each
      * {@link SocketThread} on the {@link Server}.
      *
-     * @return the Map(String,{@link MessageQueue}) queue_list, the list of {@link MessageQueue}s on the {@link Server}.
+     * @return the Map(String,{@link MessageQueue}) queue_list, the list of
+     * {@link MessageQueue}s on the {@link Server}.
      */
     public Map<String, MessageQueue> getQueueList() {
         return queue_list;
@@ -837,8 +849,10 @@ public class Server extends fantasyteam.ft1.Networking {
      *
      * @throws IOException if an exception is found when closing the
      * {@link ListenThread}.
+     * @throws SocketCloseException if the ServerSocket on ListenThread fails to
+     * close.
      */
-    public void startThread() throws IOException {
+    public void startThread() throws IOException, SocketCloseException {
         if (state == LISTEN) {
             listen_thread.start();
             boolean started = false;
