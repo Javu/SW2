@@ -1,7 +1,10 @@
 package fantasyteam.ft1.networkingbase;
 
+import fantasyteam.ft1.Timing;
 import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
 import java.io.IOException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -65,6 +68,32 @@ public class SocketThread extends Thread {
      * - RUNNING 2 - CONFIRMED 3 - ERROR 4 - CLOSED
      */
     private volatile int state;
+    /**
+     * Default timeout value to wait when waiting for critical tasks to
+     * complete.
+     */
+    private volatile long timeout;
+    /**
+     * The time in milliseconds to wait while blocking for input on the socket
+     * until a SocketTimeoutException is thrown to break blocking.
+     */
+    private int socket_timeout_response;
+    /**
+     * The number of consecutive times to handle a SocketTimeoutException before
+     * closing the {@link SocketThread}.
+     */
+    private int socket_timeout_response_count;
+    /**
+     * Boolean specifying whether to use the no response timeout feature. While
+     * blocking for input from the socket, if this feature is active the socket
+     * will throw a SocketTimeoutException if it does not receive a response
+     * within the timeout given by socket_timeout_response. It will also
+     * increment a counter by 1 each time it receives a SocketTimeoutException.
+     * If this counter becomes > socket_timeout_response_count this
+     * {@link SocketThread} will close itself. If it successfully reads a
+     * message from the socket it will set the counter back to 0.
+     */
+    private volatile boolean use_socket_timeout;
 
     /**
      * Logger for logging important actions and exceptions.
@@ -89,6 +118,10 @@ public class SocketThread extends Thread {
         this.server = server;
         this.hash = hash;
         state = NEW;
+        timeout = 5000;
+        socket_timeout_response = 1000;
+        socket_timeout_response_count = 5;
+        use_socket_timeout = false;
     }
 
     /**
@@ -98,32 +131,57 @@ public class SocketThread extends Thread {
      */
     @Override
     public void run() {
+        Timing confirmation_timer = null;
+        int no_response_count = 0;
         if (state == NEW) {
             state = RUNNING;
         }
         while (state == RUNNING || state == CONFIRMED) {
-            boolean read = false;
-            String message = "";
-            // Block and wait for input from the socket
-            try {
-                message = socket.readMessage();
-                read = true;
-            } catch (IOException e) {
-                if (state == RUNNING || state == CONFIRMED) {
-                    if (server.getSocketList().containsKey(hash)) {
-                        LOGGER.log(Level.SEVERE, "Could not read from socket. Hash {0}", hash);
+            if (state == RUNNING && confirmation_timer == null) {
+                confirmation_timer = new Timing();
+            } else if (state == CONFIRMED && confirmation_timer != null) {
+                confirmation_timer = null;
+            }
+            if (state == RUNNING && confirmation_timer != null && confirmation_timer.getTime() > timeout) {
+                LOGGER.log(Level.INFO, "Remote server did not verify connection before timeout was reached. Closing SocketThread. Hash {0}", hash);
+                server.receiveMessage("disconnect", hash);
+            } else if (use_socket_timeout && no_response_count > socket_timeout_response_count) {
+                LOGGER.log(Level.INFO, "Have not received a response from the remote server within the given timeout. Closing SocketThread. Hash {0}", hash);
+                server.receiveMessage("disconnect", hash);
+            } else {
+                boolean read = false;
+                String message = "";
+                try {
+                    message = socket.readMessage();
+                    read = true;
+                    if (use_socket_timeout) {
+                        no_response_count = 0;
+                    }
+                } catch (SocketTimeoutException e) {
+                    if (socket_timeout_response_count != -1) {
+                        no_response_count += 1;
+                    }
+                } catch (IOException e) {
+                    if (state == RUNNING || state == CONFIRMED) {
+                        if (server.getSocketList().containsKey(hash)) {
+                            LOGGER.log(Level.SEVERE, "Could not read from socket. Hash {0}", hash);
+                        }
                     }
                 }
-            }
-            if (read) {
-                if (message == null) {
-                    LOGGER.log(Level.INFO, "Socket has been disconnected, attempting to close socket on Server. Hash {0}", hash);
-                    message = "disconnect";
-                } else {
-                    LOGGER.log(Level.INFO, "Message received: {0}", message);
-                }
-                if (state != NEW) {
-                    server.receiveMessage(message, hash);
+                if (read) {
+                    if (message == null) {
+                        LOGGER.log(Level.INFO, "Socket has been disconnected, attempting to close socket on Server. Hash {0}", hash);
+                        message = "disconnect";
+                    } else {
+                        LOGGER.log(Level.INFO, "Message received: {0}", message);
+                    }
+                    if (state == RUNNING) {
+                        if (message.compareTo("customnetwork1" + Character.toString((char) 31)) == 0) {
+                            server.receiveMessage(message, hash);
+                        }
+                    } else if (state != NEW) {
+                        server.receiveMessage(message, hash);
+                    }
                 }
             }
         }
@@ -191,6 +249,52 @@ public class SocketThread extends Thread {
     }
 
     /**
+     * Returns the attribute timeout, the amount of time (in milliseconds) to
+     * wait for critical tasks to complete.
+     *
+     * @return the long timeout.
+     */
+    public long getTimeout() {
+        return timeout;
+    }
+
+    /**
+     * Returns the attribute socket_timeout_response, the amount of time to wait
+     * (in milliseconds) for a response from the socket before breaking
+     * blocking.
+     *
+     * @return the int socket_timeout_response.
+     */
+    public int getSocketTimeout() {
+        return socket_timeout_response;
+    }
+
+    /**
+     * Returns the attribute socket_timeout_response_count, the amount of
+     * consecutive times to break blocking for no response until the
+     * {@link SocketThread} closes itself.
+     *
+     * @return the int socket_timeout_no_response_count.
+     */
+    public int getSocketTimeoutCount() {
+        return socket_timeout_response_count;
+    }
+
+    /**
+     * Returns the attribute use_socket_timeout, a flag specifying whether to
+     * use the socket timeout feature to break blocking on the socket if no
+     * response is received within the given timeout. You can set this timeout
+     * value by using setSocketTimout and can specify the number of consecutive
+     * timeouts to accept before closing the {@link SocketThread} altogether by
+     * using setSocketTimeoutCount.
+     *
+     * @return the boolean to set use_socket_timeout to.
+     */
+    public boolean getUseSocketTimeout() {
+        return use_socket_timeout;
+    }
+
+    /**
      * Sets the attribute hash, the unique identifier assigned to this
      * {@link SocketThread} by the {@link Server}. WARNING: You should avoid
      * running this function manually. Changing a {@link SocketThread}'s hash
@@ -225,6 +329,93 @@ public class SocketThread extends Thread {
         } else {
             throw new InvalidArgumentException("State must equal NEW, RUNNING, CONFIRMED, ERROR or CLOSED. State equals " + state);
         }
+    }
+
+    /**
+     * Set the value of timeout, the amount of time to wait (in milliseconds)
+     * for critical tasks to complete.
+     *
+     * @param timeout long to set timeout to.
+     * @throws InvalidArgumentException if the parameter timeout is less than 0.
+     */
+    public void setTimeout(long timeout) throws InvalidArgumentException {
+        if (timeout >= 0) {
+            this.timeout = timeout;
+        } else {
+            throw new InvalidArgumentException("Value of timeout must be >= 0. Timeout = " + timeout);
+        }
+    }
+
+    /**
+     * Sets the attribute socket_timeout_response, the amount of time to wait
+     * before throwing a SocketTimeoutException if no response is received on
+     * the socket. The timeout will only be applied if this feature is turned
+     * on. You can turn the feature on using setUseSocketTimeout. You can also
+     * set how many consecutive timeouts to accept before closing the
+     * {@link SocketThread} using setSocketTimeoutCount.
+     *
+     * @param socket_timeout int to set socket_timeout_response to.
+     * @throws InvalidArgumentException if the parameter socket_timeout less
+     * than or equal to 0.
+     * @throws SocketException if there is a problem setting the socket timeout
+     * value.
+     */
+    public void setSocketTimeout(int socket_timeout) throws InvalidArgumentException, SocketException {
+        if (socket_timeout > 0) {
+            this.socket_timeout_response = socket_timeout;
+            if (use_socket_timeout) {
+                socket.getSocket().setSoTimeout(socket_timeout_response);
+            }
+        } else {
+            throw new InvalidArgumentException("Value of socket_timeout must be > 0. socket_timeout = " + socket_timeout);
+        }
+    }
+
+    /**
+     * Sets the attribute socket_timeout_response_count, the maximum number of
+     * consecutive SocketTimeoutExceptions to handle before closing the
+     * {@link SocketThread}. Set this value to -1 to tell the
+     * {@link SocketThread} to never close no matter how many consecutive
+     * SocketTimeoutExceptions it receives. This will only work if the socket
+     * timeout feature is used. You can turn on the feature using
+     * setUseSocketTimeout. You can also set the amount of time (in
+     * milliseconds) to wait while blocking on the socket to throw a
+     * SocketTimeoutException.
+     *
+     * @param count int to change socket_timeout_response_count to.
+     * @throws InvalidArgumentException if the parameter count is less than 0.
+     */
+    public void setSocketTimeoutCount(int count) throws InvalidArgumentException {
+        if (count >= -1) {
+            socket_timeout_response_count = count;
+        } else {
+            throw new InvalidArgumentException("Value of count must be >= -1. count = " + count);
+        }
+    }
+
+    /**
+     * Sets the attribute use_socket_timeout, this turns the socket timeout
+     * feature on or off. This feature is used to cause the socket to break
+     * blocking if a specified timeout is reached before receiving any input.
+     * Use setSocketTimeout to set the wait time (in milliseconds) to wait
+     * before breaking input blocking (the default value is 1000). Use
+     * setSocketTimeoutCount to specify the number of consecutive times to break
+     * blocking before closing the {@link SocketThread} (the default value is
+     * 5). if this feature is turned on while the socket is blocking for input
+     * then it will only become active the next time the socket begins to block
+     * for input.
+     *
+     * @param use_socket_timeout boolean to set use_socket_timeout to.
+     * @throws SocketException if an exception is found when trying to change
+     * the value of timeout on the socket.
+     */
+    public void setUseSocketTimeout(boolean use_socket_timeout) throws SocketException {
+        if (this.use_socket_timeout && !use_socket_timeout) {
+            socket.getSocket().setSoTimeout(0);
+        } else if (!this.use_socket_timeout && use_socket_timeout) {
+            socket.getSocket().setSoTimeout(getSocketTimeout());
+        }
+        this.use_socket_timeout = use_socket_timeout;
     }
 
     /**

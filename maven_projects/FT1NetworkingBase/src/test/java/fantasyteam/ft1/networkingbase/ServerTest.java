@@ -430,10 +430,10 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         String server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         try {
             server1.setUseMessageQueues(true);
         } catch (TimeoutException e) {
@@ -471,10 +471,10 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         String server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         waitMessageQueueAddNotEmpty(server1);
         waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
         try {
@@ -653,7 +653,7 @@ public class ServerTest {
                 exception = true;
             }
             waitSocketThreadAddNotEmpty(server1);
-            waitSocketThreadState(server1, client_hash, SocketThread.RUNNING);
+            waitSocketThreadState(server1, client_hash, SocketThread.CONFIRMED);
             waitSocketThreadAddNotEmpty(server2);
             if (server2.getSocketList() != null && !server2.getSocketList().isEmpty()) {
                 for (SocketThread socket : server2.getSocketList().values()) {
@@ -756,7 +756,7 @@ public class ServerTest {
         waitSocketThreadAddNotEmpty(server2);
         waitSocketThreadAddNotEmpty(server1);
         String server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         waitMessageQueueAddNotEmpty(server1);
         waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
         try {
@@ -836,10 +836,10 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         LOGGER.log(Level.INFO, "----- TEST testServerClientConnectSocket COMPLETED -----");
     }
 
@@ -871,10 +871,10 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         LOGGER.log(Level.INFO, "----- TEST testServerClientConnectSock COMPLETED -----");
     }
 
@@ -900,10 +900,10 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testServerClientConnectIp COMPLETED -----");
     }
@@ -930,10 +930,10 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         if (server1.containsHash(server_hash) == true) {
             client_hash = "connected";
         }
@@ -975,10 +975,10 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         waitMessageQueueAddNotEmpty(server2);
         waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
         waitMessageQueueAddNotEmpty(server1);
@@ -1009,10 +1009,10 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         try {
             server2.close();
         } catch (IOException | ServerSocketCloseException | TimeoutException e) {
@@ -1053,10 +1053,10 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         try {
             server2.close();
         } catch (IOException | ServerSocketCloseException | TimeoutException e) {
@@ -1100,7 +1100,7 @@ public class ServerTest {
         waitSocketThreadAddNotEmpty(server2);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         server2.disconnect("TEST");
         waitSocketThreadRemoveEmpty(server2);
         waitSocketThreadRemoveEmpty(server1);
@@ -1176,17 +1176,17 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         try {
             client_hash2 = server3.addSocket("127.0.0.1");
         } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server3);
-        waitSocketThreadState(server3, client_hash2, SocketThread.RUNNING);
+        waitSocketThreadState(server3, client_hash2, SocketThread.CONFIRMED);
         boolean loop = true;
         Timing new_timer = new Timing();
         while (loop) {
@@ -1245,14 +1245,14 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         try {
             client_hash2 = server3.addSocket("127.0.0.1");
         } catch (IOException | TimeoutException e) {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server3);
-        waitSocketThreadState(server3, client_hash2, SocketThread.RUNNING);
+        waitSocketThreadState(server3, client_hash2, SocketThread.CONFIRMED);
         boolean loop = true;
         Timing new_timer = new Timing();
         while (loop) {
@@ -1486,7 +1486,7 @@ public class ServerTest {
                 server_hash2 = socket.getHash();
             }
         }
-        waitSocketThreadState(server1, server_hash2, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash2, SocketThread.CONFIRMED);
         try {
             server3.close();
         } catch (IOException | ServerSocketCloseException | TimeoutException e) {
@@ -1568,7 +1568,7 @@ public class ServerTest {
                 server_hash2 = socket.getHash();
             }
         }
-        waitSocketThreadState(server1, server_hash2, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash2, SocketThread.CONFIRMED);
         try {
             server3.close();
         } catch (IOException | ServerSocketCloseException | TimeoutException e) {
@@ -1691,7 +1691,7 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, hash, SocketThread.CONFIRMED);
         String to_string = server2.toString();
         Assert.assertFalse(exception, "Exception found");
         Assert.assertNotEquals(to_string, null, "Server data not generated into a readable String");
@@ -1731,7 +1731,7 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, hash, SocketThread.CONFIRMED);
         waitMessageQueueAddNotEmpty(server2);
         waitMessageQueueState(server2, hash, MessageQueue.RUNNING);
         String to_string = server2.toString("\t");
@@ -1773,7 +1773,7 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, hash, SocketThread.CONFIRMED);
         waitMessageQueueAddNotEmpty(server2);
         server2.getQueueList().get(hash).pauseQueue();
         server2.sendMessage("TEST", hash);
@@ -1818,7 +1818,7 @@ public class ServerTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, hash, SocketThread.CONFIRMED);
         waitMessageQueueAddNotEmpty(server2);
         server2.getQueueList().get(hash).pauseQueue();
         server2.sendMessage("TEST", hash);

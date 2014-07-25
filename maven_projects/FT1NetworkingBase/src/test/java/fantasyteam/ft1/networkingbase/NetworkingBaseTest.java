@@ -2,16 +2,13 @@ package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
 import fantasyteam.ft1.Timing;
-import fantasyteam.ft1.exceptions.FT1EngineError;
 import fantasyteam.ft1.networkingbase.exceptions.FeatureNotUsedException;
 import fantasyteam.ft1.networkingbase.exceptions.HashNotFoundException;
 import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
 import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
 import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
-import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static org.easymock.EasyMock.*;
@@ -309,10 +306,10 @@ public class NetworkingBaseTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         server2.sendMessage("TEST", client_hash);
         boolean loop = true;
         Timing new_timer = new Timing();
@@ -357,7 +354,7 @@ public class NetworkingBaseTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitMessageQueueAddNotEmpty(server2);
         waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
         server2.getQueueList().get(client_hash).pauseQueue();
@@ -414,7 +411,7 @@ public class NetworkingBaseTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
         try {
@@ -477,10 +474,10 @@ public class NetworkingBaseTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         waitMessageQueueAddNotEmpty(server1);
         waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
         server1.getQueueList().get(server_hash).pauseQueue();
@@ -511,7 +508,7 @@ public class NetworkingBaseTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
         loop = true;
         new_timer.startTiming();
         while (loop) {
@@ -524,7 +521,7 @@ public class NetworkingBaseTest {
                 server_hash2 = socket.getHash();
             }
         }
-        waitSocketThreadState(server1, server_hash2, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash2, SocketThread.CONFIRMED);
         loop = true;
         new_timer.startTiming();
         while (loop) {
@@ -597,7 +594,7 @@ public class NetworkingBaseTest {
         waitSocketThreadAddNotEmpty(server2);
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
-        waitSocketThreadState(server1, server_hash, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
         waitMessageQueueAddNotEmpty(server1);
         waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
         try {
@@ -643,7 +640,7 @@ public class NetworkingBaseTest {
                 server_hash2 = socket.getHash();
             }
         }
-        waitSocketThreadState(server1, server_hash2, SocketThread.RUNNING);
+        waitSocketThreadState(server1, server_hash2, SocketThread.CONFIRMED);
         waitMessageQueueAddNotEmpty(server1);
         waitMessageQueueState(server1, server_hash2, MessageQueue.RUNNING);
         try {

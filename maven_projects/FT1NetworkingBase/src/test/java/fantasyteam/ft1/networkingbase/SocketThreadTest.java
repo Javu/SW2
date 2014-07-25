@@ -198,7 +198,7 @@ public class SocketThreadTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, hash, SocketThread.CONFIRMED);
         String new_hash = "Hi";
         server2.getSocketList().get(hash).setHash(new_hash);
         Assert.assertFalse(exception, "Exception found");
@@ -252,7 +252,7 @@ public class SocketThreadTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, hash, SocketThread.CONFIRMED);
         try {
             server2.getSocketList().get(hash).setRun(SocketThread.CONFIRMED);
         } catch (InvalidArgumentException e) {
@@ -330,7 +330,7 @@ public class SocketThreadTest {
             exception = true;
         }
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, hash, SocketThread.CONFIRMED);
         String to_string = null;
         to_string = server2.getSocketList().get(hash).toString();
         Assert.assertFalse(exception, "Exception found");

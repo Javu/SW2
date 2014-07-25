@@ -149,7 +149,7 @@ public class MessageQueue extends Thread {
                             timer = new Timing();
                         }
                         LOGGER.log(Level.SEVERE, "Could not send message: {0}. Exception: {1}", new Object[]{messages.get(0), e});
-                        if (timer.getTime() > 5000) {
+                        if (timer.getTime() > timeout) {
                             LOGGER.log(Level.SEVERE, "Sending message has timed out. Disconnecting socket. Message: ", messages.get(0));
                             server.disconnect(hash);
                         }
@@ -208,7 +208,7 @@ public class MessageQueue extends Thread {
      * handling.
      *
      * @param timeout long to set timeout to.
-     * @throws InvalidArgumentException if the parameter timeout is not >= 0.
+     * @throws InvalidArgumentException if the parameter timeout is not equal to or greater than 0.
      */
     public synchronized void setTimeout(long timeout) throws InvalidArgumentException {
         if(timeout >= 0) {

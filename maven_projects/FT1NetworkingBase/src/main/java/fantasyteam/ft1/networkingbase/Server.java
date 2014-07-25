@@ -11,6 +11,7 @@ import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
 import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,6 +68,24 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     protected volatile int port;
     /**
+     * Default timeout value to wait when waiting for critical tasks to
+     * complete.
+     */
+    protected long timeout;
+    /**
+     * Default timeout value to use for the {@link SocketThread} socket timeout
+     * feature. This will only be used if the feature is turned on. Turn the
+     * feature on using setUseSocketTimeout.
+     */
+    protected int socket_timeout;
+    /**
+     * Default number of consecutive times each {@link SocketThread} should
+     * receive a timeout on the socket before closing itself. This will only be
+     * used if the {@link SocketThread} socket timeout feature is turned on.
+     * Turn this feature on using setUseSocketTimeout.
+     */
+    protected int socket_timeout_count;
+    /**
      * Boolean used to specify whether to keep the hashes of disconnected
      * sockets.
      */
@@ -76,6 +95,15 @@ public class Server extends fantasyteam.ft1.Networking {
      * {@link MessageQueue}s.
      */
     protected volatile boolean use_message_queues;
+    /**
+     * Boolean used to specify whether to use the connection confirmation
+     * feature.
+     */
+    protected volatile boolean use_connection_confirmation;
+    /**
+     * Boolean used to specify whether to use the socket timeout feature.
+     */
+    protected volatile boolean use_socket_timeout;
     /**
      * Map used to hold {@link SocketThread}s and the keys to associate them
      * with.
@@ -109,8 +137,13 @@ public class Server extends fantasyteam.ft1.Networking {
     public Server(Game game) {
         super(game);
         port = 0;
+        timeout = 5000;
+        socket_timeout = 1000;
+        socket_timeout_count = 5;
         use_disconnected_sockets = false;
         use_message_queues = false;
+        use_connection_confirmation = false;
+        use_socket_timeout = false;
         socket_list = Collections.synchronizedMap(new HashMap<String, SocketThread>());
         queue_list = Collections.synchronizedMap(new HashMap<String, MessageQueue>());
         disconnected_sockets = new ArrayList<String>();
@@ -138,8 +171,13 @@ public class Server extends fantasyteam.ft1.Networking {
     public Server(Game game, int port, boolean listen) throws IOException, ServerSocketCloseException, TimeoutException {
         super(game);
         this.port = port;
+        timeout = 5000;
+        socket_timeout = 1000;
+        socket_timeout_count = 5;
         use_disconnected_sockets = false;
         use_message_queues = false;
+        use_connection_confirmation = false;
+        use_socket_timeout = false;
         socket_list = Collections.synchronizedMap(new HashMap<String, SocketThread>());
         queue_list = Collections.synchronizedMap(new HashMap<String, MessageQueue>());
         disconnected_sockets = new ArrayList<String>();
@@ -171,7 +209,7 @@ public class Server extends fantasyteam.ft1.Networking {
         use_disconnected_sockets = false;
         closeListenThread();
         if (socket_list != null) {
-            if(!socket_list.isEmpty()) {
+            if (!socket_list.isEmpty()) {
                 Set<String> socket_set = socket_list.keySet();
                 Object[] socket_array = socket_set.toArray();
                 for (Object socket_hash : socket_array) {
@@ -181,13 +219,13 @@ public class Server extends fantasyteam.ft1.Networking {
             boolean not_disconnected = true;
             Timing timer = new Timing();
             while (not_disconnected) {
-                if (socket_list.isEmpty() || timer.getTime() > 5000) {
+                if (socket_list.isEmpty() || timer.getTime() > timeout) {
                     not_disconnected = false;
                 }
             }
         }
         if (queue_list != null) {
-            if(!queue_list.isEmpty()) {
+            if (!queue_list.isEmpty()) {
                 Set<String> queue_set = queue_list.keySet();
                 Object[] queue_array = queue_set.toArray();
                 for (Object queue_hash : queue_array) {
@@ -201,7 +239,7 @@ public class Server extends fantasyteam.ft1.Networking {
             boolean not_disconnected = true;
             Timing timer = new Timing();
             while (not_disconnected) {
-                if (queue_list.isEmpty() || timer.getTime() > 5000) {
+                if (queue_list.isEmpty() || timer.getTime() > timeout) {
                     not_disconnected = false;
                 }
             }
@@ -233,7 +271,7 @@ public class Server extends fantasyteam.ft1.Networking {
                 while (running) {
                     if (!listen_thread.getRun()) {
                         running = false;
-                    } else if (new_timer.getTime() > 5000) {
+                    } else if (new_timer.getTime() > timeout) {
                         throw new TimeoutException("Failed to close ListenThread in time");
                     }
                 }
@@ -263,7 +301,89 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
-     * Sets whether to keep the hashes of disconnected sockets.
+     * Set the timeout attribute, the default maximum time to wait when waiting
+     * for a critical task to complete. Timeout is in milliseconds.
+     *
+     * @param timeout Number of milliseconds to wait for critical tasks to
+     * complete.
+     * @throws InvalidArgumentException if the parameter timeout is less than 0.
+     */
+    public synchronized void setTimeout(long timeout) throws InvalidArgumentException {
+        if (timeout >= 0) {
+            this.timeout = timeout;
+        } else {
+            throw new InvalidArgumentException("Value of timeout must be >= 0");
+        }
+    }
+
+    /**
+     * Sets the attribute socket_timeout, the amount of time (in milliseconds)
+     * for each SocketThread to wait before breaking any blocking on its socket.
+     * The default value for this is 1000. This function will only be used if
+     * the {@link SocketThread} socket timeout feature is turned on. Turn the
+     * feature on using setUseSocketTimeout.
+     *
+     * @param timeout Time in milliseconds to wait until breaking any blocking
+     * on {@link SocketThread}s sockets.
+     * @throws SocketException if there is a problem setting the timeout value
+     * on the {@link SocketThread}s socket.
+     * @throws InvalidArgumentException if the parameter timeout less than or
+     * equal to 0.
+     */
+    public synchronized void setSocketTimeout(int timeout) throws SocketException, InvalidArgumentException {
+        if (timeout > 0) {
+            socket_timeout = timeout;
+            if (use_socket_timeout && socket_list != null && !socket_list.isEmpty()) {
+                for (SocketThread socket : socket_list.values()) {
+                    try {
+                        socket.setSocketTimeout(socket_timeout);
+                    } catch (InvalidArgumentException e) {
+                        throw new FT1EngineError("internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeout() from Server.setSocketTimeout()", e);
+                    }
+                }
+            }
+        } else {
+            throw new InvalidArgumentException("Value timeout must be > 0. timeout = " + timeout);
+        }
+    }
+
+    /**
+     * Sets the attribute socket_timeout_count, the maximum consecutive times a
+     * {@link SocketThread} will throw a SocketTimeoutException before closing
+     * itself. The default value for this is 5. This function will only be used
+     * if the {@link SocketThread} socket timeout feature is turned on. Turn the
+     * feature on using setUseSocketTimeout.
+     *
+     * @param count Number of maximum consecutive times to throw a
+     * SocketTimeoutException before closing the {@link SocketThread}.
+     * @throws SocketException if there is a problem setting the timeout value
+     * on the {@link SocketThread}s socket.
+     * @throws InvalidArgumentException if the parameter count less than -1.
+     */
+    public synchronized void setSocketTimeoutCount(int count) throws SocketException, InvalidArgumentException {
+        if (count >= -1) {
+            socket_timeout_count = count;
+            if (use_socket_timeout && socket_list != null && !socket_list.isEmpty()) {
+                for (SocketThread socket : socket_list.values()) {
+                    try {
+                        socket.setSocketTimeoutCount(socket_timeout_count);
+                    } catch (InvalidArgumentException e) {
+                        throw new FT1EngineError("internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeoutCount() from Server.setSocketTimeoutCount()", e);
+                    }
+                }
+            }
+        } else {
+            throw new InvalidArgumentException("Value count must be >= -1. count = " + count);
+        }
+    }
+
+    /**
+     * Sets whether to keep the hashes of disconnected sockets. Please note: If
+     * you wish to also timeout disconnections after a period of time so that
+     * the client cannot reconnect after the timeout, you need to use the
+     * use_message_queues feature as well. If you just use
+     * use_disconnected_sockets the server will hold the hashes of disconnected
+     * {@link SocketThread}s indefinitely allowing them to reconnect.
      *
      * @param use Boolean specifying whether to keep the hashes of disconnected
      * sockets.
@@ -312,6 +432,59 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
+     * <p>Sets the attribute use_connection_confirmation, the flag specifying
+     * whether to use the connection confirmation feature. This feature allows a
+     * client to ensure that a remote server has successfully created a
+     * corresponding socket and is ready to begin interacting with the client.
+     * When the remote server receives a new connection it will send a
+     * notification message to the client when it is ready to start interacting.
+     * The client will ignore all messages until it receives this notification.
+     * If it does not receive the notification within a timeout period it will
+     * close. You can set this timeout by using setTimeout.</p><p>Please note: this
+     * feature needs to be turned on on both the client and the server for it to
+     * work. The server will not send the notification if the feature is not
+     * turned on and the client will continue as normal without checking for the
+     * notification.</p>
+     *
+     * @param use Boolean specifying whether to use the connection confirmation
+     * feature.
+     */
+    public synchronized void setUseConnectionConfirmation(boolean use) {
+        use_connection_confirmation = use;
+    }
+
+    /**
+     * Sets the attribute use_socket_timeout, the flag specifying whether to use
+     * the socket timeout feature of {@link SocketThread}. This feature allows
+     * the {@link SocketThread} to break blocking on its socket if no response
+     * is received after a given timeout. This allows it to handle other
+     * features, increment any counters and check any timers it needs to. The
+     * {@link SocketThread} will also close itself if it breaks blocking a
+     * number of consecutive times. Specify this number by using
+     * setSocketTimeoutCount (default value is 5). You can specify the timeout
+     * value to use by running setSocketTimeout (default value is 1000).
+     *
+     * @param use Boolean specifying whether to turn the socket timeout feature
+     * on or off.
+     * @throws SocketException if the Server attempts to set the timeout value
+     * on each {@link SocketThread}s socket but catches an error.
+     */
+    public synchronized void setUseSocketTimeout(boolean use) throws SocketException {
+        if (socket_list != null && !socket_list.isEmpty()) {
+            if (use_socket_timeout && !use) {
+                for (SocketThread socket : socket_list.values()) {
+                    socket.setUseSocketTimeout(false);
+                }
+            } else if (!use_socket_timeout && use) {
+                for (SocketThread socket : socket_list.values()) {
+                    socket.setUseSocketTimeout(true);
+                }
+            }
+        }
+        use_socket_timeout = use;
+    }
+
+    /**
      * Sets the list of connections to the {@link Server} using a
      * pre-constructed Map(String,{@link SocketThread}).
      *
@@ -333,7 +506,7 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     public synchronized void setQueueList(Map<String, MessageQueue> queue_list) {
         this.queue_list = queue_list;
-        if(this.queue_list != null) {
+        if (this.queue_list != null) {
             LOGGER.log(Level.INFO, "Changing queue_list. New queue_list:\n{0}", queue_list.toString());
         } else {
             LOGGER.log(Level.INFO, "Changing queue_list. New queue_list: null");
@@ -382,6 +555,16 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     public int getPort() {
         return port;
+    }
+
+    /**
+     * Returns the maximum wait time (in milliseconds) to wait for critical
+     * tasks to complete.
+     *
+     * @return the maximum wait time (in ms) to wait for critical tasks.
+     */
+    public long getTimeout() {
+        return timeout;
     }
 
     /**
@@ -582,7 +765,7 @@ public class Server extends fantasyteam.ft1.Networking {
                 Timing timer = new Timing();
                 while (!started && socket_list.containsKey(hash)) {
                     if (socket_list.get(hash).getRun() == SocketThread.NEW) {
-                        if (timer.getTime() > 5000) {
+                        if (timer.getTime() > timeout) {
                             started = true;
                             disconnect(hash);
                             if (use_disconnected_sockets) {
@@ -628,7 +811,7 @@ public class Server extends fantasyteam.ft1.Networking {
                 while (!started) {
                     if (queue_list.get(hash).getRun() == MessageQueue.NEW) {
                         timer.waitTime(5);
-                        if (timer.getTime() > 5000) {
+                        if (timer.getTime() > timeout) {
                             started = true;
                             throw new TimeoutException("MessageQueue was created but did not start in time");
                         }
@@ -645,7 +828,31 @@ public class Server extends fantasyteam.ft1.Networking {
         }
     }
 
-    private void addSocketThread(String hash, SocketThread new_socket) throws TimeoutException, FT1EngineError {
+    private void addSocketThread(String hash, SocketThread new_socket) throws TimeoutException, FT1EngineError, SocketException {
+        try {
+            new_socket.setTimeout(timeout);
+        } catch (InvalidArgumentException e) {
+            throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setTimeout() from Server.addSocketThread()", e);
+        }
+        if (state == LISTEN || !use_connection_confirmation) {
+            try {
+                new_socket.setRun(SocketThread.CONFIRMED);
+            } catch (InvalidArgumentException e) {
+                throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setRun() from Server.addSocketThread()", e);
+            }
+        }
+        if (use_socket_timeout) {
+            try {
+                new_socket.setSocketTimeout(socket_timeout);
+            } catch (InvalidArgumentException e) {
+                throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeout() from Server.addSocketThread()", e);
+            }
+            try {
+                new_socket.setSocketTimeoutCount(socket_timeout_count);
+            } catch (InvalidArgumentException e) {
+                throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeoutCount() from Server.addSocketThread()", e);
+            }
+        }
         socket_list.put(hash, new_socket);
         if (use_message_queues) {
             try {
@@ -724,7 +931,7 @@ public class Server extends fantasyteam.ft1.Networking {
      * @param port Port number of {@link Server}.
      * @return The hash assigned to the SocketThread.
      * @throws IOException if an exception is found when creating the new
-     * {@link Sock} or starting the new {@link SocketThread}.
+     * {@link Sock} or starting the new {@link SocketThread}
      * @throws TimeoutException if the new SocketThread did not finish starting
      * before timeout was reached.
      */
@@ -872,7 +1079,7 @@ public class Server extends fantasyteam.ft1.Networking {
                             boolean disconnected = false;
                             Timing new_timer = new Timing();
                             while (!disconnected) {
-                                if (!queue_list.containsKey(old_hash) || new_timer.getTime() > 5000) {
+                                if (!queue_list.containsKey(old_hash) || new_timer.getTime() > timeout) {
                                     disconnected = true;
                                 }
                             }
@@ -967,7 +1174,7 @@ public class Server extends fantasyteam.ft1.Networking {
             while (!started) {
                 if (!listen_thread.getRun()) {
                     timer.waitTime(5);
-                    if (timer.getTime() > 5000) {
+                    if (timer.getTime() > timeout) {
                         started = true;
                         try {
                             listen_thread.close();
@@ -1014,6 +1221,9 @@ public class Server extends fantasyteam.ft1.Networking {
                     hash = generateUniqueHash();
                     SocketThread new_socket = new SocketThread(temp_sock, this, hash);
                     addSocketThread(hash, new_socket);
+                    if (use_connection_confirmation) {
+                        sendMessage("customnetworking1", hash);
+                    }
                     LOGGER.log(Level.INFO, "New client connected to ListenServer. Connection was stored in socket_list");
                 } else {
                     LOGGER.log(Level.INFO, "ListenThread is closing, new connection was ignored");

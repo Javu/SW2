@@ -215,7 +215,7 @@ public class MessageQueueTest {
         waitListenThreadStart(server1);
         hash = server2.addSocket("127.0.0.1", port);
         waitSocketThreadAddNotEmpty(server2);
-        waitSocketThreadState(server2, hash, SocketThread.RUNNING);
+        waitSocketThreadState(server2, hash, SocketThread.CONFIRMED);
         waitMessageQueueAddNotEmpty(server2);
         waitMessageQueueState(server2, hash, MessageQueue.RUNNING);
     }
