@@ -842,6 +842,7 @@ public class Server extends fantasyteam.ft1.Networking {
             }
         }
         if (use_socket_timeout) {
+            new_socket.setUseSocketTimeout(true);
             try {
                 new_socket.setSocketTimeout(socket_timeout);
             } catch (InvalidArgumentException e) {
@@ -1283,7 +1284,7 @@ public class Server extends fantasyteam.ft1.Networking {
         } else {
             to_string += "Server ";
         }
-        to_string += "attribute values:\n" + ch + "\tState: " + state + "\n" + ch + "\tPort: " + port + "\n" + ch + "\tUse disconnected sockets: " + use_disconnected_sockets + "\n" + ch + "\tUse message queues: " + use_message_queues;
+        to_string += "attribute values:\n" + ch + "\tState: " + state + "\n" + ch + "\tPort: " + port + "\n" + ch + "\tUse disconnected sockets: " + use_disconnected_sockets + "\n" + ch + "\tUse message queues: " + use_message_queues + "\n" + ch + "\tUse connection confirmation: " + use_connection_confirmation + "\n" + ch + "\tUse socket timeout: " + use_socket_timeout;
         if (use_disconnected_sockets) {
             to_string += "\n" + ch + "\tDisconnected Sockets";
             if (!disconnected_sockets.isEmpty()) {

@@ -8,6 +8,7 @@ import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
 import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
 import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -658,5 +659,49 @@ public class NetworkingBaseTest {
         Assert.assertTrue(timed_out, "Successfully connected disconnected socket, socket should have timed out");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testServerClientDisconnectAndTimeout COMPLETED -----");
+    }
+    
+    @Test
+    public void testSocketTimeout() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSocketTimeout -----");
+        Timing timer = new Timing();
+        boolean client_timed_out = true;
+        boolean server_timed_out = true;
+        String client_hash = "";
+        String server_hash = "";
+        try {
+            server2.setSocketTimeout(100);
+            server2.setSocketTimeoutCount(3);
+            server2.setUseSocketTimeout(true);
+        } catch (SocketException | InvalidArgumentException e) {
+            exception = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
+        waitSocketThreadRemoveEmpty(server2);
+        waitSocketThreadRemoveEmpty(server1);
+        if(server2.containsHash(client_hash)) {
+            client_timed_out = false;
+        }
+        if(server1.containsHash(server_hash)) {
+            server_timed_out = false;
+        }
+        Assert.assertTrue(client_timed_out, "Client did not disconnect after not receiveing input for specified time");
+        Assert.assertTrue(server_timed_out, "Server did not disconnect itself after client timed out");
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testSocketTimeout COMPLETED -----");
     }
 }

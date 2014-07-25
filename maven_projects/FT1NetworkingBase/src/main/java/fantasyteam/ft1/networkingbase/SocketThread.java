@@ -84,6 +84,11 @@ public class SocketThread extends Thread {
      */
     private int socket_timeout_response_count;
     /**
+     * The counter that is incremented every time no response is received and the
+     * socket throws a SocketTimeoutException.
+     */
+    private int no_response_count;
+    /**
      * Boolean specifying whether to use the no response timeout feature. While
      * blocking for input from the socket, if this feature is active the socket
      * will throw a SocketTimeoutException if it does not receive a response
@@ -122,6 +127,7 @@ public class SocketThread extends Thread {
         socket_timeout_response = 1000;
         socket_timeout_response_count = 5;
         use_socket_timeout = false;
+        no_response_count = 0;
     }
 
     /**
@@ -132,7 +138,6 @@ public class SocketThread extends Thread {
     @Override
     public void run() {
         Timing confirmation_timer = null;
-        int no_response_count = 0;
         if (state == NEW) {
             state = RUNNING;
         }
@@ -481,7 +486,10 @@ public class SocketThread extends Thread {
      * @return Attributes of {@link SocketThread} in a readable String form.
      */
     public String toString(String ch) {
-        String to_string = ch + "Hash: " + hash + "\n" + ch + "State: " + state;
+        String to_string = ch + "Hash: " + hash + "\n" + ch + "State: " + state + "\n" + ch + "Use Socket Timeout: " + use_socket_timeout;
+        if (use_socket_timeout) {
+            to_string += "\n" + ch + "Socket Timeout: " + socket_timeout_response + "\n" + ch + "Maximum Cumulative Timeouts: " + socket_timeout_response_count + "\n" + ch + "Total Cumulative Timeouts: " + no_response_count;
+        }
         to_string += "\n" + ch + "Sock:";
         if (socket != null && socket.getSocket() != null) {
             to_string += "\n" + socket.toString(ch + "\t");
