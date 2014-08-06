@@ -157,24 +157,32 @@ public class MessageQueue extends Thread {
                 }
             } else if (state == DISCONNECT) {
                 if (server.getUseDisconnectedSockets()) {
-                    if (timer == null) {
-                        LOGGER.log(Level.INFO, "SocketThread with hash {0} has been disconnected, waiting to re-establish connection", hash);
-                        timer = new Timing();
-                    } else if (timer.getTime() > timeout) {
-                        LOGGER.log(Level.INFO, "SocketThread with hash {0} did not reconnect within the given timeout", hash);
-                        try {
-                            server.removeDisconnectedSocket(hash);
-                        } catch (HashNotFoundException | NullException e) {
-                            LOGGER.log(Level.SEVERE, "Failed to remove disconnected sockets hash from disconnected_sockets list", e);
-                        }
-                        try {
-                            server.removeQueue(hash);
-                        } catch (HashNotFoundException | NullException e) {
-                            LOGGER.log(Level.SEVERE, "Failed to remove self from queue_list on server", e);
-                            state = CLOSED;
+                    if (server.getDisconnectedSockets().contains(hash)) {
+                        if (timer == null) {
+                            LOGGER.log(Level.INFO, "SocketThread with hash {0} has been disconnected, waiting to re-establish connection", hash);
+                            timer = new Timing();
+                        } else if (timer.getTime() > timeout) {
+                            LOGGER.log(Level.INFO, "SocketThread with hash {0} did not reconnect within the given timeout", hash);
+                            try {
+                                server.removeDisconnectedSocket(hash);
+                            } catch (HashNotFoundException | NullException e) {
+                                LOGGER.log(Level.INFO, "Socket {0} has not been disconnect, or hash was incorrectly removed from disconnected_sockets. Queue state set to RUNNING", hash);
+                                state = RUNNING;
+                            }
+                            if(state != RUNNING) {
+                                try {
+                                    server.removeQueue(hash);
+                                } catch (HashNotFoundException | NullException e) {
+                                    LOGGER.log(Level.SEVERE, "Failed to remove self from queue_list on server", e);
+                                }
+                                state = CLOSED;
+                            }
+                        } else {
+                            messages.clear();
                         }
                     } else {
-                        messages.clear();
+                        LOGGER.log(Level.INFO, "Socket {0} has not been disconnect, or hash was incorrectly removed from disconnected_sockets. Queue state set to RUNNING", hash);
+                        state = RUNNING;
                     }
                 } else {
                     state = RUNNING;

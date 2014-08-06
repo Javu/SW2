@@ -367,7 +367,7 @@ public class SocketThread extends Thread {
      */
     public void setSocketTimeout(int socket_timeout) throws InvalidArgumentException, SocketException {
         if (socket_timeout > 0) {
-            this.socket_timeout_response = socket_timeout;
+            socket_timeout_response = socket_timeout;
             if (use_socket_timeout) {
                 socket.getSocket().setSoTimeout(socket_timeout_response);
             }

@@ -432,7 +432,7 @@ public class NetworkingBaseTest {
         action_parameters.add("PARAM1");
         action_parameters.add("PARAM2");
         server2.sendAction(action, action_parameters, client_hash);
-        time.waitTime(wait+wait);
+        time.waitTime(wait+wait+wait);
         verify(game);
         LOGGER.log(Level.INFO, "----- TEST testNetworkingEncodeParseMessage COMPLETED -----");
     }
@@ -703,5 +703,35 @@ public class NetworkingBaseTest {
         Assert.assertTrue(server_timed_out, "Server did not disconnect itself after client timed out");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testSocketTimeout COMPLETED -----");
+    }
+    
+    @Test
+    public void testConnectionConfirmed() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testConnectionConfirmed -----");
+        String client_hash = "";
+        String server_hash = "";
+        server1.setUseConnectionConfirmation(true);
+        server2.setUseConnectionConfirmation(true);
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadAddNotEmpty(server1);
+        waitSocketThreadState(server2, client_hash, SocketThread.RUNNING);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        Assert.assertTrue(server2.getUseConnectionConfirmation(), "Connection confirmation was not set to be used");
+        Assert.assertEquals(server2.getSocketList().get(client_hash).getRun(), SocketThread.CONFIRMED, "SocketThread was not CONFIRMED");
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testConnectionConfirmed COMPLETED -----");
     }
 }

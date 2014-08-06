@@ -363,6 +363,73 @@ public class MessageQueueTest {
     }
 
     /**
+     * Tests the behaviour of {@link MessageQueue} when its state is set to
+     * DISCONNECT and the use_disconnected_sockets flag is not set to true on
+     * the {@link Server}. Ensure that it correctly sets the state back to
+     * RUNNING.
+     */
+    @Test
+    public void testMessageQueueStateDisconnectNotUse() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueStateDisconnectNotUse -----");
+        server2.getQueueList().get(hash).queueDisconnected();
+        waitMessageQueueState(server2, hash, MessageQueue.RUNNING);
+        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), MessageQueue.RUNNING, "MessageQueue state was not set back to RUNNING");
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testMessageQueueStateDisconnectNotUse COMPLETED -----");
+    }
+
+    /**
+     * Tests the behaviour of {@link MessageQueue} when its state is set to
+     * DISCONNECT and its hash does not exist in the disconnected_sockets list
+     * on the {@link Server}. Ensure that it correctly sets the state back to
+     * RUNNING.
+     */
+    @Test
+    public void testMessageQueueStateDisconnectNotDisconnected() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueStateDisconnectNotDisconnected -----");
+        server2.setUseDisconnectedSockets(true);
+        server2.getQueueList().get(hash).queueDisconnected();
+        waitMessageQueueState(server2, hash, MessageQueue.RUNNING);
+        Assert.assertEquals(server2.getQueueList().get(hash).getRun(), MessageQueue.RUNNING, "MessageQueue state was not set back to RUNNING");
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testMessageQueueStateDisconnectNotDisconnected COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link MessageQueue}.setTimeout function to ensure it correctly
+     * throws an InvalidArgumentException if the parameter passed fails the
+     * input validation.
+     */
+    @Test
+    public void testMessageQueueSetTimeoutEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetTimeoutEx -----");
+        try {
+            server2.getQueueList().get(hash).setTimeout(-1);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        Assert.assertTrue(exception, "Exception not found");
+        LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetTimeoutEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link MessageQueue}.setRun function to ensure it correctly
+     * throws an InvalidArgumentException if the parameter passed fails the
+     * input validation.
+     */
+    @Test
+    public void testMessageQueueSetRunEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetRunEx -----");
+        try {
+            server2.getQueueList().get(hash).setRun(-1);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        Assert.assertTrue(exception, "Exception not found");
+        LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetRunEx COMPLETED -----");
+    }
+
+    /**
      * Tests the {@link MessageQueue}.toString() function. Check the output from
      * LOGGER to assess human readability.
      */

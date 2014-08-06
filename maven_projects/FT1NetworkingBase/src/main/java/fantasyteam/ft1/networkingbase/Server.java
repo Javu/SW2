@@ -288,15 +288,15 @@ public class Server extends fantasyteam.ft1.Networking {
      * Sets the port number used for connections.
      *
      * @param port Port number to listen for connections on.
-     * @throws IllegalArgumentException if the port parameter is not in the
+     * @throws InvalidArgumentException if the port parameter is not in the
      * range of valid port numbers. Must be between 0 and 65535 inclusive.
      */
-    public synchronized void setPort(int port) throws IllegalArgumentException {
+    public synchronized void setPort(int port) throws InvalidArgumentException {
         if (port >= 0 && port <= 65535) {
             this.port = port;
             LOGGER.log(Level.INFO, "Changing port number: {0}", port);
         } else {
-            throw new IllegalArgumentException("Port number " + port + "out of range. Must be between 0 and 65535 inclusive");
+            throw new InvalidArgumentException("Port number " + port + "out of range. Must be between 0 and 65535 inclusive");
         }
     }
 
@@ -333,7 +333,7 @@ public class Server extends fantasyteam.ft1.Networking {
     public synchronized void setSocketTimeout(int timeout) throws SocketException, InvalidArgumentException {
         if (timeout > 0) {
             socket_timeout = timeout;
-            if (use_socket_timeout && socket_list != null && !socket_list.isEmpty()) {
+            if (socket_list != null && !socket_list.isEmpty()) {
                 for (SocketThread socket : socket_list.values()) {
                     try {
                         socket.setSocketTimeout(socket_timeout);
@@ -363,7 +363,7 @@ public class Server extends fantasyteam.ft1.Networking {
     public synchronized void setSocketTimeoutCount(int count) throws SocketException, InvalidArgumentException {
         if (count >= -1) {
             socket_timeout_count = count;
-            if (use_socket_timeout && socket_list != null && !socket_list.isEmpty()) {
+            if (socket_list != null && !socket_list.isEmpty()) {
                 for (SocketThread socket : socket_list.values()) {
                     try {
                         socket.setSocketTimeoutCount(socket_timeout_count);
@@ -432,7 +432,8 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
-     * <p>Sets the attribute use_connection_confirmation, the flag specifying
+     * <p>
+     * Sets the attribute use_connection_confirmation, the flag specifying
      * whether to use the connection confirmation feature. This feature allows a
      * client to ensure that a remote server has successfully created a
      * corresponding socket and is ready to begin interacting with the client.
@@ -440,11 +441,11 @@ public class Server extends fantasyteam.ft1.Networking {
      * notification message to the client when it is ready to start interacting.
      * The client will ignore all messages until it receives this notification.
      * If it does not receive the notification within a timeout period it will
-     * close. You can set this timeout by using setTimeout.</p><p>Please note: this
-     * feature needs to be turned on on both the client and the server for it to
-     * work. The server will not send the notification if the feature is not
-     * turned on and the client will continue as normal without checking for the
-     * notification.</p>
+     * close. You can set this timeout by using setTimeout.</p><p>
+     * Please note: this feature needs to be turned on on both the client and
+     * the server for it to work. The server will not send the notification if
+     * the feature is not turned on and the client will continue as normal
+     * without checking for the notification.</p>
      *
      * @param use Boolean specifying whether to use the connection confirmation
      * feature.
@@ -568,6 +569,27 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
+     * Returns the amount of time (in ms) to wait for input on each socket
+     * before breaking blocking to process other tasks.
+     *
+     * @return the wait time (in ms) to until breaking blocking on each socket.
+     */
+    public int getSocketTimeout() {
+        return socket_timeout;
+    }
+
+    /**
+     * Returns the total consecutive number of times to break blocking on each
+     * socket before closing the socket.
+     *
+     * @return the number of consecutive times to break blocking on each socket
+     * before closing the socket.
+     */
+    public int getSocketTimeoutCount() {
+        return socket_timeout_count;
+    }
+
+    /**
      * Returns whether to keep the hashes of disconnected sockets or not.
      *
      * @return boolean specifying whether to keep the hashes of disconnected
@@ -586,6 +608,31 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     public boolean getUseMessageQueues() {
         return use_message_queues;
+    }
+
+    /**
+     * Returns whether to use the Connection Confirmation feature. This feature
+     * causes new {@link SocketThread}s connected to a listen {@link Server}
+     * will ignore all input until it receives a confirmation from the
+     * {@link Server} that the connection has been established. If the
+     * connection is not confirmed within a given timeout the
+     * {@link SocketThread} will close.
+     *
+     * @return
+     */
+    public boolean getUseConnectionConfirmation() {
+        return use_connection_confirmation;
+    }
+
+    /**
+     * Returns whether to use the Socket Timeout feature. This feature is used
+     * to cause sockets to break blocking if they do not receive input within a
+     * given timeout.
+     *
+     * @return boolean specifying whether to use the Socket Timeout feature.
+     */
+    public boolean getUseSocketTimeout() {
+        return use_socket_timeout;
     }
 
     /**
@@ -690,7 +737,11 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     @Override
     public synchronized void customNetwork1(List<String> action, String clientId) {
-        LOGGER.log(Level.INFO, "Server does not have an implementation for Networking.customNetwork1");
+        try {
+            socket_list.get(clientId).setRun(SocketThread.CONFIRMED);
+        } catch (InvalidArgumentException e) {
+            throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setRun() from Server.customNetwork1()", e);
+        }
     }
 
     /**
@@ -843,16 +894,16 @@ public class Server extends fantasyteam.ft1.Networking {
         }
         if (use_socket_timeout) {
             new_socket.setUseSocketTimeout(true);
-            try {
-                new_socket.setSocketTimeout(socket_timeout);
-            } catch (InvalidArgumentException e) {
-                throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeout() from Server.addSocketThread()", e);
-            }
-            try {
-                new_socket.setSocketTimeoutCount(socket_timeout_count);
-            } catch (InvalidArgumentException e) {
-                throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeoutCount() from Server.addSocketThread()", e);
-            }
+        }
+        try {
+            new_socket.setSocketTimeout(socket_timeout);
+        } catch (InvalidArgumentException e) {
+            throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeout() from Server.addSocketThread()", e);
+        }
+        try {
+            new_socket.setSocketTimeoutCount(socket_timeout_count);
+        } catch (InvalidArgumentException e) {
+            throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeoutCount() from Server.addSocketThread()", e);
         }
         socket_list.put(hash, new_socket);
         if (use_message_queues) {
@@ -865,7 +916,7 @@ public class Server extends fantasyteam.ft1.Networking {
         try {
             startSocket(hash);
         } catch (NullException | HashNotFoundException e) {
-            throw new FT1EngineError("Internal engine error: Caught a NullException or HashNotFoundException while running Server.startSocket() from Server.addSocketThread");
+            throw new FT1EngineError("Internal engine error: Caught a NullException or HashNotFoundException while running Server.startSocket() from Server.addSocketThread", e);
         }
     }
 
@@ -1223,7 +1274,7 @@ public class Server extends fantasyteam.ft1.Networking {
                     SocketThread new_socket = new SocketThread(temp_sock, this, hash);
                     addSocketThread(hash, new_socket);
                     if (use_connection_confirmation) {
-                        sendMessage("customnetworking1", hash);
+                        sendAction("customnetwork1", hash);
                     }
                     LOGGER.log(Level.INFO, "New client connected to ListenServer. Connection was stored in socket_list");
                 } else {

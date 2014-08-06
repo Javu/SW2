@@ -10,6 +10,7 @@ import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
 import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -377,9 +378,116 @@ public class ServerTest {
     @Test
     public void testSetPort() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testSetPort -----");
-        server1.setPort(22223);
+        try {
+            server1.setPort(22223);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception, "Exception found");
         Assert.assertEquals(server1.getPort(), 22223, "Port not changed");
         LOGGER.log(Level.INFO, "----- TEST testSetPort COMPLETED -----");
+    }
+
+    /**
+     * Test of an attribute setter for the timeout attribute.
+     */
+    @Test
+    public void testSetTimeout() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetTimeout -----");
+        try {
+            server1.setTimeout(100);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server1.getTimeout(), 100, "timeout not changed");
+        LOGGER.log(Level.INFO, "----- TEST testSetTimeout COMPLETED -----");
+    }
+
+    @Test
+    public void testSetSocketTimeout() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetSocketTimeout -----");
+        String client_hash = "";
+        String client_hash2 = "";
+        String client_hash3 = "";
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        try {
+            server2.setSocketTimeout(100);
+        } catch (InvalidArgumentException | SocketException e) {
+            exception = true;
+        }
+        try {
+            client_hash2 = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadState(server2, client_hash2, SocketThread.CONFIRMED);
+        try {
+            server2.setUseSocketTimeout(true);
+        } catch (SocketException e) {
+            exception = true;
+        }
+        try {
+            client_hash3 = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadState(server2, client_hash3, SocketThread.CONFIRMED);
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server2.getSocketTimeout(), 100, "Socket timeout value not changed on server");
+        Assert.assertEquals(server2.getSocketList().get(client_hash).getSocketTimeout(), 100, "Socket timeout value not changed on first SocketThread");
+        Assert.assertEquals(server2.getSocketList().get(client_hash2).getSocketTimeout(), 100, "Socket timeout value not changed on second SocketThread");
+        Assert.assertEquals(server2.getSocketList().get(client_hash3).getSocketTimeout(), 100, "Socket timeout value not changed on third SocketThread");
+        LOGGER.log(Level.INFO, "----- TEST testSetSocketTimeout COMPLETED -----");
+    }
+
+    @Test
+    public void testSetSocketTimeoutCount() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetSocketTimeoutCount -----");
+        String client_hash = "";
+        String client_hash2 = "";
+        String client_hash3 = "";
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        try {
+            server2.setSocketTimeoutCount(50);
+        } catch (InvalidArgumentException | SocketException e) {
+            exception = true;
+        }
+        try {
+            client_hash2 = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadState(server2, client_hash2, SocketThread.CONFIRMED);
+        try {
+            server2.setUseSocketTimeout(true);
+        } catch (SocketException e) {
+            exception = true;
+        }
+        try {
+            client_hash3 = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadState(server2, client_hash3, SocketThread.CONFIRMED);
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server2.getSocketTimeoutCount(), 50, "Socket timeout count value not changed on server");
+        Assert.assertEquals(server2.getSocketList().get(client_hash).getSocketTimeoutCount(), 50, "Socket timeout count value not changed on first SocketThread");
+        Assert.assertEquals(server2.getSocketList().get(client_hash2).getSocketTimeoutCount(), 50, "Socket timeout count value not changed on second SocketThread");
+        Assert.assertEquals(server2.getSocketList().get(client_hash3).getSocketTimeoutCount(), 50, "Socket timeout count value not changed on third SocketThread");
+        LOGGER.log(Level.INFO, "----- TEST testSetSocketTimeoutCount COMPLETED -----");
     }
 
     /**
@@ -487,6 +595,41 @@ public class ServerTest {
     }
 
     /**
+     * This test ensures that the setUseSocketTimeout function correctly sets
+     * the useSocketTimeout flag to false on both the {@link Server} and each
+     * connected {@link SocketThread} if the flag was set to true and is then
+     * set to false using this function.
+     */
+    @Test
+    public void testSetUseSocketTimeoutFalse() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetUseSocketTimeoutFalse -----");
+        String client_hash = "";
+        try {
+            server2.setUseSocketTimeout(true);
+        } catch (SocketException e) {
+            exception = true;
+        }
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        Assert.assertTrue(server2.getUseSocketTimeout(), "Use socket timeout not set to true on Server");
+        Assert.assertTrue(server2.getSocketList().get(client_hash).getUseSocketTimeout(), "Use socket timeout not set to true on SocketThread");
+        try {
+            server2.setUseSocketTimeout(false);
+        } catch (SocketException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertFalse(server2.getUseSocketTimeout(), "Use socket timeout not set to false on Server");
+        Assert.assertFalse(server2.getSocketList().get(client_hash).getUseSocketTimeout(), "Use socket timeout not set to false on SocketThread");
+        LOGGER.log(Level.INFO, "----- TEST testSetUseSocketTimeoutFalse COMPLETED -----");
+    }
+
+    /**
      * Test of an attribute setter for the socket_list attribute.
      */
     @Test
@@ -543,7 +686,11 @@ public class ServerTest {
             flag1 = true;
         }
         if (flag1) {
-            server2.setPort(23231);
+            try {
+                server2.setPort(23231);
+            } catch (InvalidArgumentException e) {
+                exception = true;
+            }
             try {
                 server2.setListenThread();
             } catch (IOException | ServerSocketCloseException | TimeoutException e) {
@@ -571,7 +718,11 @@ public class ServerTest {
             flag1 = true;
         }
         if (flag1) {
-            server1.setPort(23231);
+            try {
+                server1.setPort(23231);
+            } catch (InvalidArgumentException e) {
+                exception = true;
+            }
             try {
                 server1.setListenThread();
             } catch (IOException | ServerSocketCloseException | TimeoutException e) {
@@ -629,7 +780,11 @@ public class ServerTest {
             flag1 = true;
         }
         if (flag1) {
-            server2.setPort(23231);
+            try {
+                server2.setPort(23231);
+            } catch (InvalidArgumentException e) {
+                exception = true;
+            }
             try {
                 server2.setListenThread();
             } catch (IOException | ServerSocketCloseException | TimeoutException e) {
@@ -772,8 +927,8 @@ public class ServerTest {
         Assert.assertEquals(server1.getQueueList().get(server_hash).getRun(), MessageQueue.RUNNING, "MessageQueue with hash " + server_hash + "should not have stopped running");
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testRemoveQueueNotExist COMPLETED -----");
-    }  
-    
+    }
+
     @Test
     public void testRemoveQueueNull() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testRemoveQueueNull -----");
@@ -795,7 +950,7 @@ public class ServerTest {
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testRemoveQueueNull COMPLETED -----");
     }
-    
+
     @Test
     public void testRemoveDisconnectedSocketNotExist() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testRemoveDisconnectedSocketNotExist -----");
@@ -1107,7 +1262,7 @@ public class ServerTest {
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testServerClientDisconnectNonRunningSocketThread COMPLETED -----");
     }
-    
+
     /**
      * This test ensures that the close() method of Server correctly closes all
      * attributes and threads, including closing the listen_thread attribute
@@ -1382,6 +1537,99 @@ public class ServerTest {
     }
 
     /**
+     * Tests the {@link Server}.setPort function to ensure it correctly throws
+     * an InvalidArgumentException if the parameter passed fails the input
+     * validation.
+     */
+    @Test
+    public void testSetPortEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetPortEx -----");
+        try {
+            server2.setPort(-1);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        Assert.assertTrue(exception, "Successfully ran setPort on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testSetPortEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setTimeout function to ensure it correctly
+     * throws an InvalidArgumentException if the parameter passed fails the
+     * input validation.
+     */
+    @Test
+    public void testSetTimeoutEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetTimeoutEx -----");
+        try {
+            server2.setTimeout(-1);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        Assert.assertTrue(exception, "Successfully ran setTimeout on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testSetTimeoutEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setSocketTimeout function to ensure it correctly
+     * throws an InvalidArgumentException if the parameter passed fails the
+     * input validation.
+     */
+    @Test
+    public void testSetSocketTimeoutEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetSocketTimeoutEx -----");
+        boolean exception_socket = false;
+        try {
+            server2.setSocketTimeout(-1);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        } catch (SocketException e) {
+            exception_socket = true;
+        }
+        Assert.assertFalse(exception_socket, "SocketException received");
+        Assert.assertTrue(exception, "Successfully ran setSocketTimeout on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testSetSocketTimeoutEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setSocketTimeoutCount function to ensure it correctly
+     * throws an InvalidArgumentException if the parameter passed fails the
+     * input validation.
+     */
+    @Test
+    public void testSetSocketTimeoutCountEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetSocketTimeoutCountEx -----");
+        boolean exception_socket = false;
+        try {
+            server2.setSocketTimeoutCount(-2);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        } catch (SocketException e) {
+            exception_socket = true;
+        }
+        Assert.assertFalse(exception_socket, "SocketException received");
+        Assert.assertTrue(exception, "Successfully ran setSocketTimeoutCount on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testSetSocketTimeoutCountEx COMPLETED -----");
+    }
+    
+    @Test
+    public void testRemoveDisconnectedSocketEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testRemoveDisconnectedSocketEx -----");
+        boolean exception_hash = false;
+        server1.setDisconnectedSockets(null);
+        try {
+            server1.removeDisconnectedSocket("a");
+        } catch (NullException e) {
+            exception = true;
+        } catch (HashNotFoundException e) {
+            exception_hash = true;
+        }
+        Assert.assertFalse(exception_hash, "HashNotFoundException received");
+        Assert.assertTrue(exception, "Successfully ran removeDisconnectedSocket on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testRemoveDisconnectedSocketEx COMPLETED -----");
+    }
+
+    /**
      * Tests the {@link Server}.toString() function if state is set to
      * {@link Server}.CLIENT. Check the output from LOGGER to assess human
      * readability.
@@ -1465,7 +1713,7 @@ public class ServerTest {
         Server server3 = null;
         try {
             server3 = new Server(game, port, false);
-        } catch (IOException | ServerSocketCloseException| TimeoutException e) {
+        } catch (IOException | ServerSocketCloseException | TimeoutException e) {
             exception = true;
         }
         try {

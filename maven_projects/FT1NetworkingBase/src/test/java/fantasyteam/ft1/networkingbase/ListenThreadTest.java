@@ -139,6 +139,21 @@ public class ListenThreadTest {
     }
 
     /**
+     * Tests the {@link ListenThread}.setRun function to ensure it sets the
+     * value of {@link ListenThread}.run correctly.
+     */
+    @Test
+    public void testSetRun() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testToString -----");
+        boolean state = server.getListenThread().getRun();
+        Assert.assertTrue(state, "ListenThread.run should equal true");
+        server.getListenThread().setRun(false);
+        state = server.getListenThread().getRun();
+        Assert.assertFalse(state, "ListenThread.run should equal false");
+        LOGGER.log(Level.INFO, "----- TEST testToString COMPLETED -----");
+    }
+
+    /**
      * Tests the {@link ListenThread}.toString() function. Check the output from
      * LOGGER to assess human readability.
      */
