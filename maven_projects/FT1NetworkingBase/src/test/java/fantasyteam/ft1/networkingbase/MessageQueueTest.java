@@ -396,40 +396,6 @@ public class MessageQueueTest {
     }
 
     /**
-     * Tests the {@link MessageQueue}.setTimeout function to ensure it correctly
-     * throws an InvalidArgumentException if the parameter passed fails the
-     * input validation.
-     */
-    @Test
-    public void testMessageQueueSetTimeoutEx() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetTimeoutEx -----");
-        try {
-            server2.getQueueList().get(hash).setTimeout(-1);
-        } catch (InvalidArgumentException e) {
-            exception = true;
-        }
-        Assert.assertTrue(exception, "Exception not found");
-        LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetTimeoutEx COMPLETED -----");
-    }
-
-    /**
-     * Tests the {@link MessageQueue}.setRun function to ensure it correctly
-     * throws an InvalidArgumentException if the parameter passed fails the
-     * input validation.
-     */
-    @Test
-    public void testMessageQueueSetRunEx() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetRunEx -----");
-        try {
-            server2.getQueueList().get(hash).setRun(-1);
-        } catch (InvalidArgumentException e) {
-            exception = true;
-        }
-        Assert.assertTrue(exception, "Exception not found");
-        LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetRunEx COMPLETED -----");
-    }
-
-    /**
      * Tests the {@link MessageQueue}.toString() function. Check the output from
      * LOGGER to assess human readability.
      */

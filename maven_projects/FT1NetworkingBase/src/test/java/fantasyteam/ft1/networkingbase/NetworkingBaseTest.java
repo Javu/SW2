@@ -19,7 +19,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * 
+ *
  *
  * @author javu
  */
@@ -274,7 +274,7 @@ public class NetworkingBaseTest {
         waitServerState(server1, Server.CLOSED);
         LOGGER.log(Level.INFO, "+++++ CLOSING SERVERS COMPLETE +++++");
     }
-    
+
     /**
      * Tests sending a message when use_message_queues == true. Ensures that the
      * message is queued on the {@link MessageQueue} corresponding to the
@@ -432,7 +432,7 @@ public class NetworkingBaseTest {
         action_parameters.add("PARAM1");
         action_parameters.add("PARAM2");
         server2.sendAction(action, action_parameters, client_hash);
-        time.waitTime(wait+wait+wait);
+        time.waitTime(wait + wait + wait);
         verify(game);
         LOGGER.log(Level.INFO, "----- TEST testNetworkingEncodeParseMessage COMPLETED -----");
     }
@@ -660,7 +660,15 @@ public class NetworkingBaseTest {
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testServerClientDisconnectAndTimeout COMPLETED -----");
     }
-    
+
+    /**
+     * Tests the use of the Socket Timeout feature of networkingbase
+     * architecture. It ensures that the values for Socket Timeout are set
+     * correctly on the {@link Server} and each {@link SocketThread} on the
+     * {@link Server}. It also ensures that the Socket is timeout out and
+     * processed correctly, and that given enough consecutive timeouts the
+     * {@link SocketThread} will close.
+     */
     @Test
     public void testSocketTimeout() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testSocketTimeout -----");
@@ -694,10 +702,10 @@ public class NetworkingBaseTest {
         server1.sendMessage("TEST", server_hash);
         waitSocketThreadRemoveEmpty(server2);
         waitSocketThreadRemoveEmpty(server1);
-        if(server2.containsHash(client_hash)) {
+        if (server2.containsHash(client_hash)) {
             client_timed_out = false;
         }
-        if(server1.containsHash(server_hash)) {
+        if (server1.containsHash(server_hash)) {
             server_timed_out = false;
         }
         Assert.assertTrue(client_timed_out, "Client did not disconnect after not receiveing input for specified time");
@@ -705,7 +713,15 @@ public class NetworkingBaseTest {
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testSocketTimeout COMPLETED -----");
     }
-    
+
+    /**
+     * Tests the Connection Confirmed feature of the networkingbase
+     * architecture. It ensures that the client {@link SocketThread} will
+     * correctly be set to {@link SocketThread}.RUNNING when the feature is
+     * turned on, and will only be changed to {@link SocketThread}.CONFIRMED on
+     * receipt of the confirmation message from the corresponding listen
+     * {@link Server}.
+     */
     @Test
     public void testConnectionConfirmed() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testConnectionConfirmed -----");
