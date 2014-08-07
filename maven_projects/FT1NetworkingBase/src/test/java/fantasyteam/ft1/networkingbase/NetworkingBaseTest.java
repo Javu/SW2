@@ -691,6 +691,7 @@ public class NetworkingBaseTest {
         waitSocketThreadAddNotEmpty(server1);
         server_hash = getServerLastSocketHash(server1);
         waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
+        server1.sendMessage("TEST", server_hash);
         waitSocketThreadRemoveEmpty(server2);
         waitSocketThreadRemoveEmpty(server1);
         if(server2.containsHash(client_hash)) {

@@ -1370,6 +1370,45 @@ public class ServerTest {
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testReplaceHash COMPLETED -----");
     }
+    
+    @Test
+    public void testReplaceHashNotExist() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testReplaceHashNotExist -----");
+        String client_hash = "";
+        String server_hash = "";
+        String server_hash_new = "";
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1");
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
+        waitMessageQueueAddNotEmpty(server1);
+        waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
+        server1.replaceHash(server_hash, "TEST");
+        for(SocketThread socket : server1.getSocketList().values()) {
+            server_hash_new = socket.getHash();
+        }
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server_hash_new, "TEST", "SocketThread not moved to the correct hash");
+        Assert.assertFalse(server1.containsHash(server_hash), "Old hash not removed from list");
+        LOGGER.log(Level.INFO, "----- TEST testReplaceHashNotExist COMPLETED -----");
+    }
 
     /**
      * Tests the pingSockets function to send a blank String to two connected
@@ -1536,6 +1575,93 @@ public class ServerTest {
         LOGGER.log(Level.INFO, "----- TEST testListenClient COMPLETED -----");
     }
 
+    @Test
+    public void testSendMessageToListWithQueue() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSendMessageToListWithQueue -----");
+        String client_hash = "";
+        String client_hash2 = "";
+        String server_hash = "";
+        String server_hash2 = "";
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        Assert.assertTrue(server1.getListenThread().getRun(), "ListenThread did not start in time");
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadAddNotEmpty(server1);
+        server_hash = getServerLastSocketHash(server1);
+        waitSocketThreadState(server1, server_hash, SocketThread.CONFIRMED);
+        waitMessageQueueAddNotEmpty(server1);
+        waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
+        try {
+            client_hash2 = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadState(server2, client_hash2, SocketThread.CONFIRMED);
+        boolean loop = true;
+        Timing new_timer = new Timing();
+        while(loop) {
+            if(server1.getSocketList().size() == 2) {
+                loop = false;
+            } else if(new_timer.getTime() > 5000) {
+                exception = true;
+                loop = false;
+            }
+        }
+        Assert.assertFalse(exception, "SocketThread was not added to server1");
+        for(SocketThread socket : server1.getSocketList().values()) {
+            if(socket.getHash().compareTo(server_hash) != 0) {
+                server_hash2 = socket.getHash();
+            }
+        }
+        waitSocketThreadState(server1, server_hash2, SocketThread.CONFIRMED);
+        waitMessageQueueState(server1, server_hash2, MessageQueue.RUNNING);
+        ArrayList<String> sockets = new ArrayList<String>();
+        sockets.add(server_hash);
+        sockets.add(server_hash2);
+        server1.sendMessage("TEST", sockets);
+        waitTime();
+        Assert.assertTrue(server1.containsHash(server_hash), "Socket1 on server1 has closed");
+        Assert.assertTrue(server1.containsHash(server_hash2), "Socket2 on server1 has closed");
+        Assert.assertTrue(server2.containsHash(client_hash), "Socket1 on server2 has closed");
+        Assert.assertTrue(server2.containsHash(client_hash2), "Socket2 on server2 has closed");
+        Assert.assertFalse(server1.getQueueList().get(server_hash).getMessages().contains("TEST"), "Message was not sent on socket1");
+        Assert.assertFalse(server1.getQueueList().get(server_hash2).getMessages().contains("TEST"), "Message was not sent on socket2");
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testSendMessageToListWithQueue COMPLETED -----");
+    }
+    
+    @Test
+    public void testSendMessageToListNotExist() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSendMessageToListNotExist -----");
+        ArrayList<String> sockets = new ArrayList<String>();
+        sockets.add("TEST");
+        server2.sendMessage("TEST", sockets);
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testSendMessageToListNotExist COMPLETED -----");
+    }
+    
+    @Test
+    public void testSendMessageNotExist() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSendMessageToListNotExist -----");
+        server2.sendMessage("TEST", "TEST");
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testSendMessageToListNotExist COMPLETED -----");
+    }
+    
     /**
      * Tests the {@link Server}.setPort function to ensure it correctly throws
      * an InvalidArgumentException if the parameter passed fails the input
@@ -1628,7 +1754,171 @@ public class ServerTest {
         Assert.assertTrue(exception, "Successfully ran removeDisconnectedSocket on server, should have received an exception");
         LOGGER.log(Level.INFO, "----- TEST testRemoveDisconnectedSocketEx COMPLETED -----");
     }
+    
+    @Test
+    public void testStartSocketHashEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testStartSocketHashEx -----");
+        boolean exception_other = false;
+        try {
+            server1.startSocket("a");
+        } catch (HashNotFoundException e) {
+            exception = true;
+        } catch (TimeoutException | NullException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Exception caught was not a HashNotFoundException");
+        Assert.assertTrue(exception, "Successfully ran startSocket on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testStartSocketHashEx COMPLETED -----");
+    }
+    
+    @Test
+    public void testStartSocketNullEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testStartSocketNullEx -----");
+        boolean exception_other = false;
+        server1.setSocketList(null);
+        try {
+            server1.startSocket("a");
+        } catch (NullException e) {
+            exception = true;
+        } catch (TimeoutException | HashNotFoundException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Exception caught was not a NullException");
+        Assert.assertTrue(exception, "Successfully ran startSocket on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testStartSocketNullEx COMPLETED -----");
+    }
+    
+    @Test
+    public void testStartQueueHashEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testStartQueueHashEx -----");
+        boolean exception_other = false;
+        try {
+            server1.startQueue("a");
+        } catch (HashNotFoundException e) {
+            exception = true;
+        } catch (TimeoutException | NullException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Exception caught was not a HashNotFoundException");
+        Assert.assertTrue(exception, "Successfully ran startQueue on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testStartQueueHashEx COMPLETED -----");
+    }
+    
+    @Test
+    public void testStartQueueNullEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testStartQueueNullEx -----");
+        boolean exception_other = false;
+        server1.setQueueList(null);
+        try {
+            server1.startQueue("a");
+        } catch (NullException e) {
+            exception = true;
+        } catch (TimeoutException | HashNotFoundException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Exception caught was not a NullException");
+        Assert.assertTrue(exception, "Successfully ran startQueue on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testStartQueueNullEx COMPLETED -----");
+    }
+    
+    @Test
+    public void testAddQueueNotUsedEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testAddQueueNotUsedEx -----");
+        boolean exception_other = false;
+        try {
+            server1.addQueue("a");
+        } catch (FeatureNotUsedException e) {
+            exception = true;
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Exception caught was not a FeatureNotUsedException");
+        Assert.assertTrue(exception, "Successfully ran addQueue on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testAddQueueNotUsedEx COMPLETED -----");
+    }
+    
+    @Test
+    public void testReplaceHashInvalidEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testReplaceHashInvalidEx -----");
+        boolean exception_other = false;
+        String client_hash = "";
+        try {
+            client_hash = server2.addSocket("127.0.0.1",port);
+        } catch(IOException | TimeoutException e) {
+            exception_other = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        try{
+            server2.replaceHash(client_hash, client_hash);
+        } catch(InvalidArgumentException e) {
+            exception = true;
+        } catch(HashNotFoundException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Exception caught was not an InvalidArgumentException");
+        Assert.assertTrue(exception, "Successfully ran replaceHash on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testReplaceHashInvalidEx COMPLETED -----");
+    }
+    
+    @Test
+    public void testReplaceHashHashEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testReplaceHashHashEx -----");
+        boolean exception_other = false;
+        try {
+            server2.replaceHash("TEST", "TEST");
+        } catch(HashNotFoundException e) {
+            exception = true;
+        } catch(InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Exception caught was not a HashNotFoundException");
+        Assert.assertTrue(exception, "Successfully ran replaceHash on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testReplaceHashHashEx COMPLETED -----");
+    }
 
+    @Test
+    public void testConnectDisconnectedSocketInvalidEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testConnectDisconnectedSocketInvalid -----");
+        boolean exception_feature = false;
+        boolean exception_hash = false;
+        String test_string = "TEST";
+        ArrayList<String> string_array = new ArrayList<String>();
+        string_array.add(test_string);
+        server2.setUseDisconnectedSockets(true);
+        server2.setDisconnectedSockets(string_array);
+        Assert.assertEquals(server2.getDisconnectedSockets().get(0), test_string, "Disconnected Sockets not set correctly");
+        try {
+            server2.connectDisconnectedSocket(test_string, test_string);
+        } catch(InvalidArgumentException e) {
+            exception = true;
+        } catch(FeatureNotUsedException e) {
+            exception_feature = true;
+        } catch(HashNotFoundException e) {
+            exception_hash = true;
+        }
+        Assert.assertFalse(exception_feature, "Caught a FeatureNotUsedException, expected InvalidArgumentException");
+        Assert.assertFalse(exception_hash, "Caught a HashNotFoundException, expected InvalidArgumentException");
+        Assert.assertTrue(exception, "Successfully ran connectDisconnectedSocket on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testConnectDisconnectedSocketInvalid COMPLETED -----");
+    }
+    
+    @Test
+    public void testConnectDisconnectedSocketFeatureEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testConnectDisconnectedSocketFeatureEx -----");
+        boolean exception_other = false;
+        try {
+            server2.connectDisconnectedSocket("TEST", "TEST");
+        } catch(FeatureNotUsedException e) {
+            exception = true;
+        } catch(InvalidArgumentException | HashNotFoundException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Exception caught was not a FeatureNotUsedException");
+        Assert.assertTrue(exception, "Successfully ran connectDisconnectedSocket on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testConnectDisconnectedSocketFeatureEx COMPLETED -----");
+    }
+    
     /**
      * Tests the {@link Server}.toString() function if state is set to
      * {@link Server}.CLIENT. Check the output from LOGGER to assess human

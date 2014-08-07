@@ -488,7 +488,7 @@ public class SocketThread extends Thread {
     public String toString(String ch) {
         String to_string = ch + "Hash: " + hash + "\n" + ch + "State: " + state + "\n" + ch + "Use Socket Timeout: " + use_socket_timeout;
         if (use_socket_timeout) {
-            to_string += "\n" + ch + "Socket Timeout: " + socket_timeout_response + "\n" + ch + "Maximum Cumulative Timeouts: " + socket_timeout_response_count + "\n" + ch + "Total Cumulative Timeouts: " + no_response_count;
+            to_string += "\n\t" + ch + "Socket Timeout: " + socket_timeout_response + "\n\t" + ch + "Maximum Cumulative Timeouts: " + socket_timeout_response_count + "\n\t" + ch + "Total Cumulative Timeouts: " + no_response_count;
         }
         to_string += "\n" + ch + "Sock:";
         if (socket != null && socket.getSocket() != null) {

@@ -7,6 +7,7 @@ import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
 import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
 import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.easymock.EasyMock;
@@ -264,6 +265,30 @@ public class SocketThreadTest {
         LOGGER.log(Level.INFO, "----- TEST testSetRun COMPLETED -----");
     }
 
+    @Test
+    public void testSetGetTimeout() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetGetTimeout -----");
+        long new_timeout = 125;
+        String client_hash = "";
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1");
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        server2.getSocketList().get(client_hash).setTimeout(new_timeout);
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server2.getSocketList().get(client_hash).getTimeout(), new_timeout, "Timeout value not set or returned correctly");
+        LOGGER.log(Level.INFO, "----- TEST testSetGetTimeout COMPLETED -----");
+    }
+    
     /**
      * Tests the {@link SocketThread}.unblock function on a {@link SocketThread}
      * that is not running and therefore not blocking awaiting input.
@@ -309,15 +334,134 @@ public class SocketThreadTest {
         Assert.assertFalse(exception, "Exception found");
         LOGGER.log(Level.INFO, "----- TEST testCloseBeforeUnblock COMPLETED -----");
     }
+    
+    @Test
+    public void testSocketThreadSetRunEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSocketThreadSetRunEx -----");
+        String client_hash = "";
+        boolean exception_expected = false;
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1");
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        try {
+            server2.getSocketList().get(client_hash).setRun(-10);
+        } catch(InvalidArgumentException e) {
+            exception_expected = true;
+        }
+        Assert.assertFalse(exception, "Unexpected exception found");
+        Assert.assertTrue(exception_expected, "Successfully ran setRun, expected an exception");
+        LOGGER.log(Level.INFO, "----- TEST testSocketThreadSetRunEx COMPLETED -----");
+    }
+    
+    @Test
+    public void testSocketThreadSetTimeoutEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSocketThreadSetTimeoutEx -----");
+        String client_hash = "";
+        boolean exception_expected = false;
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1");
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        try {
+            server2.getSocketList().get(client_hash).setTimeout(-10);
+        } catch(InvalidArgumentException e) {
+            exception_expected = true;
+        }
+        Assert.assertFalse(exception, "Unexpected exception found");
+        Assert.assertTrue(exception_expected, "Successfully ran setTimeout, expected an exception");
+        LOGGER.log(Level.INFO, "----- TEST testSocketThreadSetTimeoutEx COMPLETED -----");
+    }
+    
+    @Test
+    public void testSocketThreadSetSocketTimeoutEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSocketThreadSetSocketTimeoutEx -----");
+        String client_hash = "";
+        boolean exception_expected = false;
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1");
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        try {
+            server2.getSocketList().get(client_hash).setSocketTimeout(-10);
+        } catch(InvalidArgumentException e) {
+            exception_expected = true;
+        } catch(SocketException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception, "Unexpected exception found");
+        Assert.assertTrue(exception_expected, "Successfully ran setSocketTimeout, expected an exception");
+        LOGGER.log(Level.INFO, "----- TEST testSocketThreadSetSocketTimeoutEx COMPLETED -----");
+    }
+    
+    @Test
+    public void testSocketThreadSetSocketTimeoutCountEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSocketThreadSetSocketTimeoutCountEx -----");
+        String client_hash = "";
+        boolean exception_expected = false;
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1");
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        try {
+            server2.getSocketList().get(client_hash).setSocketTimeoutCount(-10);
+        } catch(InvalidArgumentException e) {
+            exception_expected = true;
+        }
+        Assert.assertFalse(exception, "Unexpected exception found");
+        Assert.assertTrue(exception_expected, "Successfully ran setSocketTimeoutCount, expected an exception");
+        LOGGER.log(Level.INFO, "----- TEST testSocketThreadSetSocketTimeoutCountEx COMPLETED -----");
+    }
 
     /**
      * Tests the {@link SocketThread}.toString() function. Check the output from
      * LOGGER to assess human readability.
      */
     @Test
-    public void testToString() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testToString -----");
+    public void testToStringSocketThread() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringSocketThread -----");
         String hash = "";
+        try {
+            server2.setUseSocketTimeout(true);
+        } catch (SocketException e) {
+            exception = true;
+        }
         try {
             server1.startThread();
         } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
@@ -336,7 +480,7 @@ public class SocketThreadTest {
         Assert.assertFalse(exception, "Exception found");
         Assert.assertNotEquals(to_string, null, "SocketThread data not generated into a readable String with added character");
         LOGGER.log(Level.INFO, "SocketThread String details: \n{0}", to_string);
-        LOGGER.log(Level.INFO, "----- TEST testToString COMPLETED -----");
+        LOGGER.log(Level.INFO, "----- TEST testToStringSocketThread COMPLETED -----");
     }
 
     /**
@@ -344,8 +488,8 @@ public class SocketThreadTest {
      * {@link Sock}. Check the output from LOGGER to assess human readability.
      */
     @Test
-    public void testToStringSockClosed() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringSockClosed -----");
+    public void testToStringSockClosedSocketThread() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testToStringSockClosedSocketThread -----");
         try {
             server1.startThread();
         } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
@@ -376,6 +520,6 @@ public class SocketThreadTest {
         Assert.assertFalse(exception, "Exception found");
         Assert.assertNotEquals(to_string, null, "SocketThread data not generated into a readable String with added character");
         LOGGER.log(Level.INFO, "SocketThread String details: \n{0}", to_string);
-        LOGGER.log(Level.INFO, "----- TEST testToStringSockClosed COMPLETED -----");
+        LOGGER.log(Level.INFO, "----- TEST testToStringSockClosedSocketThread COMPLETED -----");
     }
 }

@@ -494,7 +494,6 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     public synchronized void setSocketList(Map<String, SocketThread> socket_list) {
         this.socket_list = socket_list;
-        LOGGER.log(Level.INFO, "Changing socket_list. New socket_list:\n{0}", socket_list.toString());
     }
 
     /**
@@ -809,34 +808,40 @@ public class Server extends fantasyteam.ft1.Networking {
      * error and does not need to be handled.
      */
     public synchronized void startSocket(String hash) throws TimeoutException, NullException, HashNotFoundException, FT1EngineError {
-        if (socket_list != null) {
-            if (socket_list.containsKey(hash)) {
-                socket_list.get(hash).start();
-                boolean started = false;
-                Timing timer = new Timing();
-                while (!started && socket_list.containsKey(hash)) {
-                    if (socket_list.get(hash).getRun() == SocketThread.NEW) {
-                        if (timer.getTime() > timeout) {
-                            started = true;
-                            disconnect(hash);
-                            if (use_disconnected_sockets) {
-                                try {
-                                    removeDisconnectedSocket(hash);
-                                } catch (NullException | HashNotFoundException e) {
-                                    throw new FT1EngineError("Internal enginer error: Caught a NullException or HashNotFoundException when trying to run Server.removeDisconnectedSocket from Server.startSocket");
+        if(state != CLOSED) {
+            if (socket_list != null) {
+                if(state != CLOSED) {
+                    if (socket_list.containsKey(hash)) {
+                        if(state != CLOSED) {
+                            socket_list.get(hash).start();
+                            boolean started = false;
+                            Timing timer = new Timing();
+                            while (state != CLOSED && (!started && socket_list.containsKey(hash))) {
+                                if (socket_list.get(hash).getRun() == SocketThread.NEW) {
+                                    if (timer.getTime() > timeout) {
+                                        started = true;
+                                        disconnect(hash);
+                                        if (use_disconnected_sockets) {
+                                            try {
+                                                removeDisconnectedSocket(hash);
+                                            } catch (NullException | HashNotFoundException e) {
+                                                throw new FT1EngineError("Internal enginer error: Caught a NullException or HashNotFoundException when trying to run Server.removeDisconnectedSocket from Server.startSocket");
+                                            }
+                                        }
+                                        throw new TimeoutException("SocketThread was created but did not start in time");
+                                    }
+                                } else {
+                                    started = true;
                                 }
                             }
-                            throw new TimeoutException("SocketThread was created but did not start in time");
                         }
                     } else {
-                        started = true;
+                        throw new HashNotFoundException("Hash " + hash + " does not exist in attribute socket_list");
                     }
                 }
             } else {
-                throw new HashNotFoundException("Hash " + hash + " does not exist in attribute socket_list");
+                throw new NullException("Attribute socket_list is set to null");
             }
-        } else {
-            throw new NullException("Attribute socket_list is set to null");
         }
     }
 
@@ -854,69 +859,93 @@ public class Server extends fantasyteam.ft1.Networking {
      * attribute queue_list.
      */
     public synchronized void startQueue(String hash) throws HashNotFoundException, NullException, TimeoutException {
-        if (queue_list != null) {
-            if (queue_list.containsKey(hash)) {
-                queue_list.get(hash).start();
-                boolean started = false;
-                Timing timer = new Timing();
-                while (!started) {
-                    if (queue_list.get(hash).getRun() == MessageQueue.NEW) {
-                        timer.waitTime(5);
-                        if (timer.getTime() > timeout) {
-                            started = true;
-                            throw new TimeoutException("MessageQueue was created but did not start in time");
+        if(state != CLOSED) {
+            if (queue_list != null) {
+                if(state != CLOSED) {
+                    if (queue_list.containsKey(hash)) {
+                        if(state != CLOSED) {
+                            queue_list.get(hash).start();
+                            boolean started = false;
+                            Timing timer = new Timing();
+                            while (state != CLOSED && !started) {
+                                if (queue_list.get(hash).getRun() == MessageQueue.NEW) {
+                                    timer.waitTime(5);
+                                    if (timer.getTime() > timeout) {
+                                        started = true;
+                                        throw new TimeoutException("MessageQueue was created but did not start in time");
+                                    }
+                                } else {
+                                    started = true;
+                                    LOGGER.log(Level.INFO, "Successfully started MessageQueue for SocketThread {0}", hash);
+                                }
+                            }
                         }
                     } else {
-                        started = true;
-                        LOGGER.log(Level.INFO, "Successfully started MessageQueue for SocketThread {0}", hash);
+                        throw new HashNotFoundException("Hash " + hash + " does not exist in attribute queue_list");
                     }
                 }
             } else {
-                throw new HashNotFoundException("Hash " + hash + " does not exist in attribute queue_list");
+                throw new NullException("Attribute queue_list is set to null");
             }
-        } else {
-            throw new NullException("Attribute queue_list is set to null");
         }
     }
 
     private void addSocketThread(String hash, SocketThread new_socket) throws TimeoutException, FT1EngineError, SocketException {
-        try {
-            new_socket.setTimeout(timeout);
-        } catch (InvalidArgumentException e) {
-            throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setTimeout() from Server.addSocketThread()", e);
-        }
-        if (state == LISTEN || !use_connection_confirmation) {
+        if(state != CLOSED) {
             try {
-                new_socket.setRun(SocketThread.CONFIRMED);
+                new_socket.setTimeout(timeout);
             } catch (InvalidArgumentException e) {
-                throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setRun() from Server.addSocketThread()", e);
+                throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setTimeout() from Server.addSocketThread()", e);
             }
         }
-        if (use_socket_timeout) {
-            new_socket.setUseSocketTimeout(true);
+        if(state != CLOSED) {
+            if (state == LISTEN || !use_connection_confirmation) {
+                try {
+                    new_socket.setRun(SocketThread.CONFIRMED);
+                } catch (InvalidArgumentException e) {
+                    throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setRun() from Server.addSocketThread()", e);
+                }
+            }
         }
-        try {
-            new_socket.setSocketTimeout(socket_timeout);
-        } catch (InvalidArgumentException e) {
-            throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeout() from Server.addSocketThread()", e);
+        if(state != CLOSED) {
+            if (use_socket_timeout) {
+                new_socket.setUseSocketTimeout(true);
+            }
         }
-        try {
-            new_socket.setSocketTimeoutCount(socket_timeout_count);
-        } catch (InvalidArgumentException e) {
-            throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeoutCount() from Server.addSocketThread()", e);
-        }
-        socket_list.put(hash, new_socket);
-        if (use_message_queues) {
+        if(state != CLOSED) {
             try {
-                addQueue(hash);
-            } catch (FeatureNotUsedException e) {
-                throw new FT1EngineError("Internal engine error: Caught a FeatureNotUsedException while running Server.addQueue from Server.addSocketThread");
+                new_socket.setSocketTimeout(socket_timeout);
+            } catch (InvalidArgumentException e) {
+                throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeout() from Server.addSocketThread()", e);
             }
         }
-        try {
-            startSocket(hash);
-        } catch (NullException | HashNotFoundException e) {
-            throw new FT1EngineError("Internal engine error: Caught a NullException or HashNotFoundException while running Server.startSocket() from Server.addSocketThread", e);
+        if(state != CLOSED) {
+            try {
+                new_socket.setSocketTimeoutCount(socket_timeout_count);
+            } catch (InvalidArgumentException e) {
+                throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeoutCount() from Server.addSocketThread()", e);
+            }
+        }
+        if(state != CLOSED) {
+            socket_list.put(hash, new_socket);
+        }
+        if(state != CLOSED) {
+            if (use_message_queues) {
+                try {
+                    addQueue(hash);
+                } catch (FeatureNotUsedException e) {
+                    throw new FT1EngineError("Internal engine error: Caught a FeatureNotUsedException while running Server.addQueue from Server.addSocketThread");
+                }
+            }
+        }
+        if(state != CLOSED) {
+            try {
+                startSocket(hash);
+            } catch (NullException e) {
+                throw new FT1EngineError("Internal engine error: Caught a NullException while running Server.startSocket() from Server.addSocketThread", e);
+            } catch (HashNotFoundException e) {
+                throw new FT1EngineError("Internal engine error: Caught a HashNotFoundException while running Server.startSocket() from Server.addSocketThread", e);
+            }
         }
     }
 
