@@ -2,10 +2,13 @@ package fantasyteam.ft1.networkingbase;
 
 import fantasyteam.ft1.Game;
 import fantasyteam.ft1.Timing;
+import fantasyteam.ft1.exceptions.FT1EngineError;
+import fantasyteam.ft1.exceptions.InvalidActionException;
+import fantasyteam.ft1.exceptions.NetworkingIOException;
+import fantasyteam.ft1.exceptions.NetworkingRuntimeException;
 import fantasyteam.ft1.networkingbase.exceptions.FeatureNotUsedException;
 import fantasyteam.ft1.networkingbase.exceptions.HashNotFoundException;
 import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
-import fantasyteam.ft1.exceptions.FT1EngineError;
 import fantasyteam.ft1.networkingbase.exceptions.NullException;
 import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
 import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
@@ -22,6 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * <p>
  * The {@link Server} class is used to create client and server modules for a
  * client/server framework. It contains all the methods needed to create and
  * accept multiple connections using IP addresses and port numbers. Any port
@@ -30,6 +34,93 @@ import java.util.logging.Logger;
  * and the handleMessage method will need to be overridden. This method is meant
  * to be used to process and correctly handle any string inputs received through
  * a connection.
+ * </p>
+ * <p>
+ * Any {@link Game} class that wishes to use the more complex and implementation
+ * specific functions of the {@link Server} class through its generic
+ * {@link fantasyteam.ft1.Networking} class will need to use the overrides of
+ * {@link fantasyteam.ft1.Networking}.handleAction. These functions all require
+ * some form of action String which corresponds to a specific function from the
+ * {@link Server} class. See each functions individual documentation under the
+ * {@link Server} class on how to correctly use each function and how to pass
+ * the action String and any parameters needed correctly to the function.
+ * </p>
+ * <p>
+ * Below is a list of all the available action strings that can be used, any
+ * parameters that need to be passed as well and any specific exceptions that
+ * will be thrown under the guise of a NetworkingIOException or
+ * NetworkingRuntimeException. To access the actual specific Exception that was
+ * thrown use the throwable cause attribute of the NetowrkingIOException or
+ * NetowrkingRuntimeException.
+ * </p>
+ * <p>
+ * List of valid action Strings, corresponding functions with needed parameters
+ * and Exceptions thrown. It is not specifically listed for each action but any
+ * function that requires parameters will throw an {@link InvalidArgumentException}
+ * ({@link fantasyteam.ft1.exceptions.NetworkingRuntimeException}) if not enough
+ * parameters are passed. See each corresponding functions documentation under
+ * the {@link Server} class for specifics on its use:
+ * </p>
+ * <table summary="List of valid Action Strings for Server class" border="1">
+ * <tr><td align="center" colspan="4"><strong>List of valid Action Strings for Server class</strong></td></tr>
+ * <tr><td><strong>Action String</strong></td><td><strong>Corresponding
+ * Function</strong></td><td><strong>NetworkingIOExceptions</strong></td><td><strong>NetworkingRuntimeExceptions</strong></td></tr>
+ * <tr><td>close</td><td>close()</td><td>IOException,
+ * ServerSocketCloseException, TimeoutException</td><td>nill</td></tr>
+ * <tr><td>closeListenThread</td><td>closeListenThread()</td><td>IOException,
+ * ServerSocketCloseException, TimeoutException</td><td>nill</td></tr>
+ * <tr><td>setPort</td><td>setPort(int
+ * port)</td><td>nill</td><td>InvalidArgumentException</td></tr>
+ * <tr><td>setTimeout</td><td>setTimeout(long
+ * timeout)</td><td>nill</td><td>InvalidArgumentException</td></tr>
+ * <tr><td>setSocketTimeout</td><td>setSocketTimeout(int
+ * timeout)</td><td>SocketException</td><td>InvalidArgumentException</td></tr>
+ * <tr><td>setSocketTimeoutCount</td><td>setSocketTimeoutCount(int
+ * count)</td><td>SocketException</td><td>InvalidArgumentException</td></tr>
+ * <tr><td>setUseDisconnectedSockets</td><td>setUseDisconnectedSockets(boolean
+ * use)</td><td>nill</td><td>nill</td></tr>
+ * <tr><td>setUseMessageQueues</td><td>setUseMessageQueues(boolean
+ * use)</td><td>TimeoutException</td><td>nill</td></tr>
+ * <tr><td>setUseConnectionConfirmation</td><td>setUseConnectionConfirmation(boolean
+ * use)</td><td>nill</td><td>nill</td></tr>
+ * <tr><td>setUseSocketTimeout</td><td>setUseSocketTimeout(boolean
+ * use)</td><td>SocketException</td><td>nill</td></tr>
+ * <tr><td>setDisconnectedSockets</td><td>setDisconnectedSockets(ArrayList(String)
+ * disconnected_sockets)</td><td>nill</td><td>nill</td></tr>
+ * <tr><td>setListenThread</td><td>setListenThread()</td><td>IOException,
+ * ServerSocketCloseException, TimeoutException</td><td>nill</td></tr>
+ * <tr><td>disconnect</td><td>disconnect(String
+ * hash)</td><td>nill</td><td>nill</td></tr>
+ * <tr><td>removeQueue</td><td>removeQueue(String
+ * hash)</td><td>nill</td><td>HashNotFoundException, NullException</td></tr>
+ * <tr><td>removeDisconnectedSocket</td><td>removeDisconnectedSocket(String
+ * hash)</td><td>nill</td><td>HashNotFoundException, NullException</td></tr>
+ * <tr><td>startSocket</td><td>startSocket(String
+ * hash)</td><td>TimeoutException</td><td>NullException,
+ * HashNotFoundException</td></tr>
+ * <tr><td>startQueue</td><td>startQueue(String
+ * hash)</td><td>TimeoutException</td><td>HashNotFoundException,
+ * NullException</td></tr>
+ * <tr><td>addSocketIP</td><td>addSocket(String ip)</td><td>IOException,
+ * TimeoutException</td><td>nill</td></tr>
+ * <tr><td>addSocketIPPort</td><td>addSocket(String ip, int
+ * port)</td><td>IOException, TimeoutException</td><td>nill</td></tr>
+ * <tr><td>addQueue</td><td>addQueue(String
+ * hash)</td><td>TimeoutException</td><td>FeatureNotUsedException</td></tr>
+ * <tr><td>replaceHash</td><td>replaceHash(String old_hash, String
+ * new_hash)</td><td>nill</td><td>HashNotFoundException,
+ * InvalidArgumentException</td></tr>
+ * <tr><td>connectDisconnectedSocket</td><td>connectDisconnectedSocket(String
+ * current_hash, String saved_hash)</td><td>nill</td><td>HashNotFoundException,
+ * InvalidArgumentException, FeatureNotUsedException</td></tr>
+ * <tr><td>startThread</td><td>startThread()</td><td>IOException,
+ * ServerSocketCloseException</td><td>FeatureNotUsedException</td></tr>
+ * <tr><td>pingSockets</td><td>pingSockets()</td><td>IOException</td><td>nill</td></tr>
+ * <tr><td>sendMessageList</td><td>sendMessage(String message, List(String)
+ * clientIds)</td><td>nill</td><td>nill</td></tr>
+ * <tr><td>sendMessageHash</td><td>sendMessage(String message, String
+ * clientId)</td><td>nill</td><td>nill</td></tr>
+ * </table>
  *
  * @author javu
  */
@@ -617,7 +708,8 @@ public class Server extends fantasyteam.ft1.Networking {
      * connection is not confirmed within a given timeout the
      * {@link SocketThread} will close.
      *
-     * @return
+     * @return boolean specifying whether to use to Connection Confirmation
+     * feature.
      */
     public boolean getUseConnectionConfirmation() {
         return use_connection_confirmation;
@@ -729,6 +821,124 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
+     * This function is used to allow a {@link Game} class to access public
+     * functions of the {@link Server} class even though the game class contains
+     * a non implementation specific instance of
+     * {@link fantasyteam.ft1.Networking}. Without this function the
+     * {@link Game} class could only access those functions contained in the
+     * {@link fantasyteam.ft1.Networking} class and any abstract functions or
+     * overridden functions in the {@link Server} class, severely limiting the
+     * amount of control the {@link Game} class can have.
+     *
+     * This particular override of handleAction takes an action String (which
+     * corresponds to a specific function in the {@link Server} class) and a
+     * List of parameter Strings to pass to the function.
+     *
+     * See the overall documentation for the {@link Server} class for a detailed
+     * list of the available action Strings.
+     *
+     * @param action The action String representing the function to be run.
+     * @param parameters The parameter Strings to pass to the function.
+     * @throws NetworkingIOException Generic exception thrown if an exception is
+     * received that must be handled. See the cause throwable of the exception
+     * for information on the more specific exception that caused this generic
+     * exception to be thrown.
+     * @throws NetworkingRuntimeException Generic exception thrown if an
+     * exception is received that does not need to be handled. See the cause
+     * throwable of the exception for information on the more specific exception
+     * that caused this generic exception to be thrown.
+     */
+    @Override
+    public synchronized void handleAction(String action, List<String> parameters) throws NetworkingIOException, NetworkingRuntimeException {
+        if (action != null) {
+            ArrayList<String> actions = new ArrayList<String>();
+            actions.add(action);
+            if (parameters != null && !parameters.isEmpty()) {
+                for (String action_string : parameters) {
+                    actions.add(action_string);
+                }
+            }
+            handleServerAction(actions);
+        }
+    }
+
+    /**
+     * This function is used to allow a {@link Game} class to access public
+     * functions of the {@link Server} class even though the game class contains
+     * a non implementation specific instance of
+     * {@link fantasyteam.ft1.Networking}. Without this function the
+     * {@link Game} class could only access those functions contained in the
+     * {@link fantasyteam.ft1.Networking} class and any abstract functions or
+     * overridden functions in the {@link Server} class, severely limiting the
+     * amount of control the {@link Game} class can have.
+     *
+     * This particular override of handleAction takes a List containing the
+     * action String (which corresponds to a specific function in the
+     * {@link Server} class) in the first index and all the parameter Strings to
+     * pass to the function as the other indexes in the List.
+     *
+     * See the overall documentation for the {@link Server} class for a detailed
+     * list of the available action Strings.
+     *
+     * @param parameters The parameter Strings to pass to the function including
+     * the action String representing the function to run on {@link Server}. The
+     * action String should always be the first index in the List.
+     * @throws NetworkingIOException Generic exception thrown if an exception is
+     * received that must be handled. See the cause throwable of the exception
+     * for information on the more specific exception that caused this generic
+     * exception to be thrown.
+     * @throws NetworkingRuntimeException Generic exception thrown if an
+     * exception is received that does not need to be handled. See the cause
+     * throwable of the exception for information on the more specific exception
+     * that caused this generic exception to be thrown.
+     */
+    @Override
+    public synchronized void handleAction(List<String> parameters) throws NetworkingIOException, NetworkingRuntimeException {
+        if (parameters != null && !parameters.isEmpty()) {
+            handleServerAction(parameters);
+        }
+    }
+
+    /**
+     * This function is used to allow a {@link Game} class to access public
+     * functions of the {@link Server} class even though the game class contains
+     * a non implementation specific instance of
+     * {@link fantasyteam.ft1.Networking}. Without this function the
+     * {@link Game} class could only access those functions contained in the
+     * {@link fantasyteam.ft1.Networking} class and any abstract functions or
+     * overridden functions in the {@link Server} class, severely limiting the
+     * amount of control the {@link Game} class can have.
+     *
+     * This particular override of handleAction takes an action String (which
+     * corresponds to a specific function in the {@link Server} class) but no
+     * parameters, allowing to easily run functions that do not require a set of
+     * parameters. Do not use this function to pass action Strings corresponding
+     * to functions that require parameters, otherwise a NetworkingIOException
+     * will be thrown.
+     *
+     * See the overall documentation for the {@link Server} class for a detailed
+     * list of the available action Strings.
+     *
+     * @param action The action String representing the function to be run.
+     * @throws NetworkingIOException Generic exception thrown if an exception is
+     * received that must be handled. See the cause throwable of the exception
+     * for information on the more specific exception that caused this generic
+     * exception to be thrown.
+     * @throws NetworkingRuntimeException Generic exception thrown if an
+     * exception is received that does not need to be handled. See the cause
+     * throwable of the exception for information on the more specific exception
+     * that caused this generic exception to be thrown.
+     */
+    @Override
+    public synchronized void handleAction(String action) throws NetworkingIOException, NetworkingRuntimeException {
+        if (action != null) {
+            ArrayList<String> actions = new ArrayList<String>();
+            actions.add(action);
+            handleServerAction(actions);
+        }
+    }
+
+    /**
      * This function is not used.
      *
      * @param action Not used.
@@ -740,6 +950,275 @@ public class Server extends fantasyteam.ft1.Networking {
             socket_list.get(clientId).setRun(SocketThread.CONFIRMED);
         } catch (InvalidArgumentException e) {
             throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setRun() from Server.customNetwork1()", e);
+        }
+    }
+
+    /**
+     * This function is implemented by the handleAction override functions. See
+     * them for more details on the use of this function.
+     *
+     * @param action A list containing the action string to execute and any
+     * needed parameters.
+     * @throws NetworkingIOException Generic exception thrown if an exception is
+     * received that must be handled. See the cause throwable of the exception
+     * for information on the more specific exception that caused this generic
+     * exception to be thrown.
+     * @throws NetworkingRuntimeException Generic exception thrown if an
+     * exception is received that does not need to be handled. See the cause
+     * throwable of the exception for information on the more specific exception
+     * that caused this generic exception to be thrown.
+     */
+    private synchronized void handleServerAction(List<String> action) throws NetworkingIOException, NetworkingRuntimeException {
+        switch (action.get(0)) {
+            case "close":
+                try {
+                    close();
+                } catch (IOException | ServerSocketCloseException | TimeoutException e) {
+                    throw new NetworkingIOException("Exception occurred", e);
+                }
+                break;
+            case "closeListenThread":
+                try {
+                    closeListenThread();
+                } catch (IOException | ServerSocketCloseException | TimeoutException e) {
+                    throw new NetworkingIOException("Exception occurred", e);
+                }
+                break;
+            case "setPort":
+                if (action.size() > 1) {
+                    setPort(Integer.parseInt(action.get(1)));
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+                break;
+            case "setTimeout":
+                if (action.size() > 1) {
+                    setTimeout(Long.parseLong(action.get(1)));
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+                break;
+            case "setSocketTimeout":
+                if (action.size() > 1) {
+                    try {
+                        setSocketTimeout(Integer.parseInt(action.get(1)));
+                    } catch (SocketException e) {
+                        throw new NetworkingIOException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+                break;
+            case "setSocketTimeoutCount":
+                if (action.size() > 1) {
+                    try {
+                        setSocketTimeoutCount(Integer.parseInt(action.get(1)));
+                    } catch (SocketException e) {
+                        throw new NetworkingIOException("Exception occurred", e);
+                    } catch (InvalidArgumentException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+                break;
+            case "setUseDisconnectedSockets":
+                if (action.size() > 1) {
+                    setUseDisconnectedSockets(Boolean.parseBoolean(action.get(1)));
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+                break;
+            case "setUseMessageQueues":
+                if (action.size() > 1) {
+                    try {
+                        setUseMessageQueues(Boolean.parseBoolean(action.get(1)));
+                    } catch (TimeoutException e) {
+                        throw new NetworkingIOException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+                break;
+            case "setUseConnectionConfirmation":
+                if (action.size() > 1) {
+                    setUseConnectionConfirmation(Boolean.parseBoolean(action.get(1)));
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+                break;
+            case "setUseSocketTimeout":
+                if (action.size() > 1) {
+                    try {
+                        setUseSocketTimeout(Boolean.parseBoolean(action.get(1)));
+                    } catch (SocketException e) {
+                        throw new NetworkingIOException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+                break;
+            case "setDisconnectedSockets":
+                if (action.size() > 1) {
+                    ArrayList<String> sockets = new ArrayList<String>();
+                    int count = 0;
+                    for (String action_string : action) {
+                        if (count != 0) {
+                            sockets.add(action_string);
+                        }
+                        count++;
+                    }
+                    setDisconnectedSockets(sockets);
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "setListenThread":
+                try {
+                    setListenThread();
+                } catch (IOException | ServerSocketCloseException | TimeoutException e) {
+                    throw new NetworkingIOException("Exception occurred", e);
+                }
+            case "disconnect":
+                if (action.size() > 1) {
+                    disconnect(action.get(1));
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "removeQueue":
+                if (action.size() > 1) {
+                    try {
+                        removeQueue(action.get(1));
+                    } catch (HashNotFoundException | NullException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "removeDisconnectedSocket":
+                if (action.size() > 1) {
+                    try {
+                        removeDisconnectedSocket(action.get(1));
+                    } catch (HashNotFoundException | NullException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "startSocket":
+                if (action.size() > 1) {
+                    try {
+                        startSocket(action.get(1));
+                    } catch (HashNotFoundException | NullException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    } catch (TimeoutException e) {
+                        throw new NetworkingIOException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "startQueue":
+                if (action.size() > 1) {
+                    try {
+                        startQueue(action.get(1));
+                    } catch (HashNotFoundException | NullException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    } catch (TimeoutException e) {
+                        throw new NetworkingIOException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "addSocketIP":
+                if (action.size() > 1) {
+                    try {
+                        addSocket(action.get(1));
+                    } catch (IOException | TimeoutException e) {
+                        throw new NetworkingIOException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "addSocketIPPort":
+                if (action.size() > 2) {
+                    try {
+                        addSocket(action.get(1), Integer.parseInt(action.get(2)));
+                    } catch (IOException | TimeoutException e) {
+                        throw new NetworkingIOException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "addQueue":
+                if (action.size() > 1) {
+                    try {
+                        addQueue(action.get(1));
+                    } catch (FeatureNotUsedException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    } catch (TimeoutException e) {
+                        throw new NetworkingIOException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "replaceHash":
+                if (action.size() > 2) {
+                    try {
+                        replaceHash(action.get(1), action.get(2));
+                    } catch (HashNotFoundException | InvalidArgumentException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "connectDisconnectedSocket":
+                if (action.size() > 2) {
+                    try {
+                        connectDisconnectedSocket(action.get(1), action.get(2));
+                    } catch (HashNotFoundException | InvalidArgumentException | FeatureNotUsedException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "startThread":
+                try {
+                    startThread();
+                } catch (IOException | ServerSocketCloseException e) {
+                    throw new NetworkingIOException("Exception occurred", e);
+                } catch (FeatureNotUsedException e) {
+                    throw new NetworkingRuntimeException("Exception occurred", e);
+                }
+            case "pingSockets":
+                try {
+                    pingSockets();
+                } catch (IOException e) {
+                    throw new NetworkingIOException("Exception occurred", e);
+                }
+            case "sendMessageList":
+                if (action.size() > 2) {
+                    String message = action.get(1);
+                    ArrayList<String> clients = new ArrayList<String>();
+                    int count = 0;
+                    for (String action_string : action) {
+                        if (count > 1) {
+                            clients.add(action_string);
+                        }
+                        count++;
+                    }
+                    sendMessage(message, clients);
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "sendMessageHash":
+                if (action.size() > 2) {
+                    String message = action.get(1);
+                    String client = action.get(2);
+                    sendMessage(message, client);
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            default:
+                throw new NetworkingIOException("Action String is invalid", new InvalidActionException("Action is invalid: " + action.get(0)));
         }
     }
 
@@ -808,11 +1287,11 @@ public class Server extends fantasyteam.ft1.Networking {
      * error and does not need to be handled.
      */
     public synchronized void startSocket(String hash) throws TimeoutException, NullException, HashNotFoundException, FT1EngineError {
-        if(state != CLOSED) {
+        if (state != CLOSED) {
             if (socket_list != null) {
-                if(state != CLOSED) {
+                if (state != CLOSED) {
                     if (socket_list.containsKey(hash)) {
-                        if(state != CLOSED) {
+                        if (state != CLOSED) {
                             socket_list.get(hash).start();
                             boolean started = false;
                             Timing timer = new Timing();
@@ -859,11 +1338,11 @@ public class Server extends fantasyteam.ft1.Networking {
      * attribute queue_list.
      */
     public synchronized void startQueue(String hash) throws HashNotFoundException, NullException, TimeoutException {
-        if(state != CLOSED) {
+        if (state != CLOSED) {
             if (queue_list != null) {
-                if(state != CLOSED) {
+                if (state != CLOSED) {
                     if (queue_list.containsKey(hash)) {
-                        if(state != CLOSED) {
+                        if (state != CLOSED) {
                             queue_list.get(hash).start();
                             boolean started = false;
                             Timing timer = new Timing();
@@ -891,14 +1370,14 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     private void addSocketThread(String hash, SocketThread new_socket) throws TimeoutException, FT1EngineError, SocketException {
-        if(state != CLOSED) {
+        if (state != CLOSED) {
             try {
                 new_socket.setTimeout(timeout);
             } catch (InvalidArgumentException e) {
                 throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setTimeout() from Server.addSocketThread()", e);
             }
         }
-        if(state != CLOSED) {
+        if (state != CLOSED) {
             if (state == LISTEN || !use_connection_confirmation) {
                 try {
                     new_socket.setRun(SocketThread.CONFIRMED);
@@ -907,29 +1386,29 @@ public class Server extends fantasyteam.ft1.Networking {
                 }
             }
         }
-        if(state != CLOSED) {
+        if (state != CLOSED) {
             if (use_socket_timeout) {
                 new_socket.setUseSocketTimeout(true);
             }
         }
-        if(state != CLOSED) {
+        if (state != CLOSED) {
             try {
                 new_socket.setSocketTimeout(socket_timeout);
             } catch (InvalidArgumentException e) {
                 throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeout() from Server.addSocketThread()", e);
             }
         }
-        if(state != CLOSED) {
+        if (state != CLOSED) {
             try {
                 new_socket.setSocketTimeoutCount(socket_timeout_count);
             } catch (InvalidArgumentException e) {
                 throw new FT1EngineError("Internal engine error: Caught InvalidArgumentException when running SocketThread.setSocketTimeoutCount() from Server.addSocketThread()", e);
             }
         }
-        if(state != CLOSED) {
+        if (state != CLOSED) {
             socket_list.put(hash, new_socket);
         }
-        if(state != CLOSED) {
+        if (state != CLOSED) {
             if (use_message_queues) {
                 try {
                     addQueue(hash);
@@ -938,7 +1417,7 @@ public class Server extends fantasyteam.ft1.Networking {
                 }
             }
         }
-        if(state != CLOSED) {
+        if (state != CLOSED) {
             try {
                 startSocket(hash);
             } catch (NullException e) {
@@ -1043,6 +1522,7 @@ public class Server extends fantasyteam.ft1.Networking {
      * the engine code.
      */
     public synchronized void addQueue(String hash) throws TimeoutException, FeatureNotUsedException, FT1EngineError {
+
         if (use_message_queues) {
             MessageQueue new_queue = new MessageQueue(this, hash);
             queue_list.put(hash, new_queue);

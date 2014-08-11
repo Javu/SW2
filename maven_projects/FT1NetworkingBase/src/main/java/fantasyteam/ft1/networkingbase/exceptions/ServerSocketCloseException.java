@@ -2,7 +2,7 @@ package fantasyteam.ft1.networkingbase.exceptions;
 
 /**
  * This is a very specific exception that is thrown if there is an issue closing
- * a ServerSocket. Used by the {@link ListenThread} class.
+ * a ServerSocket. Used by the {@link fantasyteam.ft1.networkingbase.ListenThread} class.
  *
  * @author javu
  */
