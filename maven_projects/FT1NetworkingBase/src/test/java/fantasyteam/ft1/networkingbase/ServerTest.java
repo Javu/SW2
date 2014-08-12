@@ -829,6 +829,38 @@ public class ServerTest {
     }
 
     /**
+     * Test the function to set the attribute game on a {@link SocketThread}..
+     */
+    @Test
+    public void testSetSocketGame() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetSocketGame -----");
+        String client_hash = "";
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitSocketThreadAddNotEmpty(server1);
+        Assert.assertEquals(server2.getSocketGame(client_hash), 0, "Value of game not set to 0 on SocketThread");
+        try {
+            server2.setSocketGame(client_hash, 1);
+        } catch(NullException | HashNotFoundException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server2.getSocketGame(client_hash), 1, "Value of game not set to 1 on SocketThread");
+        LOGGER.log(Level.INFO, "----- TEST testSetSocketGame COMPLETED -----");
+    }
+
+    /**
      * Tests whether an IOException is correctly thrown when attempting to start
      * a new ListenThread on a port that is in use.
      */

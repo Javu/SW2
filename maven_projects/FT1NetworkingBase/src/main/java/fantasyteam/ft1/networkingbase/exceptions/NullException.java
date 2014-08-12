@@ -1,8 +1,15 @@
 package fantasyteam.ft1.networkingbase.exceptions;
 
 /**
+ * <p>
  * This exception should be thrown if a variable or class is referenced but the
  * variable or class is set to null.
+ * </p>
+ * <p>
+ * The exception type for this class is NullException. See the
+ * {@link NetworkingBaseRuntimeException} class for more information regarding
+ * exception types.
+ * </p>
  *
  * @author javu
  */
@@ -14,7 +21,7 @@ public class NullException extends NetworkingBaseRuntimeException {
      * @param message Custom message String
      */
     public NullException(String message) {
-        super(message);
+        super(message, "NullException");
     }
 
     /**
@@ -28,6 +35,6 @@ public class NullException extends NetworkingBaseRuntimeException {
      * that caused this exception to be thrown.
      */
     public NullException(String message, Throwable cause) {
-        super(message, cause);
+        super(message, cause, "NullException");
     }
 }

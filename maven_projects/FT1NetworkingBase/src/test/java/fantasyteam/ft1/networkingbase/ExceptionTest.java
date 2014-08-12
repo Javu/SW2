@@ -5,6 +5,8 @@ import fantasyteam.ft1.Timing;
 import fantasyteam.ft1.networkingbase.exceptions.FeatureNotUsedException;
 import fantasyteam.ft1.networkingbase.exceptions.HashNotFoundException;
 import fantasyteam.ft1.networkingbase.exceptions.InvalidArgumentException;
+import fantasyteam.ft1.networkingbase.exceptions.NetworkingBaseIOException;
+import fantasyteam.ft1.networkingbase.exceptions.NetworkingBaseRuntimeException;
 import fantasyteam.ft1.networkingbase.exceptions.NullException;
 import fantasyteam.ft1.networkingbase.exceptions.ServerSocketCloseException;
 import fantasyteam.ft1.networkingbase.exceptions.TimeoutException;
@@ -13,6 +15,8 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.createMock;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -276,7 +280,7 @@ public class ExceptionTest {
         waitServerState(server1, Server.CLOSED);
         LOGGER.log(Level.INFO, "+++++ CLOSING SERVERS COMPLETE +++++");
     }
-    
+
     /**
      * Tests the {@link Server}.setPort function to ensure it correctly throws
      * an InvalidArgumentException if the parameter passed fails the input
@@ -351,6 +355,90 @@ public class ExceptionTest {
         Assert.assertFalse(exception_socket, "SocketException received");
         Assert.assertTrue(exception, "Successfully ran setSocketTimeoutCount on server, should have received an exception");
         LOGGER.log(Level.INFO, "----- TEST testServerSetSocketTimeoutCountEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setSocketGame function to ensure it correctly
+     * throws a NullException if socket_list is set to null.
+     */
+    @Test
+    public void testServerSetSocketGameNullEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetSocketGameNullEx -----");
+        server2.setSocketList(null);
+        boolean exception_socket = false;
+        try {
+            server2.setSocketGame("TEST", 1);
+        } catch (HashNotFoundException e) {
+            exception_socket = true;
+        } catch (NullException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception_socket, "HashNotFoundException received");
+        Assert.assertTrue(exception, "Successfully ran setSocketGame on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetSocketGameNullEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setSocketGame function to ensure it correctly
+     * throws a HashNotFoundException if the String parameter passed does not
+     * exist as a key in socket_list.
+     */
+    @Test
+    public void testServerSetSocketGameHashEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetSocketGameHashEx -----");
+        boolean exception_socket = false;
+        try {
+            server2.setSocketGame("TEST", 1);
+        } catch (NullException e) {
+            exception_socket = true;
+        } catch (HashNotFoundException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception_socket, "NullException received");
+        Assert.assertTrue(exception, "Successfully ran setSocketGame on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetSocketGameHashEx COMPLETED -----");
+    }
+    
+    /**
+     * Tests the {@link Server}.getSocketGame function to ensure it correctly
+     * throws a NullException if socket_list is set to null.
+     */
+    @Test
+    public void testServerGetSocketGameNullEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerGetSocketGameNullEx -----");
+        server2.setSocketList(null);
+        boolean exception_socket = false;
+        try {
+            server2.getSocketGame("TEST");
+        } catch (HashNotFoundException e) {
+            exception_socket = true;
+        } catch (NullException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception_socket, "HashNotFoundException received");
+        Assert.assertTrue(exception, "Successfully ran getSocketGame on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerGetSocketGameNullEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.getSocketGame function to ensure it correctly
+     * throws a HashNotFoundException if the String parameter passed does not
+     * exist as a key in socket_list.
+     */
+    @Test
+    public void testServerGetSocketGameHashEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerGetSocketGameHashEx -----");
+        boolean exception_socket = false;
+        try {
+            server2.getSocketGame("TEST");
+        } catch (NullException e) {
+            exception_socket = true;
+        } catch (HashNotFoundException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception_socket, "NullException received");
+        Assert.assertTrue(exception, "Successfully ran getSocketGame on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerGetSocketGameHashEx COMPLETED -----");
     }
 
     /**
@@ -623,7 +711,7 @@ public class ExceptionTest {
         Assert.assertTrue(exception, "Successfully removed disconnected socket, should have received an exception");
         LOGGER.log(Level.INFO, "----- TEST testServerRemoveDisconnectedSocketNotExistEx COMPLETED -----");
     }
-    
+
     /**
      * Tests the {@link MessageQueue}.setTimeout function to ensure it correctly
      * throws an InvalidArgumentException if the parameter passed fails the
@@ -713,7 +801,7 @@ public class ExceptionTest {
         Assert.assertTrue(exception, "Exception not found");
         LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetRunEx COMPLETED -----");
     }
-    
+
     /**
      * Tests the {@link SocketThread}.setRun function to ensure it correctly
      * throws an InalidArgumentException if a correct state is not passed to the
@@ -847,7 +935,7 @@ public class ExceptionTest {
         Assert.assertTrue(exception_expected, "Successfully ran setSocketTimeoutCount, expected an exception");
         LOGGER.log(Level.INFO, "----- TEST testSocketThreadSetSocketTimeoutCountEx COMPLETED -----");
     }
-    
+
     /**
      * Tests the message only constructor of {@link FeatureNotUsedException}.
      */
@@ -856,12 +944,12 @@ public class ExceptionTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testFeatureNotUsedException -----");
         try {
             throw new FeatureNotUsedException("TEST");
-        } catch(FeatureNotUsedException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (FeatureNotUsedException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testFeatureNotUsedException COMPLETED -----");
     }
-    
+
     /**
      * Tests the message only constructor of {@link HashNotFoundException}.
      */
@@ -870,12 +958,12 @@ public class ExceptionTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testHashNotFoundException -----");
         try {
             throw new HashNotFoundException("TEST");
-        } catch(HashNotFoundException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (HashNotFoundException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testHashNotFoundException COMPLETED -----");
     }
-    
+
     /**
      * Tests the message only constructor of {@link InvalidArgumentException}.
      */
@@ -884,12 +972,12 @@ public class ExceptionTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testInvalidArgumentException -----");
         try {
             throw new InvalidArgumentException("TEST");
-        } catch(InvalidArgumentException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (InvalidArgumentException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testInvalidArgumentException COMPLETED -----");
     }
-    
+
     /**
      * Tests the message only constructor of {@link NullException}.
      */
@@ -898,12 +986,12 @@ public class ExceptionTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testNullException -----");
         try {
             throw new NullException("TEST");
-        } catch(NullException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (NullException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testNullException COMPLETED -----");
     }
-    
+
     /**
      * Tests the message only constructor of {@link ServerSocketCloseException}.
      */
@@ -912,12 +1000,12 @@ public class ExceptionTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerSocketCloseException -----");
         try {
             throw new ServerSocketCloseException("TEST");
-        } catch(ServerSocketCloseException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (ServerSocketCloseException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testServerSocketCloseException COMPLETED -----");
     }
-    
+
     /**
      * Tests the message only constructor of {@link TimeoutException}.
      */
@@ -926,54 +1014,57 @@ public class ExceptionTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testTimeoutException -----");
         try {
             throw new TimeoutException("TEST");
-        } catch(TimeoutException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (TimeoutException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testTimeoutException COMPLETED -----");
     }
-    
+
     /**
-     * Tests the message and throwable constructor of {@link FeatureNotUsedException}.
+     * Tests the message and throwable constructor of
+     * {@link FeatureNotUsedException}.
      */
     @Test
     public void testFeatureNotUsedExceptionThrowable() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testFeatureNotUsedExceptionThrowable -----");
         try {
             throw new FeatureNotUsedException("TEST", new Throwable());
-        } catch(FeatureNotUsedException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (FeatureNotUsedException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testFeatureNotUsedExceptionThrowable COMPLETED -----");
     }
-    
+
     /**
-     * Tests the message and throwable constructor of {@link HashNotFoundException}.
+     * Tests the message and throwable constructor of
+     * {@link HashNotFoundException}.
      */
     @Test
     public void testHashNotFoundExceptionThrowable() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testHashNotFoundExceptionThrowable -----");
         try {
             throw new HashNotFoundException("TEST", new Throwable());
-        } catch(HashNotFoundException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (HashNotFoundException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testHashNotFoundExceptionThrowable COMPLETED -----");
     }
-    
+
     /**
-     * Tests the message and throwable constructor of {@link InvalidArgumentException}.
+     * Tests the message and throwable constructor of
+     * {@link InvalidArgumentException}.
      */
     @Test
     public void testInvalidArgumentExceptionThrowable() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testInvalidArgumentExceptionThrowable -----");
         try {
             throw new InvalidArgumentException("TEST", new Throwable());
-        } catch(InvalidArgumentException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (InvalidArgumentException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testInvalidArgumentExceptionThrowable COMPLETED -----");
     }
-    
+
     /**
      * Tests the message and throwable constructor of {@link NullException}.
      */
@@ -982,26 +1073,27 @@ public class ExceptionTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testNullExceptionThrowable -----");
         try {
             throw new NullException("TEST", new Throwable());
-        } catch(NullException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (NullException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testNullExceptionThrowable COMPLETED -----");
     }
-    
+
     /**
-     * Tests the message and throwable constructor of {@link ServerSocketCloseException}.
+     * Tests the message and throwable constructor of
+     * {@link ServerSocketCloseException}.
      */
     @Test
     public void testServerSocketCloseExceptionThrowable() {
         LOGGER.log(Level.INFO, "----- STARTING TEST testServerSocketCloseExceptionThrowable -----");
         try {
             throw new ServerSocketCloseException("TEST", new Throwable());
-        } catch(ServerSocketCloseException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (ServerSocketCloseException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testServerSocketCloseExceptionThrowable COMPLETED -----");
     }
-    
+
     /**
      * Tests the message and throwable constructor of {@link TimeoutException}.
      */
@@ -1010,9 +1102,197 @@ public class ExceptionTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testTimeoutExceptionThrowable -----");
         try {
             throw new TimeoutException("TEST", new Throwable());
-        } catch(TimeoutException e) {
-            LOGGER.log(Level.INFO,"{0}", e.getMessage());
+        } catch (TimeoutException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
         }
         LOGGER.log(Level.INFO, "----- TEST testTimeoutExceptionThrowable COMPLETED -----");
+    }
+
+    /**
+     * Tests the message only constructor of
+     * {@link testNetworkingBaseRuntimeExceptionMessage}.
+     */
+    @Test
+    public void testNetworkingBaseRuntimeExceptionMessage() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testNetworkingBaseRuntimeExceptionMessage -----");
+        try {
+            throw new NetworkingBaseRuntimeException("TEST");
+        } catch (NetworkingBaseRuntimeException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testNetworkingBaseRuntimeExceptionMessage COMPLETED -----");
+    }
+
+    /**
+     * Tests the message and throwable constructor of
+     * {@link testNetworkingBaseRuntimeExceptionMessage}.
+     */
+    @Test
+    public void testNetworkingBaseRuntimeExceptionThrowable() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testNetworkingBaseRuntimeExceptionThrowable -----");
+        try {
+            throw new NetworkingBaseRuntimeException("TEST", new Throwable());
+        } catch (NetworkingBaseRuntimeException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testNetworkingBaseRuntimeExceptionThrowable COMPLETED -----");
+    }
+
+    /**
+     * Tests the message only constructor of
+     * {@link testNetworkingBaseIOExceptionMessage}.
+     */
+    @Test
+    public void testNetworkingBaseIOExceptionMessage() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testNetworkingBaseIOExceptionMessage -----");
+        try {
+            throw new NetworkingBaseIOException("TEST");
+        } catch (NetworkingBaseIOException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testNetworkingBaseIOExceptionMessage COMPLETED -----");
+    }
+
+    /**
+     * Tests the message and throwable constructor of
+     * {@link testNetworkingBaseIOExceptionMessage}.
+     */
+    @Test
+    public void testNetworkingBaseIOExceptionThrowable() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testNetworkingBaseIOExceptionThrowable -----");
+        try {
+            throw new NetworkingBaseIOException("TEST", new Throwable());
+        } catch (NetworkingBaseIOException e) {
+            LOGGER.log(Level.INFO, "{0}", e.getMessage());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testNetworkingBaseIOExceptionThrowable COMPLETED -----");
+    }
+
+    /**
+     * Tests the value of exception_type for NetworkingBaseRuntimeException to
+     * ensure it is correct.
+     */
+    @Test
+    public void testNetworkingBaseRuntimeExceptionGetExceptionType() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testNetworkingBaseRuntimeExceptionGetExceptionType -----");
+        try {
+            throw new NetworkingBaseRuntimeException("TEST");
+        } catch (NetworkingBaseRuntimeException e) {
+            Assert.assertEquals(e.getExceptionType(), "NetworkingBaseRuntimeException", "Exception type not set correctly");
+            LOGGER.log(Level.INFO, "{0}", e.getExceptionType());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testNetworkingBaseRuntimeExceptionGetExceptionType COMPLETED -----");
+    }
+
+    /**
+     * Tests the value of exception_type for NetworkingBaseIOException to ensure
+     * it is correct.
+     */
+    @Test
+    public void testNetworkingBaseIOExceptionGetExceptionType() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testNetworkingBaseIOExceptionGetExceptionType -----");
+        try {
+            throw new NetworkingBaseIOException("TEST");
+        } catch (NetworkingBaseIOException e) {
+            Assert.assertEquals(e.getExceptionType(), "NetworkingBaseIOException", "Exception type not set correctly");
+            LOGGER.log(Level.INFO, "{0}", e.getExceptionType());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testNetworkingBaseIOExceptionGetExceptionType COMPLETED -----");
+    }
+
+    /**
+     * Tests the value of exception_type for FeatureNotUsedException to ensure
+     * it is correct.
+     */
+    @Test
+    public void testFeatureNotUsedExceptionGetExceptionType() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testFeatureNotUsedExceptionGetExceptionType -----");
+        try {
+            throw new FeatureNotUsedException("TEST");
+        } catch (FeatureNotUsedException e) {
+            Assert.assertEquals(e.getExceptionType(), "FeatureNotUsedException", "Exception type not set correctly");
+            LOGGER.log(Level.INFO, "{0}", e.getExceptionType());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testFeatureNotUsedExceptionGetExceptionType COMPLETED -----");
+    }
+
+    /**
+     * Tests the value of exception_type for HashNotFoundException to ensure it
+     * is correct.
+     */
+    @Test
+    public void testHashNotFoundExceptionGetExceptionType() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testHashNotFoundExceptionGetExceptionType -----");
+        try {
+            throw new HashNotFoundException("TEST");
+        } catch (HashNotFoundException e) {
+            Assert.assertEquals(e.getExceptionType(), "HashNotFoundException", "Exception type not set correctly");
+            LOGGER.log(Level.INFO, "{0}", e.getExceptionType());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testHashNotFoundExceptionGetExceptionType COMPLETED -----");
+    }
+
+    /**
+     * Tests the value of exception_type for InvalidArgumentException to ensure
+     * it is correct.
+     */
+    @Test
+    public void testInvalidArgumentExceptionGetExceptionType() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testInvalidArgumentExceptionGetExceptionType -----");
+        try {
+            throw new InvalidArgumentException("TEST");
+        } catch (InvalidArgumentException e) {
+            Assert.assertEquals(e.getExceptionType(), "InvalidArgumentException", "Exception type not set correctly");
+            LOGGER.log(Level.INFO, "{0}", e.getExceptionType());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testInvalidArgumentExceptionGetExceptionType COMPLETED -----");
+    }
+
+    /**
+     * Tests the value of exception_type for NullException to ensure it is
+     * correct.
+     */
+    @Test
+    public void testNullExceptionGetExceptionType() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testNullExceptionGetExceptionType -----");
+        try {
+            throw new NullException("TEST");
+        } catch (NullException e) {
+            Assert.assertEquals(e.getExceptionType(), "NullException", "Exception type not set correctly");
+            LOGGER.log(Level.INFO, "{0}", e.getExceptionType());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testNullExceptionGetExceptionType COMPLETED -----");
+    }
+
+    /**
+     * Tests the value of exception_type for ServerSocketCloseException to
+     * ensure it is correct.
+     */
+    @Test
+    public void testServerSocketCloseExceptionGetExceptionType() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSocketCloseExceptionGetExceptionType -----");
+        try {
+            throw new ServerSocketCloseException("TEST");
+        } catch (ServerSocketCloseException e) {
+            Assert.assertEquals(e.getExceptionType(), "ServerSocketCloseException", "Exception type not set correctly");
+            LOGGER.log(Level.INFO, "{0}", e.getExceptionType());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testServerSocketCloseExceptionGetExceptionType COMPLETED -----");
+    }
+
+    /**
+     * Tests the value of exception_type for TimeoutException to ensure it is
+     * correct.
+     */
+    @Test
+    public void testTimeoutExceptionGetExceptionType() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testTimeoutExceptionGetExceptionType -----");
+        try {
+            throw new TimeoutException("TEST");
+        } catch (TimeoutException e) {
+            Assert.assertEquals(e.getExceptionType(), "TimeoutException", "Exception type not set correctly");
+            LOGGER.log(Level.INFO, "{0}", e.getExceptionType());
+        }
+        LOGGER.log(Level.INFO, "----- TEST testTimeoutExceptionGetExceptionType COMPLETED -----");
     }
 }

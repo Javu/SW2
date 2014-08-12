@@ -1,11 +1,18 @@
 package fantasyteam.ft1.networkingbase.exceptions;
 
 /**
+ * <p>
  * This exception should be thrown if a function times out. A lot of critical
  * functions that need to wait on data/information from a different thread
  * implement a timeout feature so that they will only wait a set amount of time
  * for needed data/information. If this set time is reached before the
  * data/implementation is received then they throw a {@link TimeoutException}.
+ * </p>
+ * <p>
+ * The exception type for this class is TimeoutException. See the
+ * {@link NetworkingBaseIOException} class for more information regarding
+ * exception types.
+ * </p>
  *
  * @author javu
  */
@@ -17,7 +24,7 @@ public class TimeoutException extends NetworkingBaseIOException {
      * @param message Custom message String
      */
     public TimeoutException(String message) {
-        super(message);
+        super(message, "TimeoutException");
     }
 
     /**
@@ -31,6 +38,6 @@ public class TimeoutException extends NetworkingBaseIOException {
      * that caused this exception to be thrown.
      */
     public TimeoutException(String message, Throwable cause) {
-        super(message, cause);
+        super(message, cause, "TimeoutException");
     }
 }

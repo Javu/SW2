@@ -48,10 +48,11 @@ import java.util.logging.Logger;
  * <p>
  * Below is a list of all the available action strings that can be used, any
  * parameters that need to be passed as well and any specific exceptions that
- * will be thrown under the guise of a NetworkingIOException or
- * NetworkingRuntimeException. To access the actual specific Exception that was
- * thrown use the throwable cause attribute of the NetowrkingIOException or
- * NetowrkingRuntimeException.
+ * will be thrown under the guise of a
+ * {@link fantasyteam.ft1.exceptions.NetworkingIOException} or
+ * {@link fantasyteam.ft1.exceptions.NetworkingRuntimeException}. To access the
+ * actual specific Exception that was thrown use the throwable cause attribute
+ * of the NetworkingIOException or NetowrkingRuntimeException.
  * </p>
  * <p>
  * List of valid action Strings, corresponding functions with needed parameters
@@ -62,7 +63,8 @@ import java.util.logging.Logger;
  * the {@link Server} class for specifics on its use:
  * </p>
  * <table summary="List of valid Action Strings for Server class" border="1">
- * <tr><td align="center" colspan="4"><strong>List of valid Action Strings for Server class</strong></td></tr>
+ * <tr><td align="center" colspan="4"><strong>List of valid Action Strings for
+ * Server class</strong></td></tr>
  * <tr><td><strong>Action String</strong></td><td><strong>Corresponding
  * Function</strong></td><td><strong>NetworkingIOExceptions</strong></td><td><strong>NetworkingRuntimeExceptions</strong></td></tr>
  * <tr><td>close</td><td>close()</td><td>IOException,
@@ -89,6 +91,8 @@ import java.util.logging.Logger;
  * disconnected_sockets)</td><td>nill</td><td>nill</td></tr>
  * <tr><td>setListenThread</td><td>setListenThread()</td><td>IOException,
  * ServerSocketCloseException, TimeoutException</td><td>nill</td></tr>
+ * <tr><td>setSocketGame</td><td>setSocketGame(String hash, int
+ * game)</td><td>nill</td><td>NullException, HashNotFoundException</td></tr>
  * <tr><td>disconnect</td><td>disconnect(String
  * hash)</td><td>nill</td><td>nill</td></tr>
  * <tr><td>removeQueue</td><td>removeQueue(String
@@ -640,6 +644,32 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
+     * Changes to value of game on the {@link SocketThread} specified by hash.
+     * This int value is used to seperate {@link SocketThread}s into groups to
+     * allow for a single {@link Server} to run and handle multiple different
+     * games.
+     *
+     * @param hash Hash identifier of {@link SocketThread} to change the value
+     * of game on.
+     * @param game int to change the value of game to on {@link SocketThread}
+     * specified by hash.
+     * @throws NullException If socket_list is set to null.
+     * @throws HashNotFoundException If the parameter hash does not exist as a
+     * key in socket_list.
+     */
+    public synchronized void setSocketGame(String hash, int game) throws NullException, HashNotFoundException {
+        if (socket_list != null) {
+            if (socket_list.containsKey(hash)) {
+                socket_list.get(hash).setGame(game);
+            } else {
+                throw new HashNotFoundException("Hash " + hash + " does not exist in socket_list");
+            }
+        } else {
+            throw new NullException("Socket list is currently set to null");
+        }
+    }
+
+    /**
      * Returns the port number used for connections.
      *
      * @return the port number used to listen for connections.
@@ -777,6 +807,31 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     public int getState() {
         return state;
+    }
+
+    /**
+     * Returns the int used for the {@link SocketThread} specified by the
+     * parameter hash used to group the {@link SocketThread} so the
+     * {@link Server} can run and handle multiple games at once.
+     *
+     * @param hash the String key used to identify the required
+     * {@link SocketThread}.
+     * @return int used to group the {@link SocketThread} by the {@link Server}
+     * allowing it to run and handle multiple games.
+     * @throws NullException if socket_list is set to null.
+     * @throws HashNotFoundException if the String hash does not exist as a key
+     * in socket_list.
+     */
+    public int getSocketGame(String hash) throws NullException, HashNotFoundException {
+        if (socket_list != null) {
+            if (socket_list.containsKey(hash)) {
+                return socket_list.get(hash).getGame();
+            } else {
+                throw new HashNotFoundException("Hash does not exist as a key in socket list");
+            }
+        } else {
+            throw new NullException("Socket list is set to null");
+        }
     }
 
     /**
@@ -1077,6 +1132,16 @@ public class Server extends fantasyteam.ft1.Networking {
                     setListenThread();
                 } catch (IOException | ServerSocketCloseException | TimeoutException e) {
                     throw new NetworkingIOException("Exception occurred", e);
+                }
+            case "setSocketGame":
+                if (action.size() > 2) {
+                    try {
+                        setSocketGame(action.get(1), Integer.parseInt(action.get(2)));
+                    } catch (NullException | HashNotFoundException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
                 }
             case "disconnect":
                 if (action.size() > 1) {

@@ -1,8 +1,15 @@
 package fantasyteam.ft1.networkingbase.exceptions;
 
 /**
+ * <p>
  * This exception should be thrown by any function that attempts to validate
  * input and detects that the input is invalid.
+ * </p>
+ * <p>
+ * The exception type for this class is InvalidArgumentException. See the
+ * {@link NetworkingBaseRuntimeException} class for more information regarding
+ * exception types.
+ * </p>
  *
  * @author javu
  */
@@ -14,7 +21,7 @@ public class InvalidArgumentException extends NetworkingBaseRuntimeException {
      * @param message Custom message String
      */
     public InvalidArgumentException(String message) {
-        super(message);
+        super(message, "InvalidArgumentException");
     }
 
     /**
@@ -28,6 +35,6 @@ public class InvalidArgumentException extends NetworkingBaseRuntimeException {
      * that caused this exception to be thrown.
      */
     public InvalidArgumentException(String message, Throwable cause) {
-        super(message, cause);
+        super(message, cause, "InvalidArgumentException");
     }
 }

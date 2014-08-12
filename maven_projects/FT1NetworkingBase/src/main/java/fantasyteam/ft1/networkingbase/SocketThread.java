@@ -69,6 +69,14 @@ public class SocketThread extends Thread {
      */
     private volatile int state;
     /**
+     * int used to determine which game set the {@link SocketThread}s belongs to
+     * on the {@link Server}. This can be used to separate {@link SocketThread}s
+     * into different groups depending on their game value, which can be used to
+     * facilitate one {@link Server} hosting and handling multiple different
+     * game sessions at once.
+     */
+    private volatile int game;
+    /**
      * Default timeout value to wait when waiting for critical tasks to
      * complete.
      */
@@ -84,8 +92,8 @@ public class SocketThread extends Thread {
      */
     private int socket_timeout_response_count;
     /**
-     * The counter that is incremented every time no response is received and the
-     * socket throws a SocketTimeoutException.
+     * The counter that is incremented every time no response is received and
+     * the socket throws a SocketTimeoutException.
      */
     private int no_response_count;
     /**
@@ -123,6 +131,7 @@ public class SocketThread extends Thread {
         this.server = server;
         this.hash = hash;
         state = NEW;
+        game = 0;
         timeout = 5000;
         socket_timeout_response = 1000;
         socket_timeout_response_count = 5;
@@ -254,6 +263,16 @@ public class SocketThread extends Thread {
     }
 
     /**
+     * Returns the attribute game, the int specifying which game group the
+     * {@link SocketThread} belongs to on the {@link Server}.
+     *
+     * @return the int game.
+     */
+    public int getGame() {
+        return game;
+    }
+
+    /**
      * Returns the attribute timeout, the amount of time (in milliseconds) to
      * wait for critical tasks to complete.
      *
@@ -334,6 +353,17 @@ public class SocketThread extends Thread {
         } else {
             throw new InvalidArgumentException("State must equal NEW, RUNNING, CONFIRMED, ERROR or CLOSED. State equals " + state);
         }
+    }
+
+    /**
+     * Sets the attribute game, the int specifying which game group the
+     * {@link SocketThread} belongs to on the {@link Server}.
+     *
+     * @param game int specifying which game group this {@link SocketThread}
+     * belongs to on the {@link Server}.
+     */
+    public void setGame(int game) {
+        this.game = game;
     }
 
     /**

@@ -1,8 +1,16 @@
 package fantasyteam.ft1.networkingbase.exceptions;
 
 /**
+ * <p>
  * This is a very specific exception that is thrown if there is an issue closing
- * a ServerSocket. Used by the {@link fantasyteam.ft1.networkingbase.ListenThread} class.
+ * a ServerSocket. Used by the
+ * {@link fantasyteam.ft1.networkingbase.ListenThread} class.
+ * </p>
+ * <p>
+ * The exception type for this class is ServerSocketCloseException. See the
+ * {@link NetworkingBaseIOException} class for more information regarding
+ * exception types.
+ * </p>
  *
  * @author javu
  */
@@ -14,7 +22,7 @@ public class ServerSocketCloseException extends NetworkingBaseIOException {
      * @param message Custom message String
      */
     public ServerSocketCloseException(String message) {
-        super(message);
+        super(message, "ServerSocketCloseException");
     }
 
     /**
@@ -28,6 +36,6 @@ public class ServerSocketCloseException extends NetworkingBaseIOException {
      * that caused this exception to be thrown.
      */
     public ServerSocketCloseException(String message, Throwable cause) {
-        super(message, cause);
+        super(message, cause, "ServerSocketCloseException");
     }
 }

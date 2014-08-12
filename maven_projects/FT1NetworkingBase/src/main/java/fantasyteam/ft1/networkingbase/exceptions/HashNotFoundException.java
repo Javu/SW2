@@ -1,9 +1,16 @@
 package fantasyteam.ft1.networkingbase.exceptions;
 
 /**
+ * <p>
  * This exception should be thrown by any function that attempts to reference a
  * hash/key/index in a map/list/array but the referenced hash/key/index does not
  * exist.
+ * </p>
+ * <p>
+ * The exception type for this class is HashNotFoundException. See the
+ * {@link NetworkingBaseRuntimeException} class for more information regarding
+ * exception types.
+ * </p>
  *
  * @author javu
  */
@@ -15,7 +22,7 @@ public class HashNotFoundException extends NetworkingBaseRuntimeException {
      * @param message Custom message String
      */
     public HashNotFoundException(String message) {
-        super(message);
+        super(message, "HashNotFoundException");
     }
 
     /**
@@ -29,6 +36,6 @@ public class HashNotFoundException extends NetworkingBaseRuntimeException {
      * that caused this exception to be thrown.
      */
     public HashNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+        super(message, cause, "HashNotFoundException");
     }
 }

@@ -1,8 +1,15 @@
 package fantasyteam.ft1.networkingbase.exceptions;
 
 /**
+ * <p>
  * This exception should be thrown by any function that requires a specific
  * feature to be turned on before it can be run.
+ * </p>
+ * <p>
+ * The exception type for this class is FeatureNotUsedException. See the
+ * {@link NetworkingBaseRuntimeException} class for more information regarding
+ * exception types.
+ * </p>
  *
  * @author javu
  */
@@ -14,7 +21,7 @@ public class FeatureNotUsedException extends NetworkingBaseRuntimeException {
      * @param message Custom message String
      */
     public FeatureNotUsedException(String message) {
-        super(message);
+        super(message, "FeatureNotUsedException");
     }
 
     /**
@@ -28,6 +35,6 @@ public class FeatureNotUsedException extends NetworkingBaseRuntimeException {
      * that caused this exception to be thrown.
      */
     public FeatureNotUsedException(String message, Throwable cause) {
-        super(message, cause);
+        super(message, cause, "FeatureNotUsedException");
     }
 }
