@@ -1,7 +1,7 @@
 package fantasyteam.ft1.exceptions;
 
 /**
- *
+ * 
  * @author Javu
  */
 public class NetworkingRuntimeException extends RuntimeException {

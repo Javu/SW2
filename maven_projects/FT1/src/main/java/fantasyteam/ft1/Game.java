@@ -6,10 +6,11 @@ import java.util.List;
 
 /**
  * Game class. Handles game logic and combines all of the engine components
+ *
  * @author jamessemple
  */
 public abstract class Game {
-	
+
     //Engines go here
     private final Physics physics;
     private final Renderer renderer;
@@ -17,38 +18,39 @@ public abstract class Game {
 
     protected List<Entity> entities;
 
-
     public Game(Physics physics, Renderer renderer, Networking networking) {
         this.physics = physics;
         this.renderer = renderer;
         this.networking = networking;
     }
 
-
     //something of the like here, could be interchanged with a seperate engine + event loop, also probably want to thread the rendering and physics stuff?
     protected void runGameLoop() {
         //need a better loop implementation here but you get the idea
         for (Entity entity : entities) {
-                entity.create();
+            entity.create();
         }
 
         for (Entity entity : entities) {
-                entity.step();
+            entity.step();
         }
 
         physics.runPhysics(entities);
 
         for (Entity entity : entities) {
-                entity.draw();
+            entity.draw();
         }
         //.... run other game loop steps here
     }
-    
-    
+
     /**
-     * abstract method for handling messages received from the networking engine component
-     * @param action
-     * @param clientId 
+     * abstract method for handling messages received from the networking engine
+     * component
+     *
+     * @param action String List identifying the action to run and any
+     * parameters needed for the action.
+     * @param clientId The unique hash associated with the connected user who
+     * requested the action.
      */
     public abstract void handleAction(List<String> action, String clientId);
 }

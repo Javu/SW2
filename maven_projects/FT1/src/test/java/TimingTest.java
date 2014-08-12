@@ -22,7 +22,7 @@ public class TimingTest {
     @Test
     public void testWaitTime() {
         LOGGER.log(Level.INFO,"--- START TEST testWaitTime ---");
-        timer.waitTime(5000);
+        timer.waitTime(50);
         LOGGER.log(Level.INFO,"--- FINISH TEST ---");
     }
 }
