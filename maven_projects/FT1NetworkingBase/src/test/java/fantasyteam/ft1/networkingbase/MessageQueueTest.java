@@ -282,24 +282,45 @@ public class MessageQueueTest {
     }
 
     /**
-     * Tests the {@link MessageQueue}.getTimeout() function and ensures it
+     * Tests the {@link MessageQueue}.getTimeoutError() function and ensures it
      * returns the correct value of timeout.
      */
     @Test
-    public void testMessageQueueGetTimeout() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueGetTimeout -----");
-        long current_timeout = server2.getQueueList().get(hash).getTimeout();
+    public void testMessageQueueGetTimeoutError() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueGetTimeoutError -----");
+        long current_timeout = server2.getQueueList().get(hash).getTimeoutError();
         Assert.assertEquals(current_timeout, 300000, "Did not return the correct timeout value");
         long new_timeout = 5;
         try {
-            server2.getQueueList().get(hash).setTimeout(new_timeout);
+            server2.getQueueList().get(hash).setTimeoutError(new_timeout);
         } catch (InvalidArgumentException e) {
             exception = true;
         }
-        current_timeout = server2.getQueueList().get(hash).getTimeout();
-        Assert.assertEquals(current_timeout, new_timeout, "Did not return the correct timeout value after changing it using MessageQueue.setTimeout(long timeout)");
+        current_timeout = server2.getQueueList().get(hash).getTimeoutError();
+        Assert.assertEquals(current_timeout, new_timeout, "Did not return the correct timeout value after changing it using MessageQueue.setTimeoutError(long timeout)");
         Assert.assertFalse(exception, "Exception found");
-        LOGGER.log(Level.INFO, "----- TEST testMessageQueueGetTimeout COMPLETED -----");
+        LOGGER.log(Level.INFO, "----- TEST testMessageQueueGetTimeoutError COMPLETED -----");
+    }
+    
+    /**
+     * Tests the {@link MessageQueue}.getTimeoutError() function and ensures it
+     * returns the correct value of timeout.
+     */
+    @Test
+    public void testMessageQueueGetTimeoutDisconnect() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueGetTimeoutDisconnect -----");
+        long current_timeout = server2.getQueueList().get(hash).getTimeoutDisconnect();
+        Assert.assertEquals(current_timeout, 300000, "Did not return the correct timeout value");
+        long new_timeout = 5;
+        try {
+            server2.getQueueList().get(hash).setTimeoutDisconnect(new_timeout);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        current_timeout = server2.getQueueList().get(hash).getTimeoutDisconnect();
+        Assert.assertEquals(current_timeout, new_timeout, "Did not return the correct timeout value after changing it using MessageQueue.setTimeoutDisconnect(long timeout)");
+        Assert.assertFalse(exception, "Exception found");
+        LOGGER.log(Level.INFO, "----- TEST testMessageQueueGetTimeoutDisconnect COMPLETED -----");
     }
 
     /**

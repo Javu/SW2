@@ -72,17 +72,28 @@ public class MessageQueue extends Thread {
      */
     private volatile Server server;
     /**
-     * {@link fantasyteam.ft1.Timing} used to track timeouts for global errors
-     * on the socket (affecting the entire socket, not just an individual
-     * message).
+     * {@link fantasyteam.ft1.Timing} used to timeout the socket if an exception
+     * is caught when sending messages and is not recovered from in the time
+     * given by timeout_error.
      */
-    private Timing timer;
+    private Timing timer_error;
     /**
-     * The long in milliseconds used when determining the timeout offset for all
-     * default timing operations such as waiting for a reconnection after a
-     * socket disconnects or error handling.
+     * {@link fantasyteam.ft1.Timing} used to timeout disconnections by the
+     * socket. If the socket does not reconnect in the time given by
+     * timeout_disconnect then the sockets hash is removed from the disconnected
+     * sockets list and this queue is closed.
      */
-    private volatile long timeout;
+    private Timing timer_disconnect;
+    /**
+     * The long in milliseconds used when determining the timeout offset for
+     * error handling.
+     */
+    private volatile long timeout_error;
+    /**
+     * The long in milliseconds used when determining the timeout offset for
+     * disconnections.
+     */
+    private volatile long timeout_disconnect;
     /**
      * The unique identifier this {@link MessageQueue} shares with its
      * accompanying {@link SocketThread} given to it by its owning
@@ -113,8 +124,10 @@ public class MessageQueue extends Thread {
         messages = new ArrayList<String>();
         this.server = server;
         this.hash = hash;
-        timer = null;
-        timeout = 300000;
+        timer_error = null;
+        timer_disconnect = null;
+        timeout_error = 300000;
+        timeout_disconnect = 300000;
         state = NEW;
     }
 
@@ -140,16 +153,19 @@ public class MessageQueue extends Thread {
                         socket().getSocket().sendMessage(messages.get(0));
                         messages.remove(0);
                         state = RUNNING;
-                        if (timer != null) {
-                            timer = null;
+                        if (timer_error != null) {
+                            timer_error = null;
+                        }
+                        if(timer_disconnect != null) {
+                            timer_disconnect = null;
                         }
                     } catch (IOException e) {
                         state = ERROR;
-                        if (timer == null) {
-                            timer = new Timing();
+                        if (timer_error == null) {
+                            timer_error = new Timing();
                         }
                         LOGGER.log(Level.SEVERE, "Could not send message: {0}. Exception: {1}", new Object[]{messages.get(0), e});
-                        if (timer.getTime() > timeout) {
+                        if (timer_error.getTime() > timeout_error) {
                             LOGGER.log(Level.SEVERE, "Sending message has timed out. Disconnecting socket. Message: ", messages.get(0));
                             server.disconnect(hash);
                         }
@@ -158,10 +174,10 @@ public class MessageQueue extends Thread {
             } else if (state == DISCONNECT) {
                 if (server.getUseDisconnectedSockets()) {
                     if (server.getDisconnectedSockets().contains(hash)) {
-                        if (timer == null) {
+                        if (timer_disconnect == null) {
                             LOGGER.log(Level.INFO, "SocketThread with hash {0} has been disconnected, waiting to re-establish connection", hash);
-                            timer = new Timing();
-                        } else if (timer.getTime() > timeout) {
+                            timer_disconnect = new Timing();
+                        } else if (timer_disconnect.getTime() > timeout_disconnect) {
                             LOGGER.log(Level.INFO, "SocketThread with hash {0} did not reconnect within the given timeout", hash);
                             try {
                                 server.removeDisconnectedSocket(hash);
@@ -169,7 +185,7 @@ public class MessageQueue extends Thread {
                                 LOGGER.log(Level.INFO, "Socket {0} has not been disconnect, or hash was incorrectly removed from disconnected_sockets. Queue state set to RUNNING", hash);
                                 state = RUNNING;
                             }
-                            if(state != RUNNING) {
+                            if (state != RUNNING) {
                                 try {
                                     server.removeQueue(hash);
                                 } catch (HashNotFoundException | NullException e) {
@@ -192,7 +208,8 @@ public class MessageQueue extends Thread {
         }
         messages.clear();
         messages = null;
-        timer = null;
+        timer_error = null;
+        timer_disconnect = null;
         LOGGER.log(Level.INFO, "MessageQueue successfully closed. State {0}", state);
     }
 
@@ -211,16 +228,34 @@ public class MessageQueue extends Thread {
     }
 
     /**
-     * Sets the attribute timeout. Timeout is the default value in milliseconds
-     * to wait on all timing functions such as disconnection timeouts or error
-     * handling.
+     * Sets the attribute timeout_error. Timeout is the default value in
+     * milliseconds to wait when an IO exception is received on the socket.
      *
-     * @param timeout long to set timeout to.
-     * @throws InvalidArgumentException if the parameter timeout is not equal to or greater than 0.
+     * @param timeout long to set timeout_error to.
+     * @throws InvalidArgumentException if the parameter timeout is not equal to
+     * or greater than 0.
      */
-    public synchronized void setTimeout(long timeout) throws InvalidArgumentException {
-        if(timeout >= 0) {
-            this.timeout = timeout;
+    public synchronized void setTimeoutError(long timeout) throws InvalidArgumentException {
+        if (timeout >= 0) {
+            timeout_error = timeout;
+        } else {
+            throw new InvalidArgumentException("Value of timeout must be greater than or equal to 0");
+        }
+    }
+
+    /**
+     * Sets the attribute timeout_disconnect. Timeout is the default value in
+     * milliseconds to wait when the {@link SocketThread} disconnects before
+     * closing this {@link MessageQueue} and removing the hash from disconnected
+     * sockets list.
+     *
+     * @param timeout long to set timeout_disconnect to.
+     * @throws InvalidArgumentException if the parameter timeout is not equal to
+     * or greater than 0.
+     */
+    public synchronized void setTimeoutDisconnect(long timeout) throws InvalidArgumentException {
+        if (timeout >= 0) {
+            timeout_disconnect = timeout;
         } else {
             throw new InvalidArgumentException("Value of timeout must be greater than or equal to 0");
         }
@@ -239,14 +274,16 @@ public class MessageQueue extends Thread {
     }
 
     /**
-     * Sets the attribute state, the current state of the {@link MessageQueue}. Valid states are: 0 - NEW 1 - RUNNING 2 - ERROR
-     * 3 - PAUSED 4 - DISCONNECT 5 - CLOSED.
+     * Sets the attribute state, the current state of the {@link MessageQueue}.
+     * Valid states are: 0 - NEW 1 - RUNNING 2 - ERROR 3 - PAUSED 4 - DISCONNECT
+     * 5 - CLOSED.
      *
      * @param state the int to set state to.
-     * @throws InvalidArgumentException if parameter state != NEW, RUNNING, ERROR, PAUSED, DISCONNECT or CLOSED.
+     * @throws InvalidArgumentException if parameter state != NEW, RUNNING,
+     * ERROR, PAUSED, DISCONNECT or CLOSED.
      */
     public synchronized void setRun(int state) throws InvalidArgumentException {
-        if(state == NEW || state == RUNNING || state == ERROR || state == PAUSED || state == DISCONNECT || state == CLOSED){
+        if (state == NEW || state == RUNNING || state == ERROR || state == PAUSED || state == DISCONNECT || state == CLOSED) {
             this.state = state;
         } else {
             throw new InvalidArgumentException("State must equal NEW, RUNNING, ERROR, PAUSED, DISCONNECT or CLOSED. State equals " + state);
@@ -263,12 +300,21 @@ public class MessageQueue extends Thread {
     }
 
     /**
-     * Returns the attribute timeout.
+     * Returns the attribute timeout_error.
      *
-     * @return the long timeout.
+     * @return the long timeout_error.
      */
-    public long getTimeout() {
-        return timeout;
+    public long getTimeoutError() {
+        return timeout_error;
+    }
+    
+    /**
+     * Returns the attribute timeout_disconnect.
+     *
+     * @return the long timeout_disconnect.
+     */
+    public long getTimeoutDisconnect() {
+        return timeout_disconnect;
     }
 
     /**

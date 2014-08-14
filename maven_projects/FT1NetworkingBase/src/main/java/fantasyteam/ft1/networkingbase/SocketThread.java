@@ -174,6 +174,8 @@ public class SocketThread extends Thread {
                 } catch (SocketTimeoutException e) {
                     if (socket_timeout_response_count != -1) {
                         no_response_count += 1;
+                    } else {
+                        no_response_count = -1;
                     }
                 } catch (IOException e) {
                     if (state == RUNNING || state == CONFIRMED) {

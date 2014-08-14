@@ -30,10 +30,12 @@ import java.util.logging.Logger;
  * client/server framework. It contains all the methods needed to create and
  * accept multiple connections using IP addresses and port numbers. Any port
  * based connections will need to be port forwarded on the end of the acceptor.
- * When creating a client/server framework this class will need to be extended
- * and the handleMessage method will need to be overridden. This method is meant
- * to be used to process and correctly handle any string inputs received through
- * a connection.
+ * </p>
+ * <p>
+ * The {@link Server} is essentially a Map of {@link SocketThread}s and a list
+ * of functions to control and handle those SocketThreads and interactions
+ * between them. It contains all the functionality to correctly setup and
+ * configure your network.
  * </p>
  * <p>
  * Any {@link Game} class that wishes to use the more complex and implementation
@@ -93,6 +95,16 @@ import java.util.logging.Logger;
  * ServerSocketCloseException, TimeoutException</td><td>nill</td></tr>
  * <tr><td>setSocketGame</td><td>setSocketGame(String hash, int
  * game)</td><td>nill</td><td>NullException, HashNotFoundException</td></tr>
+ * <tr><td>setQueueTimeoutError</td><td>setQueueTimeoutError(long
+ * timeout)</td><td>nill</td><td>InvalidArgumentException</td></tr>
+ * <tr><td>setQueueTimeoutDisconnect</td><td>setQueueTimeoutDisconnect(long
+ * timeout)</td><td>nill</td><td>InvalidArgumentException</td></tr>
+ * <tr><td>setQueueTimeoutErrorIndividual</td><td>setQueueTimeoutErrorIndividual(String
+ * hash, long timeout)</td><td>nill</td><td>FeatureNotUsedException,
+ * NullException, HashNotFoundException, InvalidArgumentException</td></tr>
+ * <tr><td>setQueueTimeoutDisconnectIndividual</td><td>setQueueTimeoutDisconnectIndividual(String
+ * hash, long timeout)</td><td>nill</td><td>FeatureNotUsedException,
+ * NullException, HashNotFoundException, InvalidArgumentException</td></tr>
  * <tr><td>disconnect</td><td>disconnect(String
  * hash)</td><td>nill</td><td>nill</td></tr>
  * <tr><td>removeQueue</td><td>removeQueue(String
@@ -181,6 +193,14 @@ public class Server extends fantasyteam.ft1.Networking {
      */
     protected int socket_timeout_count;
     /**
+     * The default value of timeout_error for each {@link MessageQueue}.
+     */
+    protected long queue_timeout_error;
+    /**
+     * The default value of timeout_disconnect for each {@link MessageQueue}.
+     */
+    protected long queue_timeout_disconnect;
+    /**
      * Boolean used to specify whether to keep the hashes of disconnected
      * sockets.
      */
@@ -235,6 +255,8 @@ public class Server extends fantasyteam.ft1.Networking {
         timeout = 5000;
         socket_timeout = 1000;
         socket_timeout_count = 5;
+        queue_timeout_error = 300000;
+        queue_timeout_disconnect = 300000;
         use_disconnected_sockets = false;
         use_message_queues = false;
         use_connection_confirmation = false;
@@ -269,6 +291,8 @@ public class Server extends fantasyteam.ft1.Networking {
         timeout = 5000;
         socket_timeout = 1000;
         socket_timeout_count = 5;
+        queue_timeout_error = 300000;
+        queue_timeout_disconnect = 300000;
         use_disconnected_sockets = false;
         use_message_queues = false;
         use_connection_confirmation = false;
@@ -391,7 +415,7 @@ public class Server extends fantasyteam.ft1.Networking {
             this.port = port;
             LOGGER.log(Level.INFO, "Changing port number: {0}", port);
         } else {
-            throw new InvalidArgumentException("Port number " + port + "out of range. Must be between 0 and 65535 inclusive");
+            throw new InvalidArgumentException("Port number " + port + " out of range. Must be between 0 and 65535 inclusive");
         }
     }
 
@@ -670,6 +694,109 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
+     * Changes the value of timeout_error for all current and future
+     * {@link MessageQueue}s.
+     *
+     * @param timeout Time (in ms) to set queue_timeout_error to.
+     * @throws InvalidArgumentException If the parameter timeout fails input
+     * validation.
+     */
+    public synchronized void setQueueTimeoutError(long timeout) throws InvalidArgumentException {
+        if (timeout >= 0) {
+            queue_timeout_error = timeout;
+            if (queue_list != null && !queue_list.isEmpty()) {
+                for (MessageQueue queue : queue_list.values()) {
+                    queue.setTimeoutError(timeout);
+                }
+            }
+        } else {
+            throw new InvalidArgumentException("Value of queue_timeout_error must be equal to or greater than 0");
+        }
+    }
+
+    /**
+     * Changes the value of timeout_disconnect for all current and future
+     * {@link MessageQueue}s.
+     *
+     * @param timeout Time (in ms) to set queue_timeout_error to.
+     * @throws InvalidArgumentException If the parameter timeout fails input
+     * validation.
+     */
+    public synchronized void setQueueTimeoutDisconnect(long timeout) throws InvalidArgumentException {
+        if (timeout >= 0) {
+            queue_timeout_disconnect = timeout;
+            if (queue_list != null && !queue_list.isEmpty()) {
+                for (MessageQueue queue : queue_list.values()) {
+                    queue.setTimeoutDisconnect(timeout);
+                }
+            }
+        } else {
+            throw new InvalidArgumentException("Value of queue_timeout_disconnect must be equal to or greater than 0");
+        }
+    }
+
+    /**
+     * Changes the value of timeout_error for a single {@link MessageQueue}.
+     *
+     * @param hash Hash identifier of {@link MessageQueue} to change the value
+     * of timeout_error on.
+     * @param timeout Time (in ms) to set timeout_error to.
+     * @throws FeatureNotUsedException If the {@link MessageQueue} feature is
+     * set to be used.
+     * @throws NullException If queue_list is set to null.
+     * @throws HashNotFoundException If the parameter hash does not exist as a
+     * key in queue_list.
+     * @throws InvalidArgumentException If the parameter timeout fails input
+     * validation.
+     */
+    public synchronized void setQueueTimeoutErrorIndividual(String hash, long timeout) throws FeatureNotUsedException, NullException, HashNotFoundException, InvalidArgumentException {
+        if (use_message_queues) {
+            if (queue_list != null) {
+                if (queue_list.containsKey(hash)) {
+                    queue_list.get(hash).setTimeoutError(timeout);
+                } else {
+                    throw new HashNotFoundException("Hash " + hash + " does not exist in queue_list");
+                }
+            } else {
+                throw new NullException("Queue list is currently set to null");
+            }
+        } else {
+            throw new FeatureNotUsedException("Message Queue feature is not being used");
+        }
+    }
+
+    /**
+     * Changes the value of timeout_disconnect for a single
+     * {@link MessageQueue}.
+     *
+     * @param hash Hash identifier of {@link MessageQueue} to change the value
+     * of timeout_disconnect on.
+     * @param timeout Time (in ms) to set timeout_disconnect to.
+     * @throws FeatureNotUsedException If the {@link MessageQueue} feature is
+     * set to be used.
+     * @throws NullException If queue_list is set to null.
+     * @throws HashNotFoundException If the parameter hash does not exist as a
+     * key in queue_list.
+     * @throws InvalidArgumentException If the parameter timeout fails input
+     * validation.
+     */
+    public synchronized void setQueueTimeoutDisconnectIndividual(String hash, long timeout) throws FeatureNotUsedException, NullException, HashNotFoundException, InvalidArgumentException {
+        if (use_message_queues) {
+            if (queue_list != null) {
+                if (queue_list.containsKey(hash)) {
+                    queue_list.get(hash).setTimeoutDisconnect(timeout);
+                } else {
+                    throw new HashNotFoundException("Hash " + hash + " does not exist in queue_list");
+                }
+            } else {
+                throw new NullException("Queue list is currently set to null");
+            }
+        } else {
+            throw new FeatureNotUsedException("Message Queue feature is not being used");
+        }
+    }
+
+    /**
      * Returns the port number used for connections.
      *
      * @return the port number used to listen for connections.
@@ -831,6 +958,92 @@ public class Server extends fantasyteam.ft1.Networking {
             }
         } else {
             throw new NullException("Socket list is set to null");
+        }
+    }
+
+    /**
+     * Returns the default value for all {@link MessageQueue}s to wait before
+     * closing themselves if they received an IO error on their socket.
+     *
+     * @return long specifying the default time (in ms) a {@link MessageQueue}
+     * should wait before closing itself after receiving an IO error on it's
+     * socket.
+     */
+    public long getQueueTimeoutError() {
+        return queue_timeout_error;
+    }
+
+    /**
+     * Returns the default value for all {@link MessageQueue}s to wait before
+     * closing themselves if their accompanying {@link SocketThread}
+     * disconnects. Used in the Disconnect/Reconnect feature.
+     *
+     * @return long specifying how long each {@link MessageQueue} should wait
+     * before closing itself after it's accompanying {@link SocketThread}
+     * disconnects.
+     */
+    public long getQueueTimeoutDisconnect() {
+        return queue_timeout_disconnect;
+    }
+
+    /**
+     * Returns the value of timeout_error in an individual {@link MessageQueue}.
+     * timeout_error is the time (in ms) the {@link MessageQueue} should wait
+     * before closing itself after receiving an IO error on it's socket.
+     *
+     * @param hash the String hash specifying the key to use in queue_list.
+     * @return long value of timeout_error in the {@link MessageQueue} specified
+     * by the parameter hash.
+     * @throws FeatureNotUsedException If the {@link MessageQueue} feature has
+     * not been set to be used.
+     * @throws NullException If the value of queue_list is null.
+     * @throws HashNotFoundException If the value specified by the parameter
+     * hash does not exist as a key in queue_list.
+     */
+    public long getQueueTimeoutErrorIndividual(String hash) throws FeatureNotUsedException, NullException, HashNotFoundException {
+        if (use_message_queues) {
+            if (queue_list != null) {
+                if (queue_list.containsKey(hash)) {
+                    return queue_list.get(hash).getTimeoutError();
+                } else {
+                    throw new HashNotFoundException("Hash " + hash + " does not exist in queue_list");
+                }
+            } else {
+                throw new NullException("Queue list is currently set to null");
+            }
+        } else {
+            throw new FeatureNotUsedException("Message Queue feature is not being used");
+        }
+    }
+
+    /**
+     * Returns the value of timeout_disconnect in an individual
+     * {@link MessageQueue}. timeout_disconnect is the time (in ms) the
+     * {@link MessageQueue} should wait before closing itself after it's
+     * accompanying {@link SocketThread} disconnects.
+     *
+     * @param hash the String hash specifying the key to use in queue_list.
+     * @return long value of timeout_disconnect in the {@link MessageQueue}
+     * specified by the parameter hash.
+     * @throws FeatureNotUsedException If the {@link MessageQueue} feature has
+     * not been set to be used.
+     * @throws NullException If the value of queue_list is null.
+     * @throws HashNotFoundException If the value specified by the parameter
+     * hash does not exist as a key in queue_list.
+     */
+    public long getQueueTimeoutDisconnectIndividual(String hash) throws FeatureNotUsedException, NullException, HashNotFoundException {
+        if (use_message_queues) {
+            if (queue_list != null) {
+                if (queue_list.containsKey(hash)) {
+                    return queue_list.get(hash).getTimeoutDisconnect();
+                } else {
+                    throw new HashNotFoundException("Hash " + hash + " does not exist in queue_list");
+                }
+            } else {
+                throw new NullException("Queue list is currently set to null");
+            }
+        } else {
+            throw new FeatureNotUsedException("Message Queue feature is not being used");
         }
     }
 
@@ -1041,7 +1254,11 @@ public class Server extends fantasyteam.ft1.Networking {
                 break;
             case "setPort":
                 if (action.size() > 1) {
-                    setPort(Integer.parseInt(action.get(1)));
+                    try {
+                        setPort(Integer.parseInt(action.get(1)));
+                    } catch (InvalidArgumentException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    }
                 } else {
                     throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
                 }
@@ -1138,6 +1355,46 @@ public class Server extends fantasyteam.ft1.Networking {
                     try {
                         setSocketGame(action.get(1), Integer.parseInt(action.get(2)));
                     } catch (NullException | HashNotFoundException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "setQueueTimeoutError":
+                if (action.size() > 1) {
+                    try {
+                        setQueueTimeoutError(Long.parseLong(action.get(1)));
+                    } catch (InvalidArgumentException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "setQueueTimeoutDisconnect":
+                if (action.size() > 1) {
+                    try {
+                        setQueueTimeoutDisconnect(Long.parseLong(action.get(1)));
+                    } catch (InvalidArgumentException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "setQueueTimeoutErrorIndividual":
+                if (action.size() > 2) {
+                    try {
+                        setQueueTimeoutErrorIndividual(action.get(1), Long.parseLong(action.get(2)));
+                    } catch (FeatureNotUsedException | NullException | HashNotFoundException | InvalidArgumentException e) {
+                        throw new NetworkingRuntimeException("Exception occurred", e);
+                    }
+                } else {
+                    throw new NetworkingIOException("Parameter list is too small", new InvalidArgumentException("Parameter list is too small: " + action.size()));
+                }
+            case "setQueueTimeoutDisconnectIndividual":
+                if (action.size() > 2) {
+                    try {
+                        setQueueTimeoutDisconnectIndividual(action.get(1), Long.parseLong(action.get(2)));
+                    } catch (FeatureNotUsedException | NullException | HashNotFoundException | InvalidArgumentException e) {
                         throw new NetworkingRuntimeException("Exception occurred", e);
                     }
                 } else {
@@ -1590,6 +1847,8 @@ public class Server extends fantasyteam.ft1.Networking {
 
         if (use_message_queues) {
             MessageQueue new_queue = new MessageQueue(this, hash);
+            new_queue.setTimeoutError(queue_timeout_error);
+            new_queue.setTimeoutDisconnect(queue_timeout_disconnect);
             queue_list.put(hash, new_queue);
             try {
                 startQueue(hash);

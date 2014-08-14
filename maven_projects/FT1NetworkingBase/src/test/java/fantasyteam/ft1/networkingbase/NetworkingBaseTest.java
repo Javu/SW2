@@ -599,7 +599,7 @@ public class NetworkingBaseTest {
         waitMessageQueueAddNotEmpty(server1);
         waitMessageQueueState(server1, server_hash, MessageQueue.RUNNING);
         try {
-            server1.getQueueList().get(server_hash).setTimeout(disconnect_timeout);
+            server1.getQueueList().get(server_hash).setTimeoutDisconnect(disconnect_timeout);
         } catch (InvalidArgumentException e) {
             exception = true;
         }

@@ -16,16 +16,17 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.createMock;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Tests for any exception handling use throughout the networkingbase package.
- * Also used to test functions of custom exceptions.
+ * Tests for any exception handling used throughout the networkingbase package,
+ * with the exception of the {@link Server}.handleServerAction function. Tests
+ * for exceptions thrown by the {@link Server}.handleServerAction function can
+ * be found in the ServerHandleActionTest test file. This test class is also
+ * used to test functions of custom exceptions.
  *
  * @author javu
  */
@@ -398,7 +399,7 @@ public class ExceptionTest {
         Assert.assertTrue(exception, "Successfully ran setSocketGame on server, should have received an exception");
         LOGGER.log(Level.INFO, "----- TEST testServerSetSocketGameHashEx COMPLETED -----");
     }
-    
+
     /**
      * Tests the {@link Server}.getSocketGame function to ensure it correctly
      * throws a NullException if socket_list is set to null.
@@ -441,6 +442,480 @@ public class ExceptionTest {
         LOGGER.log(Level.INFO, "----- TEST testServerGetSocketGameHashEx COMPLETED -----");
     }
 
+    /**
+     * Tests the {@link Server}.setQueueTimeoutError function to ensure it
+     * correctly throws an InvalidArgumentException if the value passed does not
+     * pass input validation.
+     */
+    @Test
+    public void testServerSetQueueTimeoutErrorInvalidEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetQueueTimeoutErrorInvalidEx -----");
+        try {
+            server2.setQueueTimeoutError(-1);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        Assert.assertTrue(exception, "Successfully ran setQueueTimeoutError on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetQueueTimeoutErrorInvalidEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutDisconnect function to ensure it
+     * correctly throws an InvalidArgumentException if the value passed does not
+     * pass input validation.
+     */
+    @Test
+    public void testServerSetQueueTimeoutDisconnectInvalidEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetQueueTimeoutDisconnectInvalidEx -----");
+        try {
+            server2.setQueueTimeoutDisconnect(-1);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        Assert.assertTrue(exception, "Successfully ran setQueueTimeoutDisconnect on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetQueueTimeoutDisconnectInvalidEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutErrorIndividual function to
+     * ensure it correctly throws a FeatureNotUsedException if the
+     * {@link MessageQueue} feature has not been activated.
+     */
+    @Test
+    public void testServerSetQueueTimeoutErrorIndividualFeatureEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetQueueTimeoutErrorIndividualFeatureEx -----");
+        boolean exception_other = false;
+        try {
+            server2.setQueueTimeoutErrorIndividual("TEST", -1);
+        } catch (FeatureNotUsedException e) {
+            exception = true;
+        } catch (NullException | HashNotFoundException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran setQueueTimeoutErrorIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetQueueTimeoutErrorIndividualFeatureEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutErrorIndividual function to
+     * ensure it correctly throws a NullException if queue_list is set to null.
+     */
+    @Test
+    public void testServerSetQueueTimeoutErrorIndividualNullEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetQueueTimeoutErrorIndividualNullEx -----");
+        boolean exception_other = false;
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        server2.setQueueList(null);
+        try {
+            server2.setQueueTimeoutErrorIndividual("TEST", -1);
+        } catch (NullException e) {
+            exception = true;
+        } catch (FeatureNotUsedException | HashNotFoundException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran setQueueTimeoutErrorIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetQueueTimeoutErrorIndividualNullEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutErrorIndividual function to
+     * ensure it correctly throws a HashNotFoundException if the value specified
+     * does not correspond to a key in queue_list.
+     */
+    @Test
+    public void testServerSetQueueTimeoutErrorIndividualHashEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetQueueTimeoutErrorIndividualHashEx -----");
+        boolean exception_other = false;
+        String client_hash = "";
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception_other = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception_other = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        try {
+            server2.setQueueTimeoutErrorIndividual("TEST", -1);
+        } catch (HashNotFoundException e) {
+            exception = true;
+        } catch (FeatureNotUsedException | NullException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran setQueueTimeoutErrorIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetQueueTimeoutErrorIndividualHashEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutErrorIndividual function to
+     * ensure it correctly throws an InvalidArgumentException if the value
+     * passed does not pass input validation.
+     */
+    @Test
+    public void testServerSetQueueTimeoutErrorIndividualInvalidEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetQueueTimeoutErrorIndividualInvalidEx -----");
+        boolean exception_other = false;
+        String client_hash = "";
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception_other = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception_other = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        try {
+            server2.setQueueTimeoutErrorIndividual(client_hash, -1);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        } catch (FeatureNotUsedException | NullException | HashNotFoundException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran setQueueTimeoutErrorIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetQueueTimeoutErrorIndividualInvalidEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutDisconnectIndividual function to
+     * ensure it correctly throws a FeatureNotUsedException if the
+     * {@link MessageQueue} feature has not been activated.
+     */
+    @Test
+    public void testServerSetQueueTimeoutDisconnectIndividualFeatureEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetQueueTimeoutDisconnectIndividualFeatureEx -----");
+        boolean exception_other = false;
+        try {
+            server2.setQueueTimeoutDisconnectIndividual("TEST", -1);
+        } catch (FeatureNotUsedException e) {
+            exception = true;
+        } catch (NullException | HashNotFoundException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran setQueueTimeoutDisconnectIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetQueueTimeoutDisconnectIndividualFeatureEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutDisconnectIndividual function to
+     * ensure it correctly throws a NullException if queue_list is set to null.
+     */
+    @Test
+    public void testServerSetQueueTimeoutDisconnectIndividualNullEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetQueueTimeoutDisconnectIndividualNullEx -----");
+        boolean exception_other = false;
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        server2.setQueueList(null);
+        try {
+            server2.setQueueTimeoutDisconnectIndividual("TEST", -1);
+        } catch (NullException e) {
+            exception = true;
+        } catch (FeatureNotUsedException | HashNotFoundException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran setQueueTimeoutDisconnectIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetQueueTimeoutDisconnectIndividualNullEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutDisconnectIndividual function to
+     * ensure it correctly throws a HashNotFoundException if the value specified
+     * does not correspond to a key in queue_list.
+     */
+    @Test
+    public void testServerSetQueueTimeoutDisconnectIndividualHashEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetQueueTimeoutDisconnectIndividualHashEx -----");
+        boolean exception_other = false;
+        String client_hash = "";
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception_other = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception_other = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        try {
+            server2.setQueueTimeoutDisconnectIndividual("TEST", -1);
+        } catch (HashNotFoundException e) {
+            exception = true;
+        } catch (FeatureNotUsedException | NullException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran setQueueTimeoutDisconnectIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetQueueTimeoutDisconnectIndividualHashEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutDisconnectIndividual function to
+     * ensure it correctly throws an InvalidArgumentException if the value
+     * passed does not pass input validation.
+     */
+    @Test
+    public void testServerSetQueueTimeoutDisconnectIndividualInvalidEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerSetQueueTimeoutDisconnectIndividualInvalidEx -----");
+        boolean exception_other = false;
+        String client_hash = "";
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception_other = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception_other = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        try {
+            server2.setQueueTimeoutDisconnectIndividual(client_hash, -1);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        } catch (FeatureNotUsedException | NullException | HashNotFoundException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran setQueueTimeoutDisconnectIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerSetQueueTimeoutDisconnectIndividualInvalidEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.getQueueTimeoutErrorIndividual function to
+     * ensure it correctly throws a FeatureNotUsedException if the
+     * {@link MessageQueue} feature has not been activated.
+     */
+    @Test
+    public void testServerGetQueueTimeoutErrorIndividualFeatureEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerGetQueueTimeoutErrorIndividualFeatureEx -----");
+        boolean exception_other = false;
+        try {
+            server2.getQueueTimeoutErrorIndividual("TEST");
+        } catch (FeatureNotUsedException e) {
+            exception = true;
+        } catch (NullException | HashNotFoundException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran getQueueTimeoutErrorIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerGetQueueTimeoutErrorIndividualFeatureEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.getQueueTimeoutErrorIndividual function to
+     * ensure it correctly throws a NullException if queue_list is set to null.
+     */
+    @Test
+    public void testServerGetQueueTimeoutErrorIndividualNullEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerGetQueueTimeoutErrorIndividualNullEx -----");
+        boolean exception_other = false;
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        server2.setQueueList(null);
+        try {
+            server2.getQueueTimeoutErrorIndividual("TEST");
+        } catch (NullException e) {
+            exception = true;
+        } catch (FeatureNotUsedException | HashNotFoundException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran getQueueTimeoutErrorIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerGetQueueTimeoutErrorIndividualNullEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.getQueueTimeoutErrorIndividual function to
+     * ensure it correctly throws a HashNotFoundException if the value specified
+     * does not correspond to a key in queue_list.
+     */
+    @Test
+    public void testServerGetQueueTimeoutErrorIndividualHashEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerGetQueueTimeoutErrorIndividualHashEx -----");
+        boolean exception_other = false;
+        String client_hash = "";
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception_other = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception_other = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        try {
+            server2.getQueueTimeoutErrorIndividual("TEST");
+        } catch (HashNotFoundException e) {
+            exception = true;
+        } catch (FeatureNotUsedException | NullException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran getQueueTimeoutErrorIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerGetQueueTimeoutErrorIndividualHashEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.getQueueTimeoutDisconnectIndividual function to
+     * ensure it correctly throws a FeatureNotUsedException if the
+     * {@link MessageQueue} feature has not been activated.
+     */
+    @Test
+    public void testServerGetQueueTimeoutDisconnectIndividualFeatureEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerGetQueueTimeoutDisconnectIndividualFeatureEx -----");
+        boolean exception_other = false;
+        try {
+            server2.getQueueTimeoutDisconnectIndividual("TEST");
+        } catch (FeatureNotUsedException e) {
+            exception = true;
+        } catch (NullException | HashNotFoundException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran getQueueTimeoutDisconnectIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerGetQueueTimeoutDisconnectIndividualFeatureEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.getQueueTimeoutDisconnectIndividual function to
+     * ensure it correctly throws a NullException if queue_list is set to null.
+     */
+    @Test
+    public void testServerGetQueueTimeoutDisconnectIndividualNullEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerGetQueueTimeoutDisconnectIndividualNullEx -----");
+        boolean exception_other = false;
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        server2.setQueueList(null);
+        try {
+            server2.getQueueTimeoutDisconnectIndividual("TEST");
+        } catch (NullException e) {
+            exception = true;
+        } catch (FeatureNotUsedException | HashNotFoundException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran getQueueTimeoutDisconnectIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerGetQueueTimeoutDisconnectIndividualNullEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.getQueueTimeoutDisconnectIndividual function to
+     * ensure it correctly throws a HashNotFoundException if the value specified
+     * does not correspond to a key in queue_list.
+     */
+    @Test
+    public void testServerGetQueueTimeoutDisconnectIndividualHashEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testServerGetQueueTimeoutDisconnectIndividualHashEx -----");
+        boolean exception_other = false;
+        String client_hash = "";
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception_other = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception_other = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        try {
+            server2.getQueueTimeoutDisconnectIndividual("TEST");
+        } catch (HashNotFoundException e) {
+            exception = true;
+        } catch (FeatureNotUsedException | NullException | InvalidArgumentException e) {
+            exception_other = true;
+        }
+        Assert.assertFalse(exception_other, "Caught an unexpected exception");
+        Assert.assertTrue(exception, "Successfully ran getQueueTimeoutDisconnectIndividual on server, should have received an exception");
+        LOGGER.log(Level.INFO, "----- TEST testServerGetQueueTimeoutDisconnectIndividualHashEx COMPLETED -----");
+    }
+    
     /**
      * Tests the {@link Server}.removeDisconnectedSocket function to ensure it
      * correctly throws a NullException if disconnected_sockets is set to null.
@@ -713,13 +1188,13 @@ public class ExceptionTest {
     }
 
     /**
-     * Tests the {@link MessageQueue}.setTimeout function to ensure it correctly
-     * throws an InvalidArgumentException if the parameter passed fails the
-     * input validation.
+     * Tests the {@link MessageQueue}.setTimeoutError function to ensure it
+     * correctly throws an InvalidArgumentException if the parameter passed
+     * fails the input validation.
      */
     @Test
-    public void testMessageQueueSetTimeoutEx() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetTimeoutEx -----");
+    public void testMessageQueueSetTimeoutErrorEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetTimeoutErrorEx -----");
         boolean exception_other = false;
         String hash = "";
         try {
@@ -748,13 +1223,58 @@ public class ExceptionTest {
         waitMessageQueueAddNotEmpty(server2);
         waitMessageQueueState(server2, hash, MessageQueue.RUNNING);
         try {
-            server2.getQueueList().get(hash).setTimeout(-1);
+            server2.getQueueList().get(hash).setTimeoutError(-1);
         } catch (InvalidArgumentException e) {
             exception = true;
         }
         Assert.assertFalse(exception_other, "Unexpected exception found");
         Assert.assertTrue(exception, "Exception not found");
-        LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetTimeoutEx COMPLETED -----");
+        LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetTimeoutErrorEx COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link MessageQueue}.setTimeoutDisconnect function to ensure it
+     * correctly throws an InvalidArgumentException if the parameter passed
+     * fails the input validation.
+     */
+    @Test
+    public void testMessageQueueSetTimeoutDisconnectEx() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testMessageQueueSetTimeoutDisconnectEx -----");
+        boolean exception_other = false;
+        String hash = "";
+        try {
+            server1.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception_other = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception_other = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception_other = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, hash, SocketThread.CONFIRMED);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, hash, MessageQueue.RUNNING);
+        try {
+            server2.getQueueList().get(hash).setTimeoutDisconnect(-1);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception_other, "Unexpected exception found");
+        Assert.assertTrue(exception, "Exception not found");
+        LOGGER.log(Level.INFO, "----- TEST testMessageQueueSetTimeoutDisconnectEx COMPLETED -----");
     }
 
     /**

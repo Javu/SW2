@@ -852,12 +852,206 @@ public class ServerTest {
         Assert.assertEquals(server2.getSocketGame(client_hash), 0, "Value of game not set to 0 on SocketThread");
         try {
             server2.setSocketGame(client_hash, 1);
-        } catch(NullException | HashNotFoundException e) {
+        } catch (NullException | HashNotFoundException e) {
             exception = true;
         }
         Assert.assertFalse(exception, "Exception found");
         Assert.assertEquals(server2.getSocketGame(client_hash), 1, "Value of game not set to 1 on SocketThread");
         LOGGER.log(Level.INFO, "----- TEST testSetSocketGame COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutError function to ensure it
+     * correctly sets the value of timeout_error recursively on already existing
+     * {@link MessageQueues} and on any newly created queues after running the
+     * function.
+     */
+    @Test
+    public void testSetQueueTimeoutError() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetQueueTimeoutError -----");
+        String client_hash = "";
+        String client_hash2 = "";
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitSocketThreadAddNotEmpty(server1);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        try {
+            server2.setQueueTimeoutError(5);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server2.getQueueTimeoutError(), 5, "Value of queue_timeout_error not set to 5 on Server");
+        Assert.assertEquals(server2.getQueueTimeoutErrorIndividual(client_hash), 5, "Value of timeout_error not set to 5 on SocketThread");
+        try {
+            client_hash2 = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadState(server2, client_hash2, SocketThread.CONFIRMED);
+        waitMessageQueueState(server2, client_hash2, MessageQueue.RUNNING);
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server2.getQueueTimeoutErrorIndividual(client_hash2), 5, "Value of timeout_error not set to 5 on SocketThread");
+        LOGGER.log(Level.INFO, "----- TEST testSetQueueTimeoutError COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutDisconnect function to ensure it
+     * correctly sets the value of timeout_disconnect recursively on already
+     * existing {@link MessageQueues} and on any newly created queues after
+     * running the function.
+     */
+    @Test
+    public void testSetQueueTimeoutDisconnect() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetQueueTimeoutDisconnect -----");
+        String client_hash = "";
+        String client_hash2 = "";
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitSocketThreadAddNotEmpty(server1);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        try {
+            server2.setQueueTimeoutDisconnect(5);
+        } catch (InvalidArgumentException e) {
+            exception = true;
+        }
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server2.getQueueTimeoutDisconnect(), 5, "Value of queue_disconnect_error not set to 5 on Server");
+        Assert.assertEquals(server2.getQueueTimeoutDisconnectIndividual(client_hash), 5, "Value of timeout_disconnect not set to 5 on SocketThread");
+        try {
+            client_hash2 = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadState(server2, client_hash2, SocketThread.CONFIRMED);
+        waitMessageQueueState(server2, client_hash2, MessageQueue.RUNNING);
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server2.getQueueTimeoutDisconnectIndividual(client_hash2), 5, "Value of timeout_disconnect not set to 5 on SocketThread");
+        LOGGER.log(Level.INFO, "----- TEST testSetQueueTimeoutDisconnect COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutErrorIndividual function to
+     * ensure it correctly sets the value of timeout_error only on the
+     * {@link MessageQueue} specified.
+     */
+    @Test
+    public void testSetQueueTimeoutErrorIndividual() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetQueueTimeoutErrorIndividual -----");
+        String client_hash = "";
+        String client_hash2 = "";
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitSocketThreadAddNotEmpty(server1);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        try {
+            client_hash2 = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadState(server2, client_hash2, SocketThread.CONFIRMED);
+        waitMessageQueueState(server2, client_hash2, MessageQueue.RUNNING);
+        server2.setQueueTimeoutErrorIndividual(client_hash2, 5);
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server2.getQueueTimeoutErrorIndividual(client_hash2), 5, "Value of timeout_error not set to 5 on SocketThread");
+        Assert.assertEquals(server2.getQueueTimeoutErrorIndividual(client_hash), 300000, "Value of timeout_error changed on SocketThread");
+        LOGGER.log(Level.INFO, "----- TEST testSetQueueTimeoutErrorIndividual COMPLETED -----");
+    }
+
+    /**
+     * Tests the {@link Server}.setQueueTimeoutDisconnectIndividual function to
+     * ensure it correctly sets the value of timeout_disconnect only on the
+     * {@link MessageQueue} specified.
+     */
+    @Test
+    public void testSetQueueTimeoutDisconnectIndividual() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testSetQueueTimeoutDisconnectIndividual -----");
+        String client_hash = "";
+        String client_hash2 = "";
+        try {
+            server2.setUseMessageQueues(true);
+        } catch (TimeoutException e) {
+            exception = true;
+        }
+        try {
+            server1.startThread();
+        } catch (IOException | ServerSocketCloseException | FeatureNotUsedException e) {
+            exception = true;
+        }
+        waitListenThreadStart(server1);
+        try {
+            client_hash = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadAddNotEmpty(server2);
+        waitSocketThreadState(server2, client_hash, SocketThread.CONFIRMED);
+        waitSocketThreadAddNotEmpty(server1);
+        waitMessageQueueAddNotEmpty(server2);
+        waitMessageQueueState(server2, client_hash, MessageQueue.RUNNING);
+        try {
+            client_hash2 = server2.addSocket("127.0.0.1", port);
+        } catch (IOException | TimeoutException e) {
+            exception = true;
+        }
+        waitSocketThreadState(server2, client_hash2, SocketThread.CONFIRMED);
+        waitMessageQueueState(server2, client_hash2, MessageQueue.RUNNING);
+        server2.setQueueTimeoutDisconnectIndividual(client_hash2, 5);
+        Assert.assertFalse(exception, "Exception found");
+        Assert.assertEquals(server2.getQueueTimeoutDisconnectIndividual(client_hash2), 5, "Value of timeout_disconnect not set to 5 on SocketThread");
+        Assert.assertEquals(server2.getQueueTimeoutDisconnectIndividual(client_hash), 300000, "Value of timeout_disconnect changed on SocketThread");
+        LOGGER.log(Level.INFO, "----- TEST testSetQueueTimeoutDisconnectIndividual COMPLETED -----");
     }
 
     /**
