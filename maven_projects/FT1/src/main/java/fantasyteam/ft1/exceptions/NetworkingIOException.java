@@ -28,5 +28,4 @@ public class NetworkingIOException  extends Exception {
     public NetworkingIOException(String message, Throwable cause) {
         super(message, cause);
     }
-    
 }

@@ -28,5 +28,4 @@ public class NetworkingRuntimeException extends RuntimeException {
     public NetworkingRuntimeException(String message, Throwable cause) {
         super(message, cause);
     }
-    
 }
