@@ -13,6 +13,7 @@
  * implementing the below advanced features to aid a more robust, stable and
  * seamless networking system.
  * </p>
+ * <br>
  * <table summary="list of features"><tr><td align="center"><strong>List of
  * Networking Features</strong></td></tr>
  * <tr><td><strong>Summary</strong></td></tr><tr><td>The below features are
@@ -104,5 +105,25 @@
  * server for multiplayer games.
  * </p></td></tr>
  * </table>
+ * <br><br>
+ * <div style="text-align:center"><strong>Bug List:</strong></div>
+ * <ul>
+ * <li>There is currently a bug when closing a listen {@link Server}. It will
+ * sometimes detect a new connection (even when there is nothing trying to
+ * connect) and start going through the process of creating a new socket while
+ * also going through the process of closing the server (this is due to the
+ * {@link ListenThread} process running the listen procedure, while the actual
+ * server process runs the closing procedure). I have made many attempts to
+ * resolve this issue and it is mostly gone, but will still occur in rare
+ * occasions. It will not affect the running of the code during testing, or if
+ * the code makes a full release, as the issue only occurs during the closing of
+ * the server (getting a process ending exception when the process is trying to
+ * end itself). However in the past this issue would also cause the port the
+ * server was listening on to remain in use and any subsequent tests using the
+ * same port would fail as the new listen server created for the test would not
+ * be able to bind to the port, getting a JVM_BIND exception. This should not be
+ * able to happen anymore, but be aware that if it does this issue could be the
+ * cause.</li>
+ * </ul>
  */
 package fantasyteam.ft1.networkingbase;

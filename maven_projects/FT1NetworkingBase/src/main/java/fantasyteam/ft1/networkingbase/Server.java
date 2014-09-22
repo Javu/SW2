@@ -1207,10 +1207,27 @@ public class Server extends fantasyteam.ft1.Networking {
     }
 
     /**
-     * This function is not used.
+     * This function is used to set a {@link SocketThread}s state to CONFIRMED
+     * when using the connection confirmation feature. Once the listen
+     * {@link Server} has accepted the new connection it will send the string
+     * "customnetwork1" through the socket. Once received on the other end the
+     * client {@link Server} will run this function setting the required
+     * {@link SocketThread} to confirmed.
+     *
+     * This is also used to display the possibility of overriding generic
+     * functions from the base {@link fantasyteam.ft1.Networking} class to allow
+     * top level {@link fantasyteam.ft1.Game} classes to access implementation
+     * specific features of child classes of Networking without compromising the
+     * use of the Networking class to separate implementation specific code from
+     * engine code (although this is not actually displayed here, the top level
+     * game class would never call this use of customNetwork1, however it could
+     * if it wanted to, which is the point intended to be displayed. If the
+     * function was called confirmConnection() instead, then the Game class
+     * could never call it).
      *
      * @param action Not used.
-     * @param clientId Not used.
+     * @param clientId The hash corresponding to the {@link SocketThread} in
+     * socket_list to set its state to SocketThread.CONFIRMED.
      */
     @Override
     public synchronized void customNetwork1(List<String> action, String clientId) {
