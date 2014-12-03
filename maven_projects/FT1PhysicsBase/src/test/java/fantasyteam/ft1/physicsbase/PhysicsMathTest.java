@@ -45,7 +45,7 @@ public class PhysicsMathTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testAccelerateSpeed -----");
         float speed = 2;
         float accelerate = 12;
-        System.out.println("Starting speed " + speed + ", acceleration " + accelerate);
+        System.out.println("Starting speed " + speed + ", acceleration " + accelerate + ", updates per second " + fps);
         for (int i = 0; i < fps; i++) {
             speed = physics.accelerateSpeed(speed, 100.0f, 0.0f, accelerate);
             System.out.println("Speed at " + (i + 1) + ":\t" + speed);
@@ -63,7 +63,7 @@ public class PhysicsMathTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testAccelerateSpeedMax -----");
         float speed = 2;
         float accelerate = 100;
-        System.out.println("Starting speed " + speed + ", acceleration " + accelerate);
+        System.out.println("Starting speed " + speed + ", acceleration " + accelerate + ", updates per second " + fps);
         for (int i = 0; i < fps; i++) {
             speed = physics.accelerateSpeed(speed, 100.0f, 0.0f, accelerate);
             System.out.println("Speed at " + (i + 1) + ":\t" + speed);
@@ -82,7 +82,7 @@ public class PhysicsMathTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testAccelerateSpeedMin -----");
         float speed = 2;
         float accelerate = -3;
-        System.out.println("Starting speed " + speed + ", acceleration " + accelerate);
+        System.out.println("Starting speed " + speed + ", acceleration " + accelerate + ", updates per second " + fps);
         for (int i = 0; i < fps; i++) {
             speed = physics.accelerateSpeed(speed, 100.0f, 0.0f, accelerate);
             System.out.println("Speed at " + (i + 1) + ":\t" + speed);
@@ -101,7 +101,7 @@ public class PhysicsMathTest {
         LOGGER.log(Level.INFO, "----- STARTING TEST testExponentialAccelerate -----");
         double accelerate = 4;
         double base = 2;
-        System.out.println("Starting acceleration " + accelerate + ", base " + base);
+        System.out.println("Starting acceleration " + accelerate + ", base " + base + ", updates per second " + fps);
         for (int i = 0; i < fps; i++) {
             accelerate = physics.exponentialAccelerate(accelerate, base);
             System.out.println("Accelerate at " + (i + 1) + ":\t" + accelerate);
@@ -121,7 +121,7 @@ public class PhysicsMathTest {
         float speed = 4;
         double base = 2;
         double accelerate = 4;
-        System.out.println("Starting speed " + speed + ", acceleration " + accelerate + ", base " + base);
+        System.out.println("Starting speed " + speed + ", acceleration " + accelerate + ", base " + base + ", updates per second " + fps);
         for (int i = 0; i < fps; i++) {
             accelerate = physics.exponentialAccelerate(accelerate, base);
             speed = physics.accelerateSpeed(speed, (float) accelerate);
