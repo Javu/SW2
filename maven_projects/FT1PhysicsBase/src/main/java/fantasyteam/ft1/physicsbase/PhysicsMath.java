@@ -87,8 +87,26 @@ public class PhysicsMath {
      * @param base the base desired for the exponential equation.
      * @return the acceleration after it has been incremented exponentially.
      */
-    public double exponentialAccelerate(double acceleration, double base) {
+    public double exponentialAccelerateIncreasing(double acceleration, double base) {
         double accelerate_final = Math.pow(base, ((Math.log(acceleration) / Math.log(base)) + (1.0f / fps)));
+        return accelerate_final;
+    }
+    
+    /**
+     * This function takes an acceleration value and changes it exponentially.
+     * This function can be used to move an object using a non-constant
+     * acceleration. This version has a parameter for the maximum acceleration.
+     *
+     * @param acceleration the starting acceleration (in pixels/second^2).
+     * @param base the base desired for the exponential equation.
+     * @param acceleration_max the maximum allowed acceleration (in pixels/second^2).
+     * @return the acceleration after it has been incremented exponentially.
+     */
+    public double exponentialAccelerateIncreasing(double acceleration, double base, double acceleration_max) {
+        double accelerate_final = Math.pow(base, ((Math.log(acceleration) / Math.log(base)) + (1.0f / fps)));
+        if(accelerate_final > acceleration_max) {
+            accelerate_final = acceleration_max;
+        }
         return accelerate_final;
     }
 }

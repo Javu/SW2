@@ -93,40 +93,60 @@ public class PhysicsMathTest {
     }
 
     /**
-     * Tests the exponentialAccelerate function to ensure it correctly
+     * Tests the exponentialAccelerateIncreasing function to ensure it correctly
      * increments the acceleration to the correct scale exponentially.
      */
     @Test
-    public void testExponentialAccelerate() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testExponentialAccelerate -----");
+    public void testExponentialAccelerateIncreasing() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testExponentialAccelerateIncreasing -----");
         double accelerate = 4;
         double base = 2;
         System.out.println("Starting acceleration " + accelerate + ", base " + base + ", updates per second " + fps);
         for (int i = 0; i < fps; i++) {
-            accelerate = physics.exponentialAccelerate(accelerate, base);
+            accelerate = physics.exponentialAccelerateIncreasing(accelerate, base);
             System.out.println("Accelerate at " + (i + 1) + ":\t" + accelerate);
         }
         Assert.assertEquals(Math.round(accelerate), 8, "Accelerate was not increased to 8");
-        LOGGER.log(Level.INFO, "----- TEST testExponentialAccelerate COMPLETED -----");
+        LOGGER.log(Level.INFO, "----- TEST testExponentialAccelerateIncreasing COMPLETED -----");
+    }
+
+    /**
+     * Tests the exponentialAccelerateIncreasing function to ensure it correctly
+     * increments the acceleration to the correct scale exponentially and does
+     * not exceed the maximum acceleration when a maximum is specified.
+     */
+    @Test
+    public void testExponentialAccelerateIncreasingMax() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testExponentialAccelerateIncreasingMax -----");
+        double accelerate = 4;
+        double base = 2;
+        System.out.println("Starting acceleration " + accelerate + ", base " + base + ", updates per second " + fps);
+        for (int i = 0; i < fps; i++) {
+            accelerate = physics.exponentialAccelerateIncreasing(accelerate, base, 6);
+            System.out.println("Accelerate at " + (i + 1) + ":\t" + accelerate);
+        }
+        Assert.assertFalse(accelerate > 6.0f, "Accelerate was increased passed the max acceleration");
+        Assert.assertEquals(Math.round(accelerate), 6, "Accelerate was not increased to 6");
+        LOGGER.log(Level.INFO, "----- TEST testExponentialAccelerateIncreasingMax COMPLETED -----");
     }
 
     /**
      * This test is simply used to show the affect of incrementing the
-     * acceleration exponentially while also incrementing the speed by the
+     * acceleration exponentially (increasing) while also incrementing the speed by the
      * acceleration.
      */
     @Test
-    public void testExponentialAccelerateAndAccelerateSpeed() {
-        LOGGER.log(Level.INFO, "----- STARTING TEST testExponentialAccelerateAndAccelerateSpeed -----");
+    public void testExponentialAccelerateIncreasingAndAccelerateSpeed() {
+        LOGGER.log(Level.INFO, "----- STARTING TEST testExponentialAccelerateIncreasingAndAccelerateSpeed -----");
         float speed = 4;
         double base = 2;
         double accelerate = 4;
         System.out.println("Starting speed " + speed + ", acceleration " + accelerate + ", base " + base + ", updates per second " + fps);
         for (int i = 0; i < fps; i++) {
-            accelerate = physics.exponentialAccelerate(accelerate, base);
+            accelerate = physics.exponentialAccelerateIncreasing(accelerate, base);
             speed = physics.accelerateSpeed(speed, (float) accelerate);
             System.out.println("Speed at " + (i + 1) + ":\t" + speed);
         }
-        LOGGER.log(Level.INFO, "----- TEST testExponentialAccelerateAndAccelerateSpeed COMPLETED -----");
+        LOGGER.log(Level.INFO, "----- TEST testExponentialAccelerateIncreasingAndAccelerateSpeed COMPLETED -----");
     }
 }
